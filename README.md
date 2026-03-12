@@ -517,15 +517,7 @@ Requisitos:
 
 * Login con usuario y contraseña
 * Contraseñas seguras
-* Control de roles
 * Registro de actividad
-
-Roles sugeridos:
-
-* ADMIN
-* RECEPCIONISTA
-* TECNICO
-* CAJERO
 
 ---
 
