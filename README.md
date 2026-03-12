@@ -304,48 +304,115 @@ POST /api/pagos
 
 ---
 
-# 6. Aplicación Web
+# 6. Aplicación Webb (Portal del Cliente
 
-La aplicación web será utilizada por:
+La aplicación **Web** funciona como un **portal para clientes**, permitiendo que los usuarios interactúen directamente con el taller.
 
-* Recepcionistas
-* Administradores
-* Técnicos
+Los clientes pueden acceder desde un navegador.
 
-## Funciones
+Responsabilidades:
 
-### Gestión de clientes
+* Registro de clientes
+* Inicio de sesión
+* Gestión de vehículos
+* Solicitud de servicios
+* Consulta del estado de reparación
+* Consulta de historial de servicios
+* Consulta de facturas
 
-* Registrar clientes
-* Consultar clientes
+Flujo de interacción:
 
-### Gestión de vehículos
+```
+Cliente
+   ↓
+Portal Web
+   ↓
+Integración
+   ↓
+Core
+```
 
-* Registrar vehículos
-* Ver historial de servicios
+### Funcionalidades del Portal
 
-### Diagnóstico
+#### Registro de Usuario
 
-* Registrar diagnóstico del vehículo
+Permite a un cliente crear una cuenta en el sistema.
 
-### Órdenes de servicio
+Datos registrados:
 
-* Crear órdenes
-* Agregar servicios
-* Agregar piezas
-
-### Inventario
-
-* Consultar repuestos
-* Actualizar stock
-
-### Reportes
-
-* Servicios realizados
-* Ingresos del taller
-* Piezas más utilizadas
+* Nombre
+* Correo electrónico
+* Teléfono
+* Contraseña
 
 ---
+
+#### Registro de Vehículos
+
+El cliente puede registrar sus vehículos.
+
+Información almacenada:
+
+* Marca
+* Modelo
+* Año
+* Placa
+
+---
+
+#### Solicitud de Servicio
+
+El cliente puede solicitar servicios relacionados con frenos.
+
+Ejemplos de servicios:
+
+* Cambio de pastillas
+* Rectificación de discos
+* Revisión general de frenos
+* Cambio de líquido de frenos
+
+---
+
+#### Seguimiento del Servicio
+
+El cliente puede ver el estado actual de su vehículo.
+
+Estados posibles:
+
+* Pendiente
+* En diagnóstico
+* En reparación
+* Listo
+* Entregado
+
+---
+
+#### Historial de Servicios
+
+El cliente puede consultar todos los servicios realizados a sus vehículos.
+
+Ejemplo de información mostrada:
+
+* Fecha del servicio
+* Tipo de servicio
+* Vehículo
+* Costo del servicio
+
+---
+
+#### Facturas
+
+El cliente puede consultar sus facturas y pagos realizados.
+
+Información disponible:
+
+* Número de factura
+* Servicio realizado
+* Total
+* Estado de pago
+
+---
+
 
 # 7. Aplicación de Caja (POS)
 
