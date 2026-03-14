@@ -29,11 +29,13 @@ TallerCore/
 │       ├── AuthController.cs
 │       ├── UsuariosController.cs
 │       ├── ClientesController.cs
+│       ├── VehiculosController.cs 
 │       ├── ProductosController.cs
 │       ├── ServiciosController.cs
 │       ├── CotizacionesController.cs
 │       ├── OrdenesController.cs
 │       ├── FacturasController.cs
+│       ├── DiagnosticosController.cs    ← diagnóstico + sus items
 │       └── CuentasPorCobrarController.cs
 │
 ├── Pages/                      # UI Razor Pages para empleados
@@ -69,6 +71,15 @@ TallerCore/
 │   │   ├── Index.cshtml
 │   │   └── Crear.cshtml
 │   │
+│   ├── Vehiculos/  
+│   │   ├── Index.cshtml         ← vehículos de un cliente
+│   │   ├── Crear.cshtml         ← registrar nuevo vehículo
+│   │   └── Historial.cshtml     ← todas las visitas de ese vehículo
+│   │
+│   ├─── Diagnosticos/ 
+│   │   ├── Crear.cshtml         ← técnico llena el diagnóstico
+│   │   └── Detalle.cshtml       ← vista del diagnóstico + items
+│   │
 │   └── Shared/
 │       ├── _Layout.cshtml
 │       └── _NavBar.cshtml
@@ -86,18 +97,30 @@ TallerCore/
 │   │   ├── Cotizacion.cs
 │   │   ├── CuentaPorCobrar.cs
 │   │   ├── Sucursal.cs
+│   │   ├── Vehiculo.cs  
+│   │   ├── Diagnostico.cs  
+│   │   ├── DiagnosticoItem.cs  
+│   │   ├── HistorialReparacion.cs
 │   │   └── AuditLog.cs
 │   │
 │   └── DTOs/                   # Objetos usados por la API
 │       ├── ClienteDto.cs
 │       ├── ProductoDto.cs
 │       ├── OrdenDto.cs
+│       ├── VehiculoDto.cs  
+│       ├── DiagnosticoDto.cs  
+│       ├── DiagnosticoItemDto.cs  
+│       └── HistorialDto.cs  
 │       └── FacturaDto.cs
 │
 ├── Services/                   # Lógica de negocio
 │   ├── ClienteService.cs
 │   ├── OrdenService.cs
 │   ├── FacturaService.cs
+│   ├── IVehiculoService.cs  
+│   ├── VehiculoService.cs  
+│   ├── IDiagnosticoService.cs  
+│   └── DiagnosticoService.cs 
 │   └── InventarioService.cs
 │
 ├── Data/
@@ -130,11 +153,11 @@ TallerIntegracion/
 │   │   ├── CoreProductoService.cs
 │   │   ├── ICoreOrdenService.cs
 │   │   └── CoreOrdenService.cs
-│
+│   │
 │   ├── Cache/
 │   │   ├── ICacheService.cs
 │   │   └── CacheService.cs            ← IMemoryCache + fallback a BD
-│
+│   │
 │   └── Sync/
 │       ├── IColaSyncService.cs
 │       ├── ColaSyncService.cs          ← procesa ColaPendiente
@@ -146,7 +169,7 @@ TallerIntegracion/
 │   │   ├── ServicioCache.cs
 │   │   ├── ColaPendiente.cs
 │   │   └── LogPeticion.cs
-│
+│   │
 │   └── DTOs/                            ← contratos que expone a Web y Caja
 │       ├── CatalogoDto.cs
 │       ├── OrdenWebDto.cs
