@@ -1,0 +1,14 @@
+﻿namespace FrenosCore.Modelos.Entidades
+{
+    public class CotizacionItem
+    {
+        public int Id { get; set; }
+        public int CotizacionId { get; set; }
+        public string Tipo { get; set; }
+        public int ItemId { get; set; }
+        public string Descripcion { get; set; }
+        public int Cantidad { get; set; }
+        public decimal PrecioUnitario { get; set; }
+        public decimal Subtotal { get; set; }
+    }
+}

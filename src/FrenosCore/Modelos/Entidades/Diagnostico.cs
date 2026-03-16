@@ -1,0 +1,17 @@
+﻿namespace FrenosCore.Modelos.Entidades
+{
+    public class Diagnostico
+    {
+        public int Id { get; set; }
+        public int OrdenId { get; set; }
+        public int TecnicoId { get; set; }
+        public int KmIngerso { get; set; }
+        public string DescripcionGeneral { get; set; }
+        public string Estado { get; set; }
+        public bool RequiereAtencionUrgente { get; set; }
+        public bool AprobadoPorCliente { get; set; }
+        public DateTime FechaAprobacion { get; set; }
+        public string ObservacionesTecnico { get; set; }
+        public DateTime FechaDiagnostico { get; set; } = DateTime.Now;
+    }
+}
