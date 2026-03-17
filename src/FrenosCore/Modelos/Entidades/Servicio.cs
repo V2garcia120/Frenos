@@ -9,6 +9,7 @@
         public int DuracionMinutos { get; set; }
         public string Categoria { get; set; }
         public bool Activo { get; set; }
+        public DateTime CreadoEn { get; set; } = DateTime.Now;
 
         public ICollection<DiagnosticoItem> DiagnosticoItemsSugeridos { get; set; } = [];
     }
