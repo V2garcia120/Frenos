@@ -17,7 +17,7 @@ namespace FrenosCore.Servicios
         
         Task<ClienteResponse> ActualizarAsync(int id, ActualizarClienteRequest request);
 
-        Task EliminarAsync(int id);
+        Task<bool> EliminarAsync(int id);
 
     }
 }

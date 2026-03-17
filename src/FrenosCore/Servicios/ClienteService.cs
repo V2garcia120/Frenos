@@ -170,7 +170,7 @@ namespace FrenosCore.Servicios
             return ToResponse(cliente);
         }
 
-        public async Task EliminarAsync(int id)
+        public async Task<bool> EliminarAsync(int id)
         {
             var cliente = await _context.Cliente
                 .Include(c => c.Facturas)
@@ -187,6 +187,7 @@ namespace FrenosCore.Servicios
 
             _context.Cliente.Remove(cliente);
             await _context.SaveChangesAsync();
+            return true;
         }
 
         private static ClienteResponse ToResponse(Cliente c) => new(
