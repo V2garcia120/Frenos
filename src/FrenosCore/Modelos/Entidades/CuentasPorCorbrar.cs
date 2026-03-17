@@ -14,6 +14,6 @@
 
         public Cliente Cliente { get; set; } = null!;
         public Factura Factura { get; set; } = null!;
-        public ICollection<AbonoCxC> Abonos { get; set; } = new List<AbonoCxC>();
+        public ICollection<AbonoCxC> Abonos { get; set; } = [];
     }
 }

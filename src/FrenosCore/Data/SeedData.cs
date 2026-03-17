@@ -1,4 +1,3 @@
-using BCrypt.Net;
 using FrenosCore.Modelos.Entidades;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,6 +19,25 @@ namespace FrenosCore.Data
                     new Rol { Nombre = "Tecnico", Descripcion = "Gestiona diagnósticos y reparaciones" },
                     new Rol { Nombre = "Caja", Descripcion = "Gestiona cobros y cierres de caja" }
                 );
+
+                await context.SaveChangesAsync();
+            }
+
+            var existeClienteAnonimo = await context.Cliente.AnyAsync(c => c.EsAnonimo);
+            if (!existeClienteAnonimo)
+            {
+                var clienteAnonimo = new Cliente
+                {
+                    Nombre = "Cliente Anónimo",
+                    Cedula = "00000000000",
+                    Telefono = "000-000-0000",
+                    Email = "anonimo@frenos.local",
+                    Direccion = "N/A",
+                    CreadoEn = DateTime.Now
+                };
+
+                context.Cliente.Add(clienteAnonimo);
+                context.Entry(clienteAnonimo).Property(c => c.EsAnonimo).CurrentValue = true;
 
                 await context.SaveChangesAsync();
             }

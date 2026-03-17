@@ -12,10 +12,10 @@
         public DateTime? UltimoLogin { get; set; }
 
         public Rol Rol { get; set; } = null!;
-        public ICollection<AbonoCxC> AbonosRegistrados { get; set; } = new List<AbonoCxC>();
-        public ICollection<Diagnostico> DiagnosticosAsignados { get; set; } = new List<Diagnostico>();
-        public ICollection<HistorialReparaciones> HistorialesReparacionTecnico { get; set; } = new List<HistorialReparaciones>();
-        public ICollection<Factura> FacturasEmitidas { get; set; } = new List<Factura>();
+        public ICollection<AbonoCxC> AbonosRegistrados { get; set; } = [];
+        public ICollection<Diagnostico> DiagnosticosAsignados { get; set; } = [];
+        public ICollection<HistorialReparaciones> HistorialesReparacionTecnico { get; set; } = [];
+        public ICollection<Factura> FacturasEmitidas { get; set; } = [];
 
     }
 }

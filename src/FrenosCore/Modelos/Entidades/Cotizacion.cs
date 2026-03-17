@@ -15,7 +15,7 @@
 
         public Cliente Cliente { get; set; } = null!;
         public Vehiculo Vehiculo { get; set; } = null!;
-        public ICollection<CotizacionItem> Items { get; set; } = new List<CotizacionItem>();
-        public ICollection<Orden> Ordenes { get; set; } = new List<Orden>();
+        public ICollection<CotizacionItem> Items { get; set; } = [];
+        public ICollection<Orden> Ordenes { get; set; } = [];
     }
 }

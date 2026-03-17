@@ -16,6 +16,6 @@
 
         public Orden Orden { get; set; } = null!;
         public Usuario Tecnico { get; set; } = null!;
-        public ICollection<DiagnosticoItem> Items { get; set; } = new List<DiagnosticoItem>();
+        public ICollection<DiagnosticoItem> Items { get; set; } = [];
     }
 }

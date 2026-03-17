@@ -3,19 +3,18 @@
     public class Cliente
     {
         public int Id { get; set; }
-        public string Nombre { get; set; }
-        public string Cedula { get; set; }
-        public string Telefono { get; set; }
-        public string Email { get; set; }
-        public string Direccion { get; set; }
-        public bool EsAnonimo { get; }
+        public string Nombre { get; set; } = string.Empty;
+        public string Cedula { get; set; } = string.Empty;
+        public string Telefono { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Direccion { get; set; } = string.Empty;
+        public bool EsAnonimo { get; private set; } = false;
         public DateTime CreadoEn { get; set; }
 
-        public ICollection<Vehiculo> Vehiculos { get; set; } = new List<Vehiculo>();
-        public ICollection<Orden> Ordenes { get; set; } = new List<Orden>();
-        public ICollection<Cotizacion> Cotizaciones { get; set; } = new List<Cotizacion>();
-        public ICollection<Factura> Facturas { get; set; } = new List<Factura>();
-        public ICollection<CuentasPorCorbrar> CuentasPorCorbrar { get; set; } = new List<CuentasPorCorbrar>();
-
+        public ICollection<Vehiculo> Vehiculos { get; set; } = [];
+        public ICollection<Orden> Ordenes { get; set; } = [];
+        public ICollection<Cotizacion> Cotizaciones { get; set; } = [];
+        public ICollection<Factura> Facturas { get; set; } = [];
+        public ICollection<CuentasPorCorbrar> CuentasPorCorbrar { get; set; } = [];
     }
 }

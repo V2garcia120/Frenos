@@ -10,6 +10,6 @@
         public string Categoria { get; set; }
         public bool Activo { get; set; }
 
-        public ICollection<DiagnosticoItem> DiagnosticoItemsSugeridos { get; set; } = new List<DiagnosticoItem>();
+        public ICollection<DiagnosticoItem> DiagnosticoItemsSugeridos { get; set; } = [];
     }
 }

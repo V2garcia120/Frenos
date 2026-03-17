@@ -16,9 +16,9 @@
         public DateTime FechaCreacion { get; set; } = DateTime.Now;
 
         public Cliente Cliente { get; set; } = null!;
-        public ICollection<Orden> Ordenes { get; set; } = new List<Orden>();
-        public ICollection<Cotizacion> Cotizaciones { get; set; } = new List<Cotizacion>();
-        public ICollection<HistorialReparaciones> HistorialReparaciones { get; set; } = new List<HistorialReparaciones>();
+        public ICollection<Orden> Ordenes { get; set; } = [];
+        public ICollection<Cotizacion> Cotizaciones { get; set; } = [];
+        public ICollection<HistorialReparaciones> HistorialReparaciones { get; set; } = [];
 
     }
 }

@@ -69,6 +69,7 @@ namespace FrenosCore.Data
                 e.Property(c => c.Telefono).IsRequired().HasMaxLength(20);
                 e.Property(c => c.Email).HasMaxLength(200);
                 e.Property(c => c.Direccion).HasMaxLength(300);
+                e.Property(c => c.EsAnonimo);
                 e.Property(c => c.CreadoEn).HasDefaultValueSql("GETDATE()");
 
                 e.HasIndex(c => c.Cedula).IsUnique();
