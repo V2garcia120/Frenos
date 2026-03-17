@@ -13,5 +13,12 @@
         public DateOnly FechaEntregaReal { get; set; }
         public string Notas { get; set; }
 
+        public Cliente Cliente { get; set; } = null!;
+        public Vehiculo Vehiculo { get; set; } = null!;
+        public Cotizacion Cotizacion { get; set; } = null!;
+        public ICollection<Diagnostico> Diagnosticos { get; set; } = new List<Diagnostico>();
+        public ICollection<Factura> Facturas { get; set; } = new List<Factura>();
+        public ICollection<HistorialReparaciones> HistorialReparaciones { get; set; } = new List<HistorialReparaciones>();
+
     }
 }

@@ -11,5 +11,9 @@
         public string Estado { get; set; }
 
         public DateTime CreadoEn { get; set; }
+
+        public Cliente Cliente { get; set; } = null!;
+        public Factura Factura { get; set; } = null!;
+        public ICollection<AbonoCxC> Abonos { get; set; } = new List<AbonoCxC>();
     }
 }

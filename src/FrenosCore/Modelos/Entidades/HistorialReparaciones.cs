@@ -14,5 +14,9 @@
         public DateOnly GarantiaHasta { get; set; }
         public DateTime Fecha { get; set; }
 
+        public Vehiculo Vehiculo { get; set; } = null!;
+        public Orden Orden { get; set; } = null!;
+        public Usuario Tecnico { get; set; } = null!;
+
     }
 }

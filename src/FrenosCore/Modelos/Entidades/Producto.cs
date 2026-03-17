@@ -13,5 +13,7 @@
         public bool Activo { get; set; }
         public DateTime CreadoEn { get; set; } = DateTime.Now;
 
+        public ICollection<DiagnosticoItem> DiagnosticoItemsSugeridos { get; set; } = new List<DiagnosticoItem>();
+
     }
 }

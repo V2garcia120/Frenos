@@ -13,5 +13,9 @@
         public DateTime FechaAprobacion { get; set; }
         public string ObservacionesTecnico { get; set; }
         public DateTime FechaDiagnostico { get; set; } = DateTime.Now;
+
+        public Orden Orden { get; set; } = null!;
+        public Usuario Tecnico { get; set; } = null!;
+        public ICollection<DiagnosticoItem> Items { get; set; } = new List<DiagnosticoItem>();
     }
 }

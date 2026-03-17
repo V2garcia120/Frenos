@@ -12,5 +12,10 @@
         public string Estado { get; set; }
         public string Notas { get; set; }
         public DateOnly ValidoHasta { get; set; }
+
+        public Cliente Cliente { get; set; } = null!;
+        public Vehiculo Vehiculo { get; set; } = null!;
+        public ICollection<CotizacionItem> Items { get; set; } = new List<CotizacionItem>();
+        public ICollection<Orden> Ordenes { get; set; } = new List<Orden>();
     }
 }

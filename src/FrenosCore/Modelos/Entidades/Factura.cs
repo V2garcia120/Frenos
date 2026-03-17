@@ -13,5 +13,11 @@
         public string Estado { get; set; }
         public string MetodoPago { get; set; }
         public int EmitidaPor { get; set; }
+
+        public Orden Orden { get; set; } = null!;
+        public Cliente Cliente { get; set; } = null!;
+        public Usuario EmitidaPorUsuario { get; set; } = null!;
+        public CuentasPorCorbrar? CuentasPorCorbrar { get; set; }
+        public ICollection<FacturaItem> Items { get; set; } = new List<FacturaItem>();
     }
 }
