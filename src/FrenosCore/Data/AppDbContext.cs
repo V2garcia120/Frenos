@@ -160,8 +160,8 @@ namespace FrenosCore.Data
                  .OnDelete(DeleteBehavior.Restrict);
 
                 e.HasOne(o => o.Cotizacion)
-                 .WithMany(c => c.Ordenes)
-                 .HasForeignKey(o => o.CotizacionId)
+                 .WithOne(c => c.Orden)
+                 .HasForeignKey<Orden>(o => o.CotizacionId)
                  .OnDelete(DeleteBehavior.Restrict);
             });
 
@@ -176,8 +176,8 @@ namespace FrenosCore.Data
                 e.Property(d => d.FechaDiagnostico).HasDefaultValueSql("GETDATE()");
 
                 e.HasOne(d => d.Orden)
-                 .WithMany(o => o.Diagnosticos)
-                 .HasForeignKey(d => d.OrdenId)
+                 .WithOne(o => o.Diagnostico)
+                 .HasForeignKey<Diagnostico>(d => d.OrdenId)
                  .OnDelete(DeleteBehavior.Cascade);
 
                 e.HasOne(d => d.Tecnico)
@@ -195,7 +195,7 @@ namespace FrenosCore.Data
                 e.Property(di => di.Componente).IsRequired().HasMaxLength(100);
                 e.Property(di => di.Condicion).IsRequired().HasMaxLength(20);
                 e.Property(di => di.AccionRecomendada).IsRequired().HasMaxLength(20);
-                e.Property(di => di.Descripccion);
+                e.Property(di => di.Descripcion);
 
                 e.HasOne(di => di.Diagnostico)
                  .WithMany(d => d.Items)
@@ -228,8 +228,8 @@ namespace FrenosCore.Data
                 e.HasIndex(f => f.Numero).IsUnique();
 
                 e.HasOne(f => f.Orden)
-                 .WithMany(o => o.Facturas)
-                 .HasForeignKey(f => f.OrdenId)
+                 .WithOne(o => o.Factura)
+                 .HasForeignKey<Factura>(f => f.OrdenId)
                  .OnDelete(DeleteBehavior.Restrict);
 
                 e.HasOne(f => f.EmitidaPorUsuario)

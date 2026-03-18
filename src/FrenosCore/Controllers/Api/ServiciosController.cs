@@ -1,4 +1,5 @@
 ﻿using FrenosCore.Servicios;
+using FrenosCore.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,22 +20,23 @@ namespace FrenosCore.Controllers.Api
         public async Task<IActionResult> Listar()
         {
             var servicios = await _serviciciosService.ListarAsync();
-            return Ok(servicios);
+            return Ok(ApiResponse<object>.Ok(servicios));
         }
 
         [HttpGet("buscar")]
         public async Task<IActionResult> Buscar([FromQuery] string termino)
         {
             if (string.IsNullOrWhiteSpace(termino))
-                return BadRequest("El parámetro termino es requerido.");
+                return BadRequest(ApiResponse<object>.Fail(
+                    "VALIDATION_ERROR", "El parámetro termino es requerido."));
             var servicios = await _serviciciosService.BuscarAsync(termino);
-            return Ok(servicios);
+            return Ok(ApiResponse<object>.Ok(servicios));
         }
         [HttpGet("{id:int}")]
         public async Task<IActionResult> ObtenerPorId(int id)
         {
                 var servicio = await _serviciciosService.ObtenerPorIdAsync(id);
-                return Ok(servicio);
+                return Ok(ApiResponse<object>.Ok(servicio));
           
         }
         

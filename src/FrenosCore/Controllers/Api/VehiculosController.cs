@@ -40,8 +40,8 @@ namespace FrenosCore.Controllers.Api
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Eliminar(int id)
         {
-            await _vehiculoService.EliminarAsync(id);
-            return Ok(ApiResponse<object>.Ok($"Vehículo con ID {id} eliminado exitosamente."));
+            await _vehiculoService.DesactivarAsync(id);
+            return Ok(ApiResponse<object>.Ok($"Vehículo con ID {id} desactivado exitosamente."));
         }
     }
 }

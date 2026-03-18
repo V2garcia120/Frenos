@@ -13,6 +13,7 @@
         public string TipoCombustible { get; set; }
         public int KmActual { get; set; }
         public string Nota { get; set; }
+        public bool Activo { get; set; } = true;
         public DateTime FechaCreacion { get; set; } = DateTime.Now;
 
         public Cliente Cliente { get; set; } = null!;

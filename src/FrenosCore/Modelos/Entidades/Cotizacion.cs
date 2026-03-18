@@ -11,11 +11,11 @@
         public decimal Total { get; set; }
         public string Estado { get; set; }
         public string Notas { get; set; }
-        public DateOnly ValidoHasta { get; set; }
+        public DateTime ValidaHasta { get; set; }
 
         public Cliente Cliente { get; set; } = null!;
         public Vehiculo Vehiculo { get; set; } = null!;
         public ICollection<CotizacionItem> Items { get; set; } = [];
-        public ICollection<Orden> Ordenes { get; set; } = [];
+        public Orden Orden { get; set; } = null!;
     }
 }

@@ -16,8 +16,8 @@
         public Cliente Cliente { get; set; } = null!;
         public Vehiculo Vehiculo { get; set; } = null!;
         public Cotizacion Cotizacion { get; set; } = null!;
-        public ICollection<Diagnostico> Diagnosticos { get; set; } = [];
-        public ICollection<Factura> Facturas { get; set; } = [];
+        public Diagnostico Diagnostico { get; set; } = null!;
+        public Factura Factura { get; set; } = null!;
         public ICollection<HistorialReparaciones> HistorialReparaciones { get; set; } = [];
 
     }

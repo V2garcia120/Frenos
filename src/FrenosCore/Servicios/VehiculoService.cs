@@ -46,15 +46,19 @@ namespace FrenosCore.Servicios
             return ToResponse(vehiculo);
         }
 
-        public async Task<IEnumerable<VehiculoResponse>> ListarPorClienteAsync(int clienteId)
+        public async Task<IEnumerable<VehiculoResponse>> ListarPorClienteAsync(int clienteId, bool soloActivos = true)
         {
             var clienteExiste = await _context.Cliente.AnyAsync(c => c.Id == clienteId);
             if (!clienteExiste)
                 throw new KeyNotFoundException($"Cliente con ID {clienteId} no encontrado.");
-
-            return await _context.Vehiculo
+            var query = _context.Vehiculo
                 .AsNoTracking()
-                .Where(v => v.ClienteId == clienteId)
+                .Where(v => v.ClienteId == clienteId);
+
+            if (soloActivos)
+                query = query.Where(v => v.Activo);
+
+            return await query
                 .OrderByDescending(v => v.FechaCreacion)
                 .ThenBy(v => v.Placa)
                 .Select(v => ToResponse(v))
@@ -91,13 +95,13 @@ namespace FrenosCore.Servicios
             return ToResponse(vehiculo);
         }
 
-        public async Task EliminarAsync(int id)
+        public async Task DesactivarAsync(int id)
         {
             var vehiculo = await _context.Vehiculo
                 .FirstOrDefaultAsync(v => v.Id == id)
                 ?? throw new KeyNotFoundException($"Vehículo con ID {id} no encontrado.");
 
-            _context.Vehiculo.Remove(vehiculo);
+            vehiculo.Activo = false;
             await _context.SaveChangesAsync();
         }
 
