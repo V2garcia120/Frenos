@@ -1,4 +1,4 @@
-﻿namespace FrenosCore.Modelos.Dtos
+﻿namespace FrenosCore.Modelos.Dtos.Servicio
 {
     public record ServicioResponse(
         int Id,

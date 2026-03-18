@@ -1,4 +1,4 @@
-using FrenosCore.Modelos.Dtos;
+using FrenosCore.Modelos.Dtos.Usuario;
 
 namespace FrenosCore.Servicios
 {

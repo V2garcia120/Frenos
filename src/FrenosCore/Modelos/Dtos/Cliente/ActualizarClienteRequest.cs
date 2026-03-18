@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace FrenosCore.Modelos.Dtos
+namespace FrenosCore.Modelos.Dtos.Cliente
 {
     public record ActualizarClienteRequest(
         [MaxLength(200)] string? Nombre,

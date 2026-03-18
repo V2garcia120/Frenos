@@ -1,5 +1,6 @@
 ﻿using FrenosCore.Data;
 using FrenosCore.Modelos.Dtos;
+using FrenosCore.Modelos.Dtos.Producto;
 using FrenosCore.Modelos.Entidades;
 using Microsoft.EntityFrameworkCore;
 

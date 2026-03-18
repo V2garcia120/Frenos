@@ -1,5 +1,5 @@
 using FrenosCore.Data;
-using FrenosCore.Modelos.Dtos;
+using FrenosCore.Modelos.Dtos.Usuario;
 using FrenosCore.Modelos.Entidades;
 using Microsoft.EntityFrameworkCore;
 

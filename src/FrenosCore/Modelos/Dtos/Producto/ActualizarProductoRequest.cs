@@ -1,4 +1,4 @@
-﻿namespace FrenosCore.Modelos.Dtos
+﻿namespace FrenosCore.Modelos.Dtos.Producto
 {
     public record ActualizarProductoRequest(
         string? Nombre,

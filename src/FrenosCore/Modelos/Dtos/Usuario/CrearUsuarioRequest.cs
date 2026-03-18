@@ -1,4 +1,4 @@
-namespace FrenosCore.Modelos.Dtos
+namespace FrenosCore.Modelos.Dtos.Usuario
 {
     public record CrearUsuarioRequest(
         string Nombre,

@@ -2,8 +2,8 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using FrenosCore.Helpers;
-using FrenosCore.Modelos.Dtos;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using FrenosCore.Modelos.Dtos.Cliente;
 
 namespace FrenosCore.Controllers.Api
 {

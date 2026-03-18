@@ -1,4 +1,5 @@
 ﻿using FrenosCore.Modelos.Dtos;
+using FrenosCore.Modelos.Dtos.Producto;
 
 namespace FrenosCore.Servicios
 {

@@ -1,6 +1,6 @@
-﻿namespace FrenosCore.Modelos.Dtos
+﻿namespace FrenosCore.Modelos.Dtos.Servicio
 {
-    public record CrearServicioRequest(
+    public record ActualizarServicioRequest(
         string Nombre,
         string Descripcion,
         decimal Precio,
