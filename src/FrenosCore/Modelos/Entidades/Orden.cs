@@ -5,12 +5,12 @@
         public int Id { get; set; }
         public int ClienteId { get; set; }
         public int VehiculoId { get; set; }
-        public int CotizacionId { get; set; }
-        public string Estado { get; set; }
-        public string Prioridad { get; set; }
-        public DateTime FechaCreacion { get; set; }
-        public DateOnly FechaEntregaEstima { get; set; }
-        public DateOnly FechaEntregaReal { get; set; }
+        public int? CotizacionId { get; set; }
+        public string Estado { get; set; } = "Recibido";
+        public string Prioridad { get; set; } = "Normal";
+        public DateTime FechaCreacion { get; set; } = DateTime.Now;
+        public DateTime? FechaEntregaEstima { get; set; }
+        public DateTime? FechaEntregaReal { get; set; }
         public string Notas { get; set; }
 
         public Cliente Cliente { get; set; } = null!;
@@ -18,7 +18,6 @@
         public Cotizacion Cotizacion { get; set; } = null!;
         public Diagnostico Diagnostico { get; set; } = null!;
         public Factura Factura { get; set; } = null!;
-        public ICollection<HistorialReparaciones> HistorialReparaciones { get; set; } = [];
 
     }
 }

@@ -14,7 +14,7 @@
         public Rol Rol { get; set; } = null!;
         public ICollection<AbonoCxC> AbonosRegistrados { get; set; } = [];
         public ICollection<Diagnostico> DiagnosticosAsignados { get; set; } = [];
-        public ICollection<HistorialReparaciones> HistorialesReparacionTecnico { get; set; } = [];
+        public ICollection<HistorialReparacion> HistorialesReparacionTecnico { get; set; } = [];
         public ICollection<Factura> FacturasEmitidas { get; set; } = [];
 
     }

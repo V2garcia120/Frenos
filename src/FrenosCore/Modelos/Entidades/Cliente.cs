@@ -15,6 +15,6 @@
         public ICollection<Orden> Ordenes { get; set; } = [];
         public ICollection<Cotizacion> Cotizaciones { get; set; } = [];
         public ICollection<Factura> Facturas { get; set; } = [];
-        public ICollection<CuentasPorCorbrar> CuentasPorCorbrar { get; set; } = [];
+        public ICollection<CuentasPorCobrar> CuentasPorCorbrar { get; set; } = [];
     }
 }

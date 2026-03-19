@@ -1,6 +1,6 @@
 ﻿namespace FrenosCore.Modelos.Entidades
 {
-    public class CuentasPorCorbrar
+    public class CuentasPorCobrar
     {
         public int Id { get; set; }
         public int ClienteId { get; set; }

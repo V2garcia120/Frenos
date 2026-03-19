@@ -21,8 +21,8 @@ namespace FrenosCore.Data
         public DbSet<DiagnosticoItem> DiagnosticoItem => Set<DiagnosticoItem>();
         public DbSet<Factura> Factura => Set<Factura>();
         public DbSet<AbonoCxC> AbonoCxC => Set<AbonoCxC>();
-        public DbSet<CuentasPorCorbrar> CuentasPorCorbrar => Set<CuentasPorCorbrar>();
-        public DbSet<HistorialReparaciones> HistorialReparaciones => Set<HistorialReparaciones>();
+        public DbSet<CuentasPorCobrar> CuentasPorCobrar => Set<CuentasPorCobrar>();
+        public DbSet<HistorialReparacion> HistorialReparacion => Set<HistorialReparacion>();
         public DbSet<FacturaItem> FacturaItem => Set<FacturaItem>();
         public DbSet<Servicio> Servicio => Set<Servicio>();
         public DbSet<Producto> Producto => Set<Producto>();
@@ -254,7 +254,7 @@ namespace FrenosCore.Data
                  .OnDelete(DeleteBehavior.Cascade);
             });
 
-            builder.Entity<CuentasPorCorbrar>(e =>
+            builder.Entity<CuentasPorCobrar>(e =>
             {
                 e.ToTable("CuentasPorCorbrar");
                 e.HasKey(cx => cx.Id);
@@ -268,7 +268,7 @@ namespace FrenosCore.Data
 
                 e.HasOne(cx => cx.Factura)
                  .WithOne(f => f.CuentasPorCorbrar)
-                 .HasForeignKey<CuentasPorCorbrar>(cx => cx.FacturaId)
+                 .HasForeignKey<CuentasPorCobrar>(cx => cx.FacturaId)
                  .OnDelete(DeleteBehavior.Restrict);
             });
 
@@ -280,7 +280,7 @@ namespace FrenosCore.Data
                 e.Property(a => a.Monto).IsRequired().HasPrecision(10, 2);
                 e.Property(a => a.MetodoPago).IsRequired().HasMaxLength(40);
 
-                e.HasOne(a => a.CuentasPorCorbrar)
+                e.HasOne(a => a.CxC)
                  .WithMany(cx => cx.Abonos)
                  .HasForeignKey(a => a.CxCId)
                  .OnDelete(DeleteBehavior.Cascade);
@@ -291,7 +291,7 @@ namespace FrenosCore.Data
                  .OnDelete(DeleteBehavior.Restrict);
             });
 
-            builder.Entity<HistorialReparaciones>(e =>
+            builder.Entity<HistorialReparacion>(e =>
             {
                 e.ToTable("HistorialReparaciones");
                 e.HasKey(h => h.Id);
@@ -299,14 +299,10 @@ namespace FrenosCore.Data
                 e.Property(h => h.TrabajosRealizados).IsRequired();
 
                 e.HasOne(h => h.Vehiculo)
-                 .WithMany(v => v.HistorialReparaciones)
+                 .WithMany(v => v.HistorialReparacion)
                  .HasForeignKey(h => h.VehiculoId)
                  .OnDelete(DeleteBehavior.Restrict);
 
-                e.HasOne(h => h.Orden)
-                 .WithMany(o => o.HistorialReparaciones)
-                 .HasForeignKey(h => h.OrdenId)
-                 .OnDelete(DeleteBehavior.Restrict);
 
                 e.HasOne(h => h.Tecnico)
                  .WithMany(u => u.HistorialesReparacionTecnico)

@@ -4,6 +4,7 @@ using FrenosCore.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FrenosCore.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260318224607_Ajuste_de_relaciones")]
+    partial class Ajuste_de_relaciones
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -250,7 +253,7 @@ namespace FrenosCore.Migrations
                     b.ToTable("CotizacionItem", (string)null);
                 });
 
-            modelBuilder.Entity("FrenosCore.Modelos.Entidades.CuentasPorCobrar", b =>
+            modelBuilder.Entity("FrenosCore.Modelos.Entidades.CuentasPorCorbrar", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -509,7 +512,7 @@ namespace FrenosCore.Migrations
                     b.ToTable("FacturaItem", (string)null);
                 });
 
-            modelBuilder.Entity("FrenosCore.Modelos.Entidades.HistorialReparacion", b =>
+            modelBuilder.Entity("FrenosCore.Modelos.Entidades.HistorialReparaciones", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -526,16 +529,16 @@ namespace FrenosCore.Migrations
                     b.Property<DateOnly>("GarantiaHasta")
                         .HasColumnType("date");
 
-                    b.Property<int?>("KmAlServicio")
+                    b.Property<int>("KmAlServicio")
                         .HasColumnType("int");
 
                     b.Property<int>("OrdenId")
                         .HasColumnType("int");
 
-                    b.Property<DateOnly?>("ProximoServicioFecha")
+                    b.Property<DateOnly>("ProximoServicioFecha")
                         .HasColumnType("date");
 
-                    b.Property<int?>("ProximoServicioKm")
+                    b.Property<int>("ProximoServicioKm")
                         .HasColumnType("int");
 
                     b.Property<int>("TecnicoId")
@@ -581,11 +584,11 @@ namespace FrenosCore.Migrations
                     b.Property<DateTime>("FechaCreacion")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("FechaEntregaEstima")
-                        .HasColumnType("datetime2");
+                    b.Property<DateOnly?>("FechaEntregaEstima")
+                        .HasColumnType("date");
 
-                    b.Property<DateTime?>("FechaEntregaReal")
-                        .HasColumnType("datetime2");
+                    b.Property<DateOnly?>("FechaEntregaReal")
+                        .HasColumnType("date");
 
                     b.Property<string>("Notas")
                         .IsRequired()
@@ -850,7 +853,7 @@ namespace FrenosCore.Migrations
 
             modelBuilder.Entity("FrenosCore.Modelos.Entidades.AbonoCxC", b =>
                 {
-                    b.HasOne("FrenosCore.Modelos.Entidades.CuentasPorCobrar", "CxC")
+                    b.HasOne("FrenosCore.Modelos.Entidades.CuentasPorCorbrar", "CuentasPorCorbrar")
                         .WithMany("Abonos")
                         .HasForeignKey("CxCId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -862,7 +865,7 @@ namespace FrenosCore.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("CxC");
+                    b.Navigation("CuentasPorCorbrar");
 
                     b.Navigation("RegistradoPorUsuario");
                 });
@@ -897,7 +900,7 @@ namespace FrenosCore.Migrations
                     b.Navigation("Cotizacion");
                 });
 
-            modelBuilder.Entity("FrenosCore.Modelos.Entidades.CuentasPorCobrar", b =>
+            modelBuilder.Entity("FrenosCore.Modelos.Entidades.CuentasPorCorbrar", b =>
                 {
                     b.HasOne("FrenosCore.Modelos.Entidades.Cliente", "Cliente")
                         .WithMany("CuentasPorCorbrar")
@@ -907,7 +910,7 @@ namespace FrenosCore.Migrations
 
                     b.HasOne("FrenosCore.Modelos.Entidades.Factura", "Factura")
                         .WithOne("CuentasPorCorbrar")
-                        .HasForeignKey("FrenosCore.Modelos.Entidades.CuentasPorCobrar", "FacturaId")
+                        .HasForeignKey("FrenosCore.Modelos.Entidades.CuentasPorCorbrar", "FacturaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -998,7 +1001,7 @@ namespace FrenosCore.Migrations
                     b.Navigation("Factura");
                 });
 
-            modelBuilder.Entity("FrenosCore.Modelos.Entidades.HistorialReparacion", b =>
+            modelBuilder.Entity("FrenosCore.Modelos.Entidades.HistorialReparaciones", b =>
                 {
                     b.HasOne("FrenosCore.Modelos.Entidades.Orden", "Orden")
                         .WithMany()
@@ -1013,7 +1016,7 @@ namespace FrenosCore.Migrations
                         .IsRequired();
 
                     b.HasOne("FrenosCore.Modelos.Entidades.Vehiculo", "Vehiculo")
-                        .WithMany("HistorialReparacion")
+                        .WithMany("HistorialReparaciones")
                         .HasForeignKey("VehiculoId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -1094,7 +1097,7 @@ namespace FrenosCore.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("FrenosCore.Modelos.Entidades.CuentasPorCobrar", b =>
+            modelBuilder.Entity("FrenosCore.Modelos.Entidades.CuentasPorCorbrar", b =>
                 {
                     b.Navigation("Abonos");
                 });
@@ -1150,7 +1153,7 @@ namespace FrenosCore.Migrations
                 {
                     b.Navigation("Cotizaciones");
 
-                    b.Navigation("HistorialReparacion");
+                    b.Navigation("HistorialReparaciones");
 
                     b.Navigation("Ordenes");
                 });

@@ -4,7 +4,7 @@
     {
         public int Id { get; set; }
         public int CxCId { get; set; }
-        public CuentasPorCorbrar CuentasPorCorbrar { get; set; } = null!;
+        public CuentasPorCobrar CxC { get; set; } = null!;
         public decimal Monto { get; set; }
         public DateTime Fecha { get; set; }
         public string MetodoPago { get; set; }

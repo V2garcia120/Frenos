@@ -19,7 +19,7 @@
         public Cliente Cliente { get; set; } = null!;
         public ICollection<Orden> Ordenes { get; set; } = [];
         public ICollection<Cotizacion> Cotizaciones { get; set; } = [];
-        public ICollection<HistorialReparaciones> HistorialReparaciones { get; set; } = [];
+        public ICollection<HistorialReparacion> HistorialReparacion { get; set; } = [];
 
     }
 }

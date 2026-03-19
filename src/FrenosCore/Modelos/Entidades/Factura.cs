@@ -10,14 +10,14 @@
         public decimal Subtotal { get; set; }
         public decimal Itbis { get; set; }
         public decimal Total { get; set; }
-        public string Estado { get; set; }
+        public string Estado { get; set; } = "Pendiente";
         public string MetodoPago { get; set; }
         public int EmitidaPor { get; set; }
 
         public Orden Orden { get; set; } = null!;
         public Cliente Cliente { get; set; } = null!;
         public Usuario EmitidaPorUsuario { get; set; } = null!;
-        public CuentasPorCorbrar? CuentasPorCorbrar { get; set; }
+        public CuentasPorCobrar? CuentasPorCorbrar { get; set; }
         public ICollection<FacturaItem> Items { get; set; } = [];
     }
 }

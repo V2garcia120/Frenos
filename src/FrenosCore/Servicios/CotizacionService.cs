@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FrenosCore.Servicios
 {
-    public class CotizacionService
+    public class CotizacionService : ICotizacionService
     {
         private readonly AppDbContext _context;
 
@@ -34,7 +34,7 @@ namespace FrenosCore.Servicios
         {
             throw new NotImplementedException();
         }
-        public async Task<CotizacionResponse> ActualizarItemAsync(
+        public async Task<CotizacionItemResponse> ActualizarCotizacionItemAsync(
             int cotizacionId, int itemId, ActualizarCotizacionItemRequest req)
         {
             var cotizacion = await _context.Cotizacion
@@ -58,7 +58,13 @@ namespace FrenosCore.Servicios
             cotizacion.Total = cotizacion.Subtotal + cotizacion.Itbis;
 
             await _context.SaveChangesAsync();
-            return ToResponse(cotizacion);
+
+            return new CotizacionItemResponse(
+                item.Tipo,
+                item.Descripcion,
+                item.Cantidad,
+                item.PrecioUnitario,
+                item.Subtotal);
         }
         public async Task<CotizacionResponse> GenerarDesdeDiagnosticoAsync(int diagnosticoId)
         {
@@ -77,10 +83,10 @@ namespace FrenosCore.Servicios
 
             foreach (var item in diagnostico.Items)
             {
-                if (item.ServicioSugeridoId.HasValue)
+                if (item.ServicioSugeridoId > 0)
                 {
                     var servicio = await _context.Servicio
-                        .FindAsync(item.ServicioSugeridoId.Value);
+                        .FindAsync(item.ServicioSugeridoId);
 
                     if (servicio is not null)
                         items.Add(new CotizacionItem
@@ -94,10 +100,10 @@ namespace FrenosCore.Servicios
                         });
                 }
 
-                if (item.ProductoSugeridoId.HasValue)
+                if (item.ProductoSugeridoId > 0)
                 {
                     var producto = await _context.Producto
-                        .FindAsync(item.ProductoSugeridoId.Value);
+                        .FindAsync(item.ProductoSugeridoId);
 
                     if (producto is not null)
                         items.Add(new CotizacionItem
