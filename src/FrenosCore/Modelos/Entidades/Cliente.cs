@@ -9,6 +9,7 @@
         public string Email { get; set; } = string.Empty;
         public string Direccion { get; set; } = string.Empty;
         public bool EsAnonimo { get; private set; } = false;
+        public string  PasswordHash { get; set; } = string.Empty;
         public DateTime CreadoEn { get; set; }
 
         public ICollection<Vehiculo> Vehiculos { get; set; } = [];

@@ -127,6 +127,7 @@ namespace FrenosCore.Servicios
                 Cedula = req.Cedula?.Trim(),
                 Telefono = req.Telefono?.Trim(),
                 Email = req.Email?.Trim().ToLower(),
+                PasswordHash = req.Password != null ? BCrypt.Net.BCrypt.HashPassword(req.Password) : string.Empty,
                 Direccion = req.Direccion?.Trim(),
             };
 
