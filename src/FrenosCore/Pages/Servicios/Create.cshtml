@@ -1,0 +1,63 @@
+@page
+@model FrenosCore.Pages.Servicios.CreateModel
+@{
+    ViewData["Title"] = "Crear servicio";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Crear servicio</h1>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" class="row g-3">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="col-md-6">
+                <label asp-for="Input.Nombre" class="form-label"></label>
+                <input asp-for="Input.Nombre" class="form-control" />
+                <span asp-validation-for="Input.Nombre" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Input.Categoria" class="form-label"></label>
+                <input asp-for="Input.Categoria" class="form-control" />
+                <span asp-validation-for="Input.Categoria" class="text-danger"></span>
+            </div>
+
+            <div class="col-12">
+                <label asp-for="Input.Descripcion" class="form-label"></label>
+                <textarea asp-for="Input.Descripcion" class="form-control" rows="2"></textarea>
+                <span asp-validation-for="Input.Descripcion" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="Input.Precio" class="form-label"></label>
+                <input asp-for="Input.Precio" class="form-control" />
+                <span asp-validation-for="Input.Precio" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="Input.DuracionMinutos" class="form-label"></label>
+                <input asp-for="Input.DuracionMinutos" class="form-control" />
+                <span asp-validation-for="Input.DuracionMinutos" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4 form-check ms-2 d-flex align-items-end pb-2">
+                <div>
+                    <input asp-for="Input.Activo" class="form-check-input" />
+                    <label asp-for="Input.Activo" class="form-check-label"></label>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+                <a asp-page="/Servicios/Index" class="btn btn-outline-secondary ms-2">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

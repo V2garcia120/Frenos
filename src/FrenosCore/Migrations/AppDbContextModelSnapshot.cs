@@ -144,6 +144,10 @@ namespace FrenosCore.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Telefono")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -597,6 +601,9 @@ namespace FrenosCore.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<int?>("TecnicoId")
+                        .HasColumnType("int");
+
                     b.Property<int>("VehiculoId")
                         .HasColumnType("int");
 
@@ -607,6 +614,8 @@ namespace FrenosCore.Migrations
                     b.HasIndex("CotizacionId")
                         .IsUnique()
                         .HasFilter("[CotizacionId] IS NOT NULL");
+
+                    b.HasIndex("TecnicoId");
 
                     b.HasIndex("VehiculoId");
 
@@ -1038,6 +1047,11 @@ namespace FrenosCore.Migrations
                         .HasForeignKey("FrenosCore.Modelos.Entidades.Orden", "CotizacionId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("FrenosCore.Modelos.Entidades.Usuario", "TecnicoAsignado")
+                        .WithMany("OrdenesAsignadas")
+                        .HasForeignKey("TecnicoId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("FrenosCore.Modelos.Entidades.Vehiculo", "Vehiculo")
                         .WithMany("Ordenes")
                         .HasForeignKey("VehiculoId")
@@ -1047,6 +1061,8 @@ namespace FrenosCore.Migrations
                     b.Navigation("Cliente");
 
                     b.Navigation("Cotizacion");
+
+                    b.Navigation("TecnicoAsignado");
 
                     b.Navigation("Vehiculo");
                 });
@@ -1144,6 +1160,8 @@ namespace FrenosCore.Migrations
                     b.Navigation("FacturasEmitidas");
 
                     b.Navigation("HistorialesReparacionTecnico");
+
+                    b.Navigation("OrdenesAsignadas");
                 });
 
             modelBuilder.Entity("FrenosCore.Modelos.Entidades.Vehiculo", b =>

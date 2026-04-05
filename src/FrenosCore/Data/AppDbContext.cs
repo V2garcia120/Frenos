@@ -159,6 +159,11 @@ namespace FrenosCore.Data
                  .HasForeignKey(o => o.VehiculoId)
                  .OnDelete(DeleteBehavior.Restrict);
 
+                e.HasOne(o => o.TecnicoAsignado)
+                 .WithMany(u => u.OrdenesAsignadas)
+                 .HasForeignKey(o => o.TecnicoId)
+                 .OnDelete(DeleteBehavior.SetNull);
+
                 e.HasOne(o => o.Cotizacion)
                  .WithOne(c => c.Orden)
                  .HasForeignKey<Orden>(o => o.CotizacionId)

@@ -1,0 +1,110 @@
+@page
+@model FrenosCore.Pages.Dashboard.TecnicoModel
+@{
+    ViewData["Title"] = "Dashboard Técnico";
+}
+
+<style>
+    .tech-dashboard { background: #f8f9fa; border-radius: 1rem; padding: 1rem; color: #212529; }
+    .tech-card { background: #ffffff; border: 1px solid #dee2e6; border-radius: .9rem; }
+    .tech-title { color: #6c757d; font-size: .9rem; font-weight: 700; text-transform: uppercase; }
+    .tech-value { font-size: 2.1rem; line-height: 1; font-weight: 700; color: #212529; }
+    .tech-muted { color: #6c757d; }
+    .tech-success { color: #198754; font-weight: 600; }
+    .tech-warning { color: #fd7e14; font-weight: 600; }
+    .tech-section { font-size: 1.8rem; font-weight: 700; color: #212529; }
+    .tech-item { border-top: 1px solid #e9ecef; }
+    .tech-badge { border-radius: 999px; padding: .2rem .7rem; font-weight: 700; font-size: .85rem; display: inline-block; }
+    .b-recibido { background: #0d6efd; color: #e7f1ff; }
+    .b-diagnostico { background: #6610f2; color: #efe7ff; }
+    .b-reparando { background: #fd7e14; color: #fff5eb; }
+    .b-aprobado { background: #198754; color: #e9f7ef; }
+    .b-default { background: #6c757d; color: #f8f9fa; }
+</style>
+
+<div class="tech-dashboard">
+    <div class="row g-3 mb-3">
+        <div class="col-lg-4 col-md-6">
+            <div class="tech-card p-3 h-100">
+                <div class="tech-title">Mis ordenes hoy</div>
+                <div class="tech-value mt-1">@Model.Data.MisOrdenesHoy</div>
+                <div class="tech-warning mt-2">@Model.Data.OrdenesUrgentesHoy urgente@(Model.Data.OrdenesUrgentesHoy == 1 ? string.Empty : "s")</div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6">
+            <div class="tech-card p-3 h-100">
+                <div class="tech-title">En progreso ahora</div>
+                <div class="tech-value mt-1">@Model.Data.EnProgresoAhora</div>
+                <div class="fw-semibold">diagnostico y reparacion</div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-12">
+            <div class="tech-card p-3 h-100">
+                <div class="tech-title">Completadas hoy</div>
+                <div class="tech-value mt-1">@Model.Data.CompletadasHoy</div>
+                <div class="tech-success mt-2">buen ritmo</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tech-card overflow-hidden mb-3">
+        <div class="px-3 py-2 border-bottom border-secondary-subtle d-flex justify-content-between align-items-center">
+            <div class="h3 mb-0">Mi cola de trabajo</div>
+            <div class="tech-muted">Ordenada por prioridad</div>
+        </div>
+
+        @if (!Model.Data.ColaTrabajo.Any())
+        {
+            <div class="p-3 tech-muted">No hay órdenes activas en tu cola.</div>
+        }
+        else
+        {
+            @foreach (var orden in Model.Data.ColaTrabajo)
+            {
+                var estado = orden.Estado?.Trim().ToLowerInvariant() ?? string.Empty;
+                var badge = estado.Contains("repar") ? "b-reparando"
+                    : estado.Contains("diagn") ? "b-diagnostico"
+                    : estado.Contains("aprob") ? "b-aprobado"
+                    : estado.Contains("recib") ? "b-recibido"
+                    : "b-default";
+
+                var entrega = orden.FechaEntregaEstimada.HasValue
+                    ? $"Entrega {orden.FechaEntregaEstimada.Value:hh:mmtt}".ToLowerInvariant()
+                    : orden.EsUrgente ? "Urgente" : "Pendiente";
+
+                <div class="p-3 d-flex justify-content-between align-items-start tech-item">
+                    <div class="me-3">
+                        <span class="tech-badge @badge me-2">@orden.Estado</span>
+                        <span class="fs-4 fw-semibold">@orden.Cliente — @orden.Vehiculo</span>
+                        <div class="tech-muted fs-5">@orden.Placa · @orden.Detalle · Ingreso @orden.FechaIngreso.ToString("hh:mmtt").ToLowerInvariant()</div>
+                    </div>
+                    <div class="tech-muted fw-semibold">@entrega</div>
+                </div>
+            }
+        }
+    </div>
+
+    <div class="tech-card overflow-hidden">
+        <div class="px-3 py-2 border-bottom border-secondary-subtle">
+            <div class="h3 mb-0">Completadas hoy</div>
+        </div>
+
+        @if (!Model.Data.Completadas.Any())
+        {
+            <div class="p-3 tech-muted">No hay órdenes completadas hoy.</div>
+        }
+        else
+        {
+            @foreach (var item in Model.Data.Completadas)
+            {
+                <div class="p-3 d-flex justify-content-between align-items-start tech-item">
+                    <div>
+                        <div class="fs-4 fw-semibold">@item.Cliente — @item.Vehiculo</div>
+                        <div class="tech-muted fs-5">@item.Detalle · Completado @item.FechaCompletada.ToString("hh:mmtt").ToLowerInvariant()</div>
+                    </div>
+                    <span class="tech-badge b-aprobado">Lista</span>
+                </div>
+            }
+        }
+    </div>
+</div>

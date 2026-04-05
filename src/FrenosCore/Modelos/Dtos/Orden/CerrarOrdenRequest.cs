@@ -8,6 +8,7 @@ namespace FrenosCore.Modelos.Dtos.Orden
         [Required, MaxLength(2000)] string TrabajosRealizados,
                    int? ProximoServicioKm,
                    DateOnly? ProximoServicioFecha,
+        [Required] string MetodoPago,
         [Range(0, 365)] int GarantiaDias = 30
     );
 

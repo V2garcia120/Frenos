@@ -1,0 +1,18 @@
+@page
+@model FrenosCore.Pages.Dashboard.ConsultaModel
+@{
+    ViewData["Title"] = "Dashboard Consulta";
+}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body text-bg-secondary rounded">
+        <h1 class="h3 mb-1">Dashboard de Consulta</h1>
+        <p class="mb-0">Vista de solo consulta de información.</p>
+    </div>
+</div>
+
+<div class="d-flex flex-wrap gap-2">
+    <a asp-page="/Productos/Index" class="btn btn-outline-secondary">Productos</a>
+    <a asp-page="/Servicios/Index" class="btn btn-outline-secondary">Servicios</a>
+    <a asp-page="/Clientes/Index" class="btn btn-outline-secondary">Clientes</a>
+</div>

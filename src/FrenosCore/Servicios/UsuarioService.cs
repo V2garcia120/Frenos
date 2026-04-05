@@ -14,6 +14,15 @@ namespace FrenosCore.Servicios
             _context = context;
         }
 
+        public async Task<IEnumerable<RolUsuarioResponse>> ListarRolesAsync()
+        {
+            return await _context.Rol
+                .AsNoTracking()
+                .OrderBy(r => r.Nombre)
+                .Select(r => new RolUsuarioResponse(r.Id, r.Nombre))
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<UsuarioResponse>> ListarAsync(string? busqueda)
         {
             var query = _context.Usuario

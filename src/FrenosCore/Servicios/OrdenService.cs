@@ -3,6 +3,7 @@ using FrenosCore.Modelos.Dtos;
 
 using FrenosCore.Modelos.Dtos.Orden;
 using FrenosCore.Modelos.Dtos.Diagnostico;
+using FrenosCore.Modelos.Dtos.Factura;
 using FrenosCore.Modelos.Entidades;
 
 using Microsoft.EntityFrameworkCore;
@@ -28,7 +29,7 @@ namespace FrenosCore.Servicios
 
       
         public async Task<PaginadoResponse<OrdenResponse>> ListarAsync(
-            int pagina, int tam, string? estado, string? prioridad)
+            int pagina, int tam, string? estado, string? prioridad, int? tecnicoId, DateTime? fecha)
         {
             pagina = Math.Max(1, pagina);
             tam = Math.Clamp(tam, 1, 100);
@@ -37,6 +38,7 @@ namespace FrenosCore.Servicios
                 .AsNoTracking()
                 .Include(o => o.Cliente)
                 .Include(o => o.Vehiculo)
+                .Include(o => o.TecnicoAsignado)
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(estado))
@@ -44,6 +46,16 @@ namespace FrenosCore.Servicios
 
             if (!string.IsNullOrWhiteSpace(prioridad))
                 query = query.Where(o => o.Prioridad == prioridad);
+
+            if (tecnicoId.HasValue)
+                query = query.Where(o => o.TecnicoId == tecnicoId.Value);
+
+            if (fecha.HasValue)
+            {
+                var inicio = fecha.Value.Date;
+                var fin = inicio.AddDays(1);
+                query = query.Where(o => o.FechaCreacion >= inicio && o.FechaCreacion < fin);
+            }
 
             var totalItems = await query.CountAsync();
 
@@ -57,6 +69,8 @@ namespace FrenosCore.Servicios
                     o.Cliente.Nombre,
                     o.VehiculoId,
                     $"{o.Vehiculo.Marca} {o.Vehiculo.Modelo} {o.Vehiculo.Anno} · {o.Vehiculo.Placa}",
+                    o.TecnicoId,
+                    o.TecnicoAsignado != null ? o.TecnicoAsignado.Nombre : null,
                     o.CotizacionId,
                     o.Estado,
                     o.Prioridad,
@@ -83,6 +97,7 @@ namespace FrenosCore.Servicios
                 .AsNoTracking()
                 .Include(o => o.Cliente)
                 .Include(o => o.Vehiculo)
+                .Include(o => o.TecnicoAsignado)
                 .Include(o => o.Diagnostico)
                     .ThenInclude(d => d!.Items)
                         .ThenInclude(i => i.ServicioSugerido)
@@ -105,6 +120,8 @@ namespace FrenosCore.Servicios
                 ClienteNombre: orden.Cliente.Nombre,
                 VehiculoId: orden.VehiculoId,
                 VehiculoInfo: $"{orden.Vehiculo.Marca} {orden.Vehiculo.Modelo} {orden.Vehiculo.Anno} · {orden.Vehiculo.Placa}",
+                TecnicoId: orden.TecnicoId,
+                TecnicoNombre: orden.TecnicoAsignado?.Nombre,
                 CotizacionId: orden.CotizacionId,
                 Estado: orden.Estado,
                 Prioridad: orden.Prioridad,
@@ -139,6 +156,20 @@ namespace FrenosCore.Servicios
                     $"Prioridad '{req.Prioridad}' no válida. " +
                     $"Valores permitidos: {string.Join(", ", prioridadesValidas)}.");
 
+            Usuario? tecnicoAsignado = null;
+            if (req.TecnicoId.HasValue)
+            {
+                tecnicoAsignado = await db.Usuario
+                    .Include(u => u.Rol)
+                    .FirstOrDefaultAsync(u => u.Id == req.TecnicoId.Value && u.Activo)
+                    ?? throw new KeyNotFoundException($"Técnico {req.TecnicoId.Value} no encontrado o inactivo.");
+
+                var esTecnico = tecnicoAsignado.Rol.Nombre.Contains("tecnico", StringComparison.OrdinalIgnoreCase)
+                                || tecnicoAsignado.Rol.Nombre.Contains("técnico", StringComparison.OrdinalIgnoreCase);
+                if (!esTecnico)
+                    throw new InvalidOperationException("El usuario asignado no tiene rol de técnico.");
+            }
+
 
             if (req.CotizacionId.HasValue)
             {
@@ -159,6 +190,7 @@ namespace FrenosCore.Servicios
             {
                 ClienteId = req.ClienteId,
                 VehiculoId = req.VehiculoId,
+                TecnicoId = req.TecnicoId,
                 CotizacionId = req.CotizacionId,
                 Estado = "Recibido",
                 Prioridad = req.Prioridad,
@@ -174,6 +206,8 @@ namespace FrenosCore.Servicios
                 orden.Id, orden.ClienteId, cliente.Nombre,
                 orden.VehiculoId,
                 $"{vehiculo.Marca} {vehiculo.Modelo} {vehiculo.Anno} · {vehiculo.Placa}",
+                orden.TecnicoId,
+                tecnicoAsignado?.Nombre,
                 orden.CotizacionId, orden.Estado, orden.Prioridad,
                 orden.FechaCreacion, orden.FechaEntregaEstima,
                 orden.FechaEntregaReal, orden.Notas,
@@ -187,6 +221,7 @@ namespace FrenosCore.Servicios
             var orden = await db.Orden
                 .Include(o => o.Cliente)
                 .Include(o => o.Vehiculo)
+                .Include(o => o.TecnicoAsignado)
                 .Include(o => o.Diagnostico)
                 .FirstOrDefaultAsync(o => o.Id == id)
                 ?? throw new KeyNotFoundException($"Orden {id} no encontrada.");
@@ -222,6 +257,8 @@ namespace FrenosCore.Servicios
                 orden.Id, orden.ClienteId, orden.Cliente.Nombre,
                 orden.VehiculoId,
                 $"{orden.Vehiculo.Marca} {orden.Vehiculo.Modelo} {orden.Vehiculo.Anno} · {orden.Vehiculo.Placa}",
+                orden.TecnicoId,
+                orden.TecnicoAsignado?.Nombre,
                 orden.CotizacionId, orden.Estado, orden.Prioridad,
                 orden.FechaCreacion, orden.FechaEntregaEstima,
                 orden.FechaEntregaReal, orden.Notas,
@@ -233,6 +270,7 @@ namespace FrenosCore.Servicios
         {
             var orden = await db.Orden
                 .Include(o => o.Vehiculo)
+                .Include(o => o.Diagnostico)
                 .Include(o => o.Cotizacion)
                     .ThenInclude(c => c!.Items)
                 .FirstOrDefaultAsync(o => o.Id == id)
@@ -241,6 +279,14 @@ namespace FrenosCore.Servicios
             if (orden.Estado != "EnReparacion")
                 throw new InvalidOperationException(
                     "Solo se puede cerrar una orden en estado EnReparacion.");
+
+            if (orden.Diagnostico is null)
+                throw new InvalidOperationException(
+                    "No se puede cerrar la orden porque no tiene diagnóstico registrado.");
+
+            if (!orden.Diagnostico.AprobadoPorCliente)
+                throw new InvalidOperationException(
+                    "No se puede cerrar la orden porque el diagnóstico no ha sido aprobado por el cliente.");
 
 
             var tecnico = await db.Usuario
@@ -285,6 +331,10 @@ namespace FrenosCore.Servicios
 
 
                 var factura = await facturas.GenerarDesdeOrdenAsync(orden.Id, req.TecnicoId);
+
+                await facturas.RegistrarPagoAsync(
+                    factura.Id,
+                    new RegistrarPagoRequest(req.MetodoPago, factura.Total));
 
                 await transaccion.CommitAsync();
 

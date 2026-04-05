@@ -1,0 +1,83 @@
+@page
+@model FrenosCore.Pages.Ordenes.CreateModel
+@{
+    ViewData["Title"] = "Crear orden";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Crear orden</h1>
+    <a asp-page="/Ordenes/Index" class="btn btn-outline-secondary">Volver</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" class="row g-3">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="col-md-6">
+                <label asp-for="Input.ClienteId" class="form-label">Cliente</label>
+                <select asp-for="Input.ClienteId" class="form-select" onchange="window.location='?clienteId=' + this.value;">
+                    <option value="">Seleccione un cliente</option>
+                    @foreach (var cliente in Model.Clientes)
+                    {
+                        <option value="@cliente.Id">@cliente.Nombre (@cliente.Cedula)</option>
+                    }
+                </select>
+                <span asp-validation-for="Input.ClienteId" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Input.VehiculoId" class="form-label">Vehículo</label>
+                <select asp-for="Input.VehiculoId" class="form-select" disabled="@(Model.Vehiculos.Count == 0)">
+                    <option value="">@(Model.Vehiculos.Count == 0 ? "Seleccione un cliente primero" : "Seleccione un vehículo")</option>
+                    @foreach (var vehiculo in Model.Vehiculos)
+                    {
+                        <option value="@vehiculo.Id">@vehiculo.Marca @vehiculo.Modelo @vehiculo.Anno · @vehiculo.Placa</option>
+                    }
+                </select>
+                <span asp-validation-for="Input.VehiculoId" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="Input.TecnicoId" class="form-label">Técnico asignado (opcional)</label>
+                <select asp-for="Input.TecnicoId" class="form-select">
+                    <option value="">Sin asignar</option>
+                    @foreach (var tecnico in Model.Tecnicos)
+                    {
+                        <option value="@tecnico.Id">@tecnico.Nombre</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="Input.Prioridad" class="form-label">Prioridad</label>
+                <select asp-for="Input.Prioridad" class="form-select">
+                    <option>Normal</option>
+                    <option>Alta</option>
+                    <option>Urgente</option>
+                </select>
+                <span asp-validation-for="Input.Prioridad" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="Input.FechaEntregaEstimada" class="form-label">Entrega estimada</label>
+                <input asp-for="Input.FechaEntregaEstimada" class="form-control" type="datetime-local" />
+                <span asp-validation-for="Input.FechaEntregaEstimada" class="text-danger"></span>
+            </div>
+
+            <div class="col-12">
+                <label asp-for="Input.Notas" class="form-label">Notas</label>
+                <textarea asp-for="Input.Notas" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Input.Notas" class="text-danger"></span>
+            </div>
+
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">Crear orden</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

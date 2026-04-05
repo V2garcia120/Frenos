@@ -1,0 +1,57 @@
+@page
+@model FrenosCore.Pages.Usuarios.CreateModel
+@{
+    ViewData["Title"] = "Crear usuario";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Crear usuario</h1>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" class="row g-3">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="col-md-6">
+                <label asp-for="Input.Nombre" class="form-label"></label>
+                <input asp-for="Input.Nombre" class="form-control" />
+                <span asp-validation-for="Input.Nombre" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Input.Email" class="form-label"></label>
+                <input asp-for="Input.Email" class="form-control" />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Input.Password" class="form-label"></label>
+                <input asp-for="Input.Password" class="form-control" />
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Input.RolId" class="form-label">Rol</label>
+                <select asp-for="Input.RolId" asp-items="Model.Roles" class="form-select">
+                    <option value="">Seleccione un rol</option>
+                </select>
+                <span asp-validation-for="Input.RolId" class="text-danger"></span>
+            </div>
+
+            <div class="col-12 form-check ms-2">
+                <input asp-for="Input.Activo" class="form-check-input" />
+                <label asp-for="Input.Activo" class="form-check-label"></label>
+            </div>
+
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+                <a asp-page="/Usuarios/Index" class="btn btn-outline-secondary ms-2">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

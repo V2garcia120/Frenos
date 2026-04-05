@@ -5,6 +5,7 @@
         public int Id { get; set; }
         public int ClienteId { get; set; }
         public int VehiculoId { get; set; }
+        public int? TecnicoId { get; set; }
         public int? CotizacionId { get; set; }
         public string Estado { get; set; } = "Recibido";
         public string Prioridad { get; set; } = "Normal";
@@ -15,6 +16,7 @@
 
         public Cliente Cliente { get; set; } = null!;
         public Vehiculo Vehiculo { get; set; } = null!;
+        public Usuario? TecnicoAsignado { get; set; }
         public Cotizacion Cotizacion { get; set; } = null!;
         public Diagnostico Diagnostico { get; set; } = null!;
         public Factura Factura { get; set; } = null!;

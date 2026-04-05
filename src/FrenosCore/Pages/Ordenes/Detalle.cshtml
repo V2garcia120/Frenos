@@ -1,0 +1,201 @@
+﻿@page "{id:int}"
+@model FrenosCore.Pages.Ordenes.DetalleModel
+@{
+    ViewData["Title"] = "Detalle de orden";
+    var estados = new[] { "Recibido", "EnDiagnostico", "Aprobado", "EnReparacion", "Lista", "Entregada", "Cancelada" };
+    var paginaRegreso = Model.EsTecnico ? "/Ordenes/MIsOrdenes" : "/Ordenes/Index";
+}
+
+@if (TempData["Mensaje"] is string mensaje)
+{
+    <div class="alert alert-success">@mensaje</div>
+}
+
+@if (TempData["MensajeError"] is string mensajeError)
+{
+    <div class="alert alert-danger">@mensajeError</div>
+}
+
+@if (Model.Orden is null)
+{
+    <div class="alert alert-warning">No se encontró la orden.</div>
+    <a asp-page="@paginaRegreso" class="btn btn-outline-secondary">Volver</a>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">Orden #@Model.Orden.Id</h1>
+        <a asp-page="@paginaRegreso" class="btn btn-outline-secondary">Volver al listado</a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">Información general</div>
+        <div class="card-body row g-3">
+            <div class="col-md-4"><strong>Cliente:</strong> @Model.Orden.ClienteNombre</div>
+            <div class="col-md-4"><strong>Vehículo:</strong> @Model.Orden.VehiculoInfo</div>
+            <div class="col-md-2"><strong>Estado:</strong> @Model.Orden.Estado</div>
+            <div class="col-md-2"><strong>Prioridad:</strong> @Model.Orden.Prioridad</div>
+            <div class="col-md-4"><strong>Ingreso:</strong> @Model.Orden.FechaIngreso.ToString("dd/MM/yyyy HH:mm")</div>
+            <div class="col-md-4"><strong>Entrega estimada:</strong> @(Model.Orden.FechaEntregaEstimada?.ToString("dd/MM/yyyy HH:mm") ?? "-")</div>
+            <div class="col-md-4"><strong>Entrega real:</strong> @(Model.Orden.FechaEntregaReal?.ToString("dd/MM/yyyy HH:mm") ?? "-")</div>
+            <div class="col-12"><strong>Notas:</strong> @(string.IsNullOrWhiteSpace(Model.Orden.Notas) ? "-" : Model.Orden.Notas)</div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">Diagnóstico</div>
+        <div class="card-body">
+            @if (Model.Orden.Diagnostico is null)
+            {
+                <div class="alert alert-info mb-0">Esta orden aún no tiene diagnóstico.</div>
+            }
+            else
+            {
+                <div class="row g-3 mb-3">
+                    <div class="col-md-3"><strong>Técnico:</strong> @Model.Orden.Diagnostico.TecnicoNombre</div>
+                    <div class="col-md-2"><strong>Estado:</strong> @Model.Orden.Diagnostico.Estado</div>
+                    <div class="col-md-2"><strong>Urgente:</strong> @(Model.Orden.Diagnostico.RequiereAtencionUrgente ? "Sí" : "No")</div>
+                    <div class="col-md-2"><strong>Km ingreso:</strong> @(Model.Orden.Diagnostico.KmIngreso?.ToString() ?? "-")</div>
+                    <div class="col-md-3"><strong>Fecha:</strong> @Model.Orden.Diagnostico.FechaDiagnostico.ToString("dd/MM/yyyy HH:mm")</div>
+                    <div class="col-12"><strong>Descripción:</strong> @Model.Orden.Diagnostico.DescripcionGeneral</div>
+                    <div class="col-12"><strong>Observaciones:</strong> @(string.IsNullOrWhiteSpace(Model.Orden.Diagnostico.ObservacionesTecnico) ? "-" : Model.Orden.Diagnostico.ObservacionesTecnico)</div>
+                </div>
+
+                @if (Model.Orden.Diagnostico.Items.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Sistema</th>
+                                    <th>Componente</th>
+                                    <th>Condición</th>
+                                    <th>Acción</th>
+                                    <th>Urgente</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Orden.Diagnostico.Items)
+                                {
+                                    <tr>
+                                        <td>@item.SistemaVehiculo</td>
+                                        <td>@item.Componente</td>
+                                        <td>@item.Condicion</td>
+                                        <td>@item.AccionRecomendada</td>
+                                        <td>@(item.EsUrgente ? "Sí" : "No")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    @if (Model.PuedeCrearDiagnostico || Model.PuedeEditarDiagnostico)
+    {
+        <div class="card mb-4">
+            <div class="card-header">@(Model.PuedeCrearDiagnostico ? "Crear diagnóstico" : "Editar diagnóstico")</div>
+            <div class="card-body">
+                @if (Model.PuedeCrearDiagnostico)
+                {
+                    <a asp-page="/Diagnosticos/Create" asp-route-ordenId="@Model.Orden.Id" class="btn btn-primary">Ir a crear diagnóstico</a>
+                }
+                else if (Model.PuedeEditarDiagnostico && Model.Orden.Diagnostico is not null)
+                {
+                    <a asp-page="/Diagnosticos/Edit" asp-route-id="@Model.Orden.Diagnostico.Id" class="btn btn-primary">Ir a editar diagnóstico</a>
+                }
+            </div>
+        </div>
+    }
+
+    @if (Model.PuedeCambiarEstado)
+    {
+        <div class="card mb-4">
+            <div class="card-header">Cambiar estado de la orden</div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="CambiarEstado" class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="EstadoForm.Estado" class="form-label"></label>
+                        <select asp-for="EstadoForm.Estado" class="form-select">
+                            @foreach (var estado in estados)
+                            {
+                                <option value="@estado">@estado</option>
+                            }
+                        </select>
+                        <span asp-validation-for="EstadoForm.Estado" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-outline-primary">Actualizar estado</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    }
+
+    @if (Model.PuedeCerrar)
+    {
+        <div class="card mb-4">
+            <div class="card-header">Cerrar orden</div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="CerrarOrden" class="row g-3">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <div class="col-md-4">
+                        <label asp-for="CerrarForm.TecnicoId" class="form-label">Técnico</label>
+                        <select asp-for="CerrarForm.TecnicoId" class="form-select">
+                            <option value="">Seleccione técnico</option>
+                            @foreach (var tecnico in Model.Tecnicos)
+                            {
+                                <option value="@tecnico.Id">@tecnico.Nombre</option>
+                            }
+                        </select>
+                        <span asp-validation-for="CerrarForm.TecnicoId" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="CerrarForm.KmAlServicio" class="form-label"></label>
+                        <input asp-for="CerrarForm.KmAlServicio" class="form-control" />
+                        <span asp-validation-for="CerrarForm.KmAlServicio" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="CerrarForm.GarantiaDias" class="form-label"></label>
+                        <input asp-for="CerrarForm.GarantiaDias" class="form-control" />
+                        <span asp-validation-for="CerrarForm.GarantiaDias" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="CerrarForm.ProximoServicioKm" class="form-label"></label>
+                        <input asp-for="CerrarForm.ProximoServicioKm" class="form-control" />
+                        <span asp-validation-for="CerrarForm.ProximoServicioKm" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="CerrarForm.ProximoServicioFecha" class="form-label"></label>
+                        <input asp-for="CerrarForm.ProximoServicioFecha" class="form-control" type="date" />
+                        <span asp-validation-for="CerrarForm.ProximoServicioFecha" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="CerrarForm.MetodoPago" class="form-label">Método de pago</label>
+                        <select asp-for="CerrarForm.MetodoPago" class="form-select">
+                            <option>Efectivo</option>
+                            <option>Tarjeta</option>
+                            <option>Transferencia</option>
+                            <option>Credito</option>
+                        </select>
+                        <span asp-validation-for="CerrarForm.MetodoPago" class="text-danger"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="CerrarForm.TrabajosRealizados" class="form-label"></label>
+                        <textarea asp-for="CerrarForm.TrabajosRealizados" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="CerrarForm.TrabajosRealizados" class="text-danger"></span>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-danger">Cerrar orden</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    }
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

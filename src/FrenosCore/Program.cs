@@ -1,14 +1,49 @@
 using FrenosCore.Data;
+using FrenosCore.Helpers;
 using FrenosCore.Middleware;
 using FrenosCore.Servicios;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddControllers();
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Secret"]!)),
+            ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidateAudience = true,
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(2),
+            RoleClaimType = "Rol"
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                if (context.Request.Cookies.TryGetValue("AuthToken", out var token)
+                    && !string.IsNullOrWhiteSpace(token))
+                {
+                    context.Token = token;
+                }
+
+                return Task.CompletedTask;
+            }
+        };
+    });
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -32,7 +67,15 @@ builder.Services.AddScoped<IFacturaService, FacturaService>();
 builder.Services.AddScoped<IOrdenService, OrdenService>();
 builder.Services.AddScoped<IDiagnosticoService, DiagnosticoService>();
 builder.Services.AddScoped<ICotizacionService, CotizacionService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<JwtHelper>();
 
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("SoloAdmin", p => p.RequireRole("Administrador"))
+    .AddPolicy("Mantenimiento", p => p.RequireRole("Administrador", "Mantenimiento", "Mantemineto"))
+    .AddPolicy("SoloTecnico", p => p.RequireRole("Tecnico"))
+    .AddPolicy("Cajero", p => p.RequireRole("Administrador", "Cajero"));
 
 var app = builder.Build();
 
@@ -56,6 +99,7 @@ app.UseHttpsRedirection();
 
 app.UseRouting();
 app.UseMiddleware<ExceptionMiddleware>();
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();

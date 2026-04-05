@@ -17,9 +17,11 @@ namespace FrenosCore.Controllers.Api
         [FromQuery] int pagina = 1,
         [FromQuery] int tam = 20,
         [FromQuery] string? estado = null,
-        [FromQuery] string? prioridad = null)
+        [FromQuery] string? prioridad = null,
+        [FromQuery] int? tecnicoId = null,
+        [FromQuery] DateTime? fecha = null)
         {
-            var resultado = await ordenes.ListarAsync(pagina, tam, estado, prioridad);
+            var resultado = await ordenes.ListarAsync(pagina, tam, estado, prioridad, tecnicoId, fecha);
             return Ok(ApiResponse<object>.Ok(resultado));
         }
 

@@ -10,6 +10,11 @@
     <link rel="stylesheet" href="~/FrenosCore.styles.css" asp-append-version="true" />
 </head>
 <body>
+@{
+    var esAdmin = User.IsInRole("Administrador") || User.IsInRole("Admin");
+    var esMantenimiento = User.IsInRole("Mantenimiento") || User.IsInRole("Mantemineto");
+    var esTecnico = User.IsInRole("Tecnico") || User.IsInRole("Técnico");
+}
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container">
@@ -21,13 +26,36 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
-                        </li>
-                        <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-page="/Productos/Index">Productos</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-page="/Servicios/Index">Servicios</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-page="/Clientes/Index">Clientes</a>
+                        </li>
+                        @if (esAdmin || esMantenimiento)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-page="/Ordenes/Index">Órdenes</a>
+                            </li>
+                        }
+                        @if (esTecnico)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-page="/Ordenes/MIsOrdenes">Mis órdenes</a>
+                            </li>
+                        }
+                        @if (esAdmin)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-page="/Usuarios/Index">Usuarios</a>
+                            </li>
+                        }
+                        <li class="nav-item">
+                            <form method="post" asp-page="/Login/Logout" class="d-inline">
+                                <button type="submit" class="btn nav-link text-dark border-0 bg-transparent">Cerrar Sesion</button>
+                            </form>
                         </li>
                     </ul>
                 </div>

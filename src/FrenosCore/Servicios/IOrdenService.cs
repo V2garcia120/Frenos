@@ -6,7 +6,7 @@ namespace FrenosCore.Servicios
     public interface IOrdenService
     {
         Task<PaginadoResponse<OrdenResponse>> ListarAsync(
-            int pagina, int tam, string? estado, string? prioridad);
+            int pagina, int tam, string? estado, string? prioridad, int? tecnicoId, DateTime? fecha);
         
         Task<OrdenDetalleResponse> ObtenerPorIdAsync(int id);
         Task<OrdenResponse> CrearAsync(CrearOrdenRequest request);

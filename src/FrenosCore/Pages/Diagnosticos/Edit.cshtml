@@ -1,0 +1,66 @@
+@page "{id:int}"
+@model FrenosCore.Pages.Diagnosticos.EditModel
+@{
+    ViewData["Title"] = "Editar diagnóstico";
+}
+
+@if (Model.Diagnostico is not null)
+{
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">Editar diagnóstico #@Model.Diagnostico.Id</h1>
+        <a asp-page="/Ordenes/Detalle" asp-route-id="@Model.Diagnostico.OrdenId" class="btn btn-outline-secondary">Volver</a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">Información de la orden</div>
+        <div class="card-body row g-3">
+            <div class="col-md-6"><strong>Cliente:</strong> @Model.Diagnostico.ClienteNombre</div>
+            <div class="col-md-6"><strong>Vehículo:</strong> @Model.Diagnostico.VehiculoInfo</div>
+            <div class="col-md-4"><strong>Técnico:</strong> @Model.Diagnostico.TecnicoNombre</div>
+            <div class="col-md-4"><strong>Estado diagnóstico:</strong> @Model.Diagnostico.Estado</div>
+            <div class="col-md-4"><strong>Fecha:</strong> @Model.Diagnostico.FechaDiagnostico.ToString("dd/MM/yyyy HH:mm")</div>
+        </div>
+    </div>
+}
+
+<div class="card">
+    <div class="card-header">Actualizar diagnóstico</div>
+    <div class="card-body">
+        <form method="post" class="row g-3">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="col-md-3">
+                <label asp-for="Input.KmIngreso" class="form-label"></label>
+                <input asp-for="Input.KmIngreso" class="form-control" />
+                <span asp-validation-for="Input.KmIngreso" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4 form-check d-flex align-items-end pb-2 ms-2">
+                <div>
+                    <input asp-for="Input.RequiereAtencionUrgente" class="form-check-input" />
+                    <label asp-for="Input.RequiereAtencionUrgente" class="form-check-label"></label>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <label asp-for="Input.DescripcionGeneral" class="form-label"></label>
+                <textarea asp-for="Input.DescripcionGeneral" class="form-control" rows="4"></textarea>
+                <span asp-validation-for="Input.DescripcionGeneral" class="text-danger"></span>
+            </div>
+
+            <div class="col-12">
+                <label asp-for="Input.ObservacionesTecnico" class="form-label"></label>
+                <textarea asp-for="Input.ObservacionesTecnico" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Input.ObservacionesTecnico" class="text-danger"></span>
+            </div>
+
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">Guardar cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
