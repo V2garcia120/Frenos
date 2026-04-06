@@ -227,6 +227,7 @@ namespace FrenosCore.Data
                 e.Property(f => f.Subtotal).HasPrecision(10, 2);
                 e.Property(f => f.Itbis).HasPrecision(10, 2);
                 e.Property(f => f.Total).HasPrecision(10, 2);
+                e.Property(f => f.TipoOrigen).IsRequired().HasMaxLength(30);
                 e.Property(f => f.Estado).IsRequired().HasMaxLength(20);
                 e.Property(f => f.MetodoPago).HasMaxLength(40);
 

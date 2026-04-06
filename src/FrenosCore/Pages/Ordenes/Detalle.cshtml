@@ -54,12 +54,22 @@ else
                 <div class="row g-3 mb-3">
                     <div class="col-md-3"><strong>Técnico:</strong> @Model.Orden.Diagnostico.TecnicoNombre</div>
                     <div class="col-md-2"><strong>Estado:</strong> @Model.Orden.Diagnostico.Estado</div>
+                    <div class="col-md-2"><strong>Aprobación:</strong> @(Model.Orden.Diagnostico.AprobadoPorCliente ? "Aprobado" : "Pendiente")</div>
                     <div class="col-md-2"><strong>Urgente:</strong> @(Model.Orden.Diagnostico.RequiereAtencionUrgente ? "Sí" : "No")</div>
                     <div class="col-md-2"><strong>Km ingreso:</strong> @(Model.Orden.Diagnostico.KmIngreso?.ToString() ?? "-")</div>
                     <div class="col-md-3"><strong>Fecha:</strong> @Model.Orden.Diagnostico.FechaDiagnostico.ToString("dd/MM/yyyy HH:mm")</div>
                     <div class="col-12"><strong>Descripción:</strong> @Model.Orden.Diagnostico.DescripcionGeneral</div>
                     <div class="col-12"><strong>Observaciones:</strong> @(string.IsNullOrWhiteSpace(Model.Orden.Diagnostico.ObservacionesTecnico) ? "-" : Model.Orden.Diagnostico.ObservacionesTecnico)</div>
                 </div>
+
+                @if (Model.EsAdminOMantenimiento)
+                {
+                    <div class="alert @(Model.Orden.Diagnostico.AprobadoPorCliente ? "alert-success" : "alert-warning")">
+                        @(Model.Orden.Diagnostico.AprobadoPorCliente
+                            ? "Diagnóstico aprobado. Ya puede avanzar al estado Aprobado."
+                            : "Diagnóstico pendiente de aprobación.")
+                    </div>
+                }
 
                 @if (Model.Orden.Diagnostico.Items.Any())
                 {
@@ -89,6 +99,72 @@ else
                         </table>
                     </div>
                 }
+
+    @if (Model.PuedeAprobarDiagnostico)
+    {
+        <div class="card mb-4">
+            <div class="card-header">Aprobación de diagnóstico</div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="AprobarDiagnostico">
+                    <button type="submit" class="btn btn-success">Aprobar diagnóstico</button>
+                </form>
+            </div>
+        </div>
+    }
+            }
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">Cotización</div>
+        <div class="card-body">
+            @if (Model.Orden.CotizacionId is null)
+            {
+                <div class="alert alert-info mb-0">Esta orden aún no tiene cotización asociada.</div>
+            }
+            else if (Model.Cotizacion is null)
+            {
+                <div class="alert alert-warning mb-0">No se pudo cargar la cotización asociada.</div>
+            }
+            else
+            {
+                <div class="row g-3 mb-3">
+                    <div class="col-md-2"><strong>ID:</strong> @Model.Cotizacion.Id</div>
+                    <div class="col-md-2"><strong>Estado:</strong> @Model.Cotizacion.Estado</div>
+                    <div class="col-md-4"><strong>Válida hasta:</strong> @Model.Cotizacion.ValidaHasta.ToString("dd/MM/yyyy")</div>
+                    <div class="col-md-2"><strong>Subtotal:</strong> @Model.Cotizacion.Subtotal.ToString("N2")</div>
+                    <div class="col-md-2"><strong>ITBIS:</strong> @Model.Cotizacion.Itbis.ToString("N2")</div>
+                    <div class="col-md-2"><strong>Total:</strong> @Model.Cotizacion.Total.ToString("N2")</div>
+                </div>
+
+                @if (Model.Cotizacion.Detalles.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Tipo</th>
+                                    <th>Descripción</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio unitario</th>
+                                    <th>Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Cotizacion.Detalles)
+                                {
+                                    <tr>
+                                        <td>@item.Tipo</td>
+                                        <td>@item.Descripcion</td>
+                                        <td>@item.Cantidad</td>
+                                        <td>@item.PrecioUnitario.ToString("N2")</td>
+                                        <td>@item.Subtotal.ToString("N2")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
             }
         </div>
     </div>
@@ -104,7 +180,15 @@ else
                 }
                 else if (Model.PuedeEditarDiagnostico && Model.Orden.Diagnostico is not null)
                 {
-                    <a asp-page="/Diagnosticos/Edit" asp-route-id="@Model.Orden.Diagnostico.Id" class="btn btn-primary">Ir a editar diagnóstico</a>
+                    <div class="d-flex gap-2">
+                        <a asp-page="/Diagnosticos/Edit" asp-route-id="@Model.Orden.Diagnostico.Id" class="btn btn-primary">Ir a editar diagnóstico</a>
+                        @if (Model.PuedeCompletarDiagnostico)
+                        {
+                            <form method="post" asp-page-handler="CompletarDiagnostico" asp-route-id="@Model.Orden.Id" class="d-inline">
+                                <button type="submit" class="btn btn-success">marcar completado</button>
+                            </form>
+                        }
+                    </div>
                 }
             </div>
         </div>

@@ -18,6 +18,20 @@ namespace FrenosCore.Controllers.Api
             var cotizaciones = await _cotizacionService.ListarAsync(pagina, tam);
             return Ok(ApiResponse<object>.Ok(cotizaciones));
         }
+
+        [HttpPost]
+        public async Task<IActionResult> Crear([FromBody] FrenosCore.Modelos.Dtos.Cotizacion.CrearCotizacionRequest request)
+        {
+            var cotizacion = await _cotizacionService.CrearAsync(request);
+            return Ok(ApiResponse<object>.Ok(cotizacion));
+        }
+
+        [HttpPut("{id:int}")]
+        public async Task<IActionResult> Actualizar(int id, [FromBody] FrenosCore.Modelos.Dtos.Cotizacion.ActualizarCotizacionRequest request)
+        {
+            var cotizacion = await _cotizacionService.ActualizarAsync(id, request);
+            return Ok(ApiResponse<object>.Ok(cotizacion));
+        }
         [HttpGet("{id:int}")]
         public async Task<IActionResult> ObtenerPorId(int id)
         {

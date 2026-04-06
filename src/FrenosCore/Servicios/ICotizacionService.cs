@@ -1,10 +1,11 @@
-﻿using FrenosCore.Modelos.Dtos.Cotizacion;
+﻿using FrenosCore.Modelos.Dtos;
+using FrenosCore.Modelos.Dtos.Cotizacion;
 
 namespace FrenosCore.Servicios
 {
     public interface ICotizacionService
     {
-        Task<CotizacionResponse> ListarAsync(int pagina, int tam);
+        Task<PaginadoResponse<CotizacionResponse>> ListarAsync(int pagina, int tam);
         Task<CotizacionResponse> ObtenerPorIdAsync(int id);
         Task<CotizacionResponse> CrearAsync(CrearCotizacionRequest request);
         Task<CotizacionResponse> ActualizarAsync(int id, ActualizarCotizacionRequest request);

@@ -1,11 +1,17 @@
 ﻿namespace FrenosCore.Modelos.Dtos.Cotizacion
 {
     public record ActualizarCotizacionRequest(
-        );
-    public record ActualizarCotizacionItemRequest(
+        string? Notas,
+        DateTime? ValidaHasta,
+        IEnumerable<ActualizarCotizacionDetalleRequest>? Detalles
+    );
 
+    public record ActualizarCotizacionDetalleRequest(
+        int? Id,
+        string Tipo,
+        string Descripcion,
         int Cantidad,
-        int PrecioUnitario
-
-        );
+        decimal PrecioUnitario,
+        int? ItemId
+    );
 }

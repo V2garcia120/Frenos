@@ -137,7 +137,14 @@ namespace FrenosCore.Servicios
             var diagnostico = await _context.Diagnostico
                 .AsNoTracking()
                 .Include(d => d.Tecnico)
+                .Include(d => d.Orden)
+                    .ThenInclude(o => o.Cliente)
+                .Include(d => d.Orden)
+                    .ThenInclude(o => o.Vehiculo)
                 .Include(d => d.Items)
+                    .ThenInclude(i => i.ServicioSugerido)
+                .Include(d => d.Items)
+                    .ThenInclude(i => i.ProductoSugerido)
                 .Where(d => d.OrdenId == ordenId)
                 .OrderByDescending(d => d.FechaDiagnostico)
                 .FirstOrDefaultAsync()
@@ -151,7 +158,14 @@ namespace FrenosCore.Servicios
             var diagnostico = await _context.Diagnostico
                 .AsNoTracking()
                 .Include(d => d.Tecnico)
+                .Include(d => d.Orden)
+                    .ThenInclude(o => o.Cliente)
+                .Include(d => d.Orden)
+                    .ThenInclude(o => o.Vehiculo)
                 .Include(d => d.Items)
+                    .ThenInclude(i => i.ServicioSugerido)
+                .Include(d => d.Items)
+                    .ThenInclude(i => i.ProductoSugerido)
                 .FirstOrDefaultAsync(d => d.Id == id)
                 ?? throw new KeyNotFoundException($"Diagnóstico con ID {id} no encontrado.");
 
@@ -162,7 +176,14 @@ namespace FrenosCore.Servicios
         {
             var diagnostico = await _context.Diagnostico
                 .Include(d => d.Tecnico)
+                .Include(d => d.Orden)
+                    .ThenInclude(o => o.Cliente)
+                .Include(d => d.Orden)
+                    .ThenInclude(o => o.Vehiculo)
                 .Include(d => d.Items)
+                    .ThenInclude(i => i.ServicioSugerido)
+                .Include(d => d.Items)
+                    .ThenInclude(i => i.ProductoSugerido)
                 .FirstOrDefaultAsync(d => d.Id == id)
                 ?? throw new KeyNotFoundException($"Diagnóstico con ID {id} no encontrado.");
 
@@ -185,7 +206,36 @@ namespace FrenosCore.Servicios
             if (request.RequiereAtencionUrgente.HasValue) diagnostico.RequiereAtencionUrgente = request.RequiereAtencionUrgente.Value;
             if (request.ObservacionesTecnico is not null) diagnostico.ObservacionesTecnico = request.ObservacionesTecnico.Trim();
 
+            if (request.Items is not null)
+            {
+                var nuevosItems = request.Items.ToList();
+                if (nuevosItems.Any())
+                    await ValidarItemsAsync(nuevosItems);
+
+                _context.DiagnosticoItem.RemoveRange(diagnostico.Items);
+                diagnostico.Items = nuevosItems.Select(i => new DiagnosticoItem
+                {
+                    DiagnosticoId = diagnostico.Id,
+                    SistemaVehiculo = i.SistemaVehiculo.Trim(),
+                    Componente = i.Componente.Trim(),
+                    Condicion = i.Condicion,
+                    AccionRecomendada = i.AccionRecomendada,
+                    Descripcion = i.Descripcion?.Trim(),
+                    ServicioSugeridoId = i.ServicioSugeridoId,
+                    ProductoSugeridoId = i.ProductoSugeridoId,
+                    CantidadProductoSugerido = i.CantidadProductoSugerida,
+                    EsUrgente = i.EsUrgente
+                }).ToList();
+            }
+
             await _context.SaveChangesAsync();
+
+            await _context.Entry(diagnostico)
+                .Collection(d => d.Items)
+                .Query()
+                .Include(i => i.ServicioSugerido)
+                .Include(i => i.ProductoSugerido)
+                .LoadAsync();
 
             return ToResponse(diagnostico, diagnostico.Orden, diagnostico.Tecnico);
         }
@@ -203,17 +253,42 @@ namespace FrenosCore.Servicios
         public async Task<DiagnosticoResponse> CompletarDiagnosticoAsync(int id)
         {
             var diagnostico = await _context.Diagnostico
+                .Include(d => d.Tecnico)
                 .Include(d => d.Items)
+                    .ThenInclude(i => i.ServicioSugerido)
+                .Include(d => d.Items)
+                    .ThenInclude(i => i.ProductoSugerido)
                 .Include(d => d.Orden)
+                    .ThenInclude(o => o.Cliente)
+                .Include(d => d.Orden)
+                    .ThenInclude(o => o.Vehiculo)
                 .FirstOrDefaultAsync(d => d.Id == id)
                 ?? throw new KeyNotFoundException($"Diagnóstico con ID {id} no encontrado.");
 
             diagnostico.Estado = "Completado";
             await _context.SaveChangesAsync();
 
-            var cotizacion = await _CotizcionServ.GenerarDesdeDiagnosticoAsync(diagnostico.Id);
+            if (!diagnostico.Orden.CotizacionId.HasValue)
+            {
+                var cotizacion = await _CotizcionServ.GenerarDesdeDiagnosticoAsync(diagnostico.Id);
+                diagnostico.Orden.CotizacionId = cotizacion.Id;
+                await _context.SaveChangesAsync();
+            }
 
             return ToResponse(diagnostico, diagnostico.Orden, diagnostico.Tecnico);
+        }
+        public async Task AprobarAsync(int id)
+        {
+            var diagnostico = await _context.Diagnostico.FindAsync(id)
+                ?? throw new KeyNotFoundException($"El diagnostico con id: {id} no fue encontrado");
+
+            diagnostico.AprobadoPorCliente = true;
+            diagnostico.Estado = "Completado";
+
+            await _context.SaveChangesAsync();
+
+
+
         }
         private async Task ValidarItemsAsync(IEnumerable<CrearDiagnosticoItemRequest> items)
         {
@@ -259,14 +334,15 @@ namespace FrenosCore.Servicios
 
 
         private static DiagnosticoResponse ToResponse(
-            Diagnostico d, Orden orden, Usuario tecnico) => new(
+            Diagnostico d, Orden? orden, Usuario? tecnico) => new(
                 Id: d.Id,
                 OrdenId: d.OrdenId,
-                VehiculoInfo: $"{orden.Vehiculo.Marca} {orden.Vehiculo.Modelo} " +
-                                         $"{orden.Vehiculo.Anno} · {orden.Vehiculo.Placa}",
-                ClienteNombre: orden.Cliente.Nombre,
+                VehiculoInfo: orden?.Vehiculo is null
+                    ? string.Empty
+                    : $"{orden.Vehiculo.Marca} {orden.Vehiculo.Modelo} {orden.Vehiculo.Anno} · {orden.Vehiculo.Placa}",
+                ClienteNombre: orden?.Cliente?.Nombre ?? string.Empty,
                 TecnicoId: d.TecnicoId,
-                TecnicoNombre: tecnico.Nombre,
+                TecnicoNombre: tecnico?.Nombre ?? string.Empty,
                 KmIngreso: d.KmIngreso,
                 DescripcionGeneral: d.DescripcionGeneral,
                 Estado: d.Estado,

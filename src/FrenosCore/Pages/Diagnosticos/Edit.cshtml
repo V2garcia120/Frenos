@@ -55,6 +55,76 @@
             </div>
 
             <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h2 class="h5 mb-0">Servicios y productos sugeridos</h2>
+                    <button type="button" id="btnAgregarItem" class="btn btn-sm btn-outline-primary">Agregar item</button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered" id="tablaItemsDiagnostico">
+                        <thead>
+                            <tr>
+                                <th>Sistema</th>
+                                <th>Componente</th>
+                                <th>Condición</th>
+                                <th>Acción</th>
+                                <th>Servicio</th>
+                                <th>Producto</th>
+                                <th>Cant.</th>
+                                <th>Urgente</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (var i = 0; i < Model.Input.Items.Count; i++)
+                            {
+                                <tr>
+                                    <td><input asp-for="Input.Items[i].SistemaVehiculo" class="form-control form-control-sm" /></td>
+                                    <td><input asp-for="Input.Items[i].Componente" class="form-control form-control-sm" /></td>
+                                    <td>
+                                        <select asp-for="Input.Items[i].Condicion" class="form-select form-select-sm">
+                                            <option>Bueno</option>
+                                            <option>Regular</option>
+                                            <option>Malo</option>
+                                            <option>Critico</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <select asp-for="Input.Items[i].AccionRecomendada" class="form-select form-select-sm">
+                                            <option>Revisar</option>
+                                            <option>Reparar</option>
+                                            <option>Reemplazar</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <select asp-for="Input.Items[i].ServicioSugeridoId" class="form-select form-select-sm">
+                                            <option value="">-</option>
+                                            @foreach (var servicio in Model.Servicios)
+                                            {
+                                                <option value="@servicio.Id">@servicio.Nombre</option>
+                                            }
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <select asp-for="Input.Items[i].ProductoSugeridoId" class="form-select form-select-sm">
+                                            <option value="">-</option>
+                                            @foreach (var producto in Model.Productos)
+                                            {
+                                                <option value="@producto.Id">@producto.Nombre</option>
+                                            }
+                                        </select>
+                                    </td>
+                                    <td><input asp-for="Input.Items[i].CantidadProductoSugerida" class="form-control form-control-sm" min="0" /></td>
+                                    <td class="text-center"><input asp-for="Input.Items[i].EsUrgente" class="form-check-input mt-2" /></td>
+                                    <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger btn-quitar-item">Quitar</button></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="col-12">
                 <button type="submit" class="btn btn-primary">Guardar cambios</button>
             </div>
         </form>
@@ -63,4 +133,83 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        (() => {
+            const tabla = document.getElementById('tablaItemsDiagnostico');
+            const tbody = tabla.querySelector('tbody');
+            const btnAgregar = document.getElementById('btnAgregarItem');
+
+            function servicioOptions() {
+                return `
+                    <option value="">-</option>
+                    @foreach (var servicio in Model.Servicios)
+                    {
+                        <text><option value="@servicio.Id">@servicio.Nombre</option></text>
+                    }
+                `;
+            }
+
+            function productoOptions() {
+                return `
+                    <option value="">-</option>
+                    @foreach (var producto in Model.Productos)
+                    {
+                        <text><option value="@producto.Id">@producto.Nombre</option></text>
+                    }
+                `;
+            }
+
+            function reindexar() {
+                const filas = tbody.querySelectorAll('tr');
+                filas.forEach((fila, index) => {
+                    const controles = fila.querySelectorAll('input, select, textarea');
+                    controles.forEach(ctrl => {
+                        if (ctrl.name) {
+                            ctrl.name = ctrl.name.replace(/Input\.Items\[\d+\]/, `Input.Items[${index}]`);
+                        }
+                        if (ctrl.id) {
+                            ctrl.id = ctrl.id.replace(/Input_Items_\d+__/, `Input_Items_${index}__`);
+                        }
+                    });
+                });
+            }
+
+            btnAgregar.addEventListener('click', () => {
+                const index = tbody.querySelectorAll('tr').length;
+                const fila = document.createElement('tr');
+                fila.innerHTML = `
+                    <td><input name="Input.Items[${index}].SistemaVehiculo" class="form-control form-control-sm" /></td>
+                    <td><input name="Input.Items[${index}].Componente" class="form-control form-control-sm" /></td>
+                    <td>
+                        <select name="Input.Items[${index}].Condicion" class="form-select form-select-sm">
+                            <option>Bueno</option><option>Regular</option><option>Malo</option><option>Critico</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select name="Input.Items[${index}].AccionRecomendada" class="form-select form-select-sm">
+                            <option>Revisar</option><option>Reparar</option><option>Reemplazar</option>
+                        </select>
+                    </td>
+                    <td><select name="Input.Items[${index}].ServicioSugeridoId" class="form-select form-select-sm">${servicioOptions()}</select></td>
+                    <td><select name="Input.Items[${index}].ProductoSugeridoId" class="form-select form-select-sm">${productoOptions()}</select></td>
+                    <td><input name="Input.Items[${index}].CantidadProductoSugerida" type="number" min="0" class="form-control form-control-sm" value="0" /></td>
+                    <td class="text-center"><input name="Input.Items[${index}].EsUrgente" type="checkbox" class="form-check-input mt-2" /></td>
+                    <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger btn-quitar-item">Quitar</button></td>
+                `;
+                tbody.appendChild(fila);
+            });
+
+            tbody.addEventListener('click', (event) => {
+                const boton = event.target.closest('.btn-quitar-item');
+                if (!boton) return;
+
+                const filas = tbody.querySelectorAll('tr');
+                if (filas.length <= 1) return;
+
+                boton.closest('tr')?.remove();
+                reindexar();
+            });
+        })();
+    </script>
 }

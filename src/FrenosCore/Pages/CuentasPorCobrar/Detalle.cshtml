@@ -1,0 +1,115 @@
+@page "{id:int}"
+@model FrenosCore.Pages.CuentasPorCobrar.DetalleModel
+@{
+    ViewData["Title"] = "Detalle CxC";
+}
+
+@if (TempData["Mensaje"] is string mensaje)
+{
+    <div class="alert alert-success">@mensaje</div>
+}
+
+@if (TempData["MensajeError"] is string mensajeError)
+{
+    <div class="alert alert-danger">@mensajeError</div>
+}
+
+@if (Model.Cuenta is null)
+{
+    <div class="alert alert-warning">No se encontró la cuenta por cobrar.</div>
+    <a asp-page="/CuentasPorCobrar/Index" class="btn btn-outline-secondary">Volver</a>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">Cuenta por cobrar #@Model.Cuenta.Id</h1>
+        <a asp-page="/CuentasPorCobrar/Index" class="btn btn-outline-secondary">Volver al listado</a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">Resumen</div>
+        <div class="card-body row g-3">
+            <div class="col-md-3"><strong>Factura:</strong> @Model.Cuenta.NumeroFactura</div>
+            <div class="col-md-3"><strong>Estado:</strong> @Model.Cuenta.Estado</div>
+            <div class="col-md-3"><strong>Monto:</strong> @Model.Cuenta.Monto.ToString("C")</div>
+            <div class="col-md-3"><strong>Saldo:</strong> @Model.Cuenta.Saldo.ToString("C")</div>
+            <div class="col-md-6"><strong>Cliente:</strong> @Model.Cuenta.ClienteNombre</div>
+            <div class="col-md-3"><strong>Vencimiento:</strong> @Model.Cuenta.Vencimiento.ToString("dd/MM/yyyy")</div>
+            <div class="col-md-3"><strong>Creado:</strong> @Model.Cuenta.CreadoEn.ToString("dd/MM/yyyy")</div>
+            <div class="col-12">
+                <a asp-page="/Facturas/Detalle" asp-route-id="@Model.Cuenta.FacturaId" class="btn btn-outline-primary btn-sm">Ver factura</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">Abonos registrados</div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Fecha</th>
+                            <th>Método</th>
+                            <th>Registrado por</th>
+                            <th class="text-end">Monto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Cuenta.Abonos.Any())
+                        {
+                            <tr><td colspan="5" class="text-center py-3">Sin abonos registrados.</td></tr>
+                        }
+                        else
+                        {
+                            @foreach (var abono in Model.Cuenta.Abonos)
+                            {
+                                <tr>
+                                    <td>@abono.Id</td>
+                                    <td>@abono.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>@abono.MetodoPago</td>
+                                    <td>@abono.RegistradoPorNombre</td>
+                                    <td class="text-end">@abono.Monto.ToString("C")</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.Cuenta.Estado != "Pagada" && Model.Cuenta.Estado != "Anulada")
+    {
+        <div class="card mb-4">
+            <div class="card-header">Registrar abono</div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="RegistrarAbono" class="row g-3">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <div class="col-md-4">
+                        <label asp-for="Abono.Monto" class="form-label">Monto</label>
+                        <input asp-for="Abono.Monto" class="form-control" />
+                        <span asp-validation-for="Abono.Monto" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Abono.MetodoPago" class="form-label">Método de pago</label>
+                        <select asp-for="Abono.MetodoPago" class="form-select">
+                            <option>Efectivo</option>
+                            <option>Tarjeta</option>
+                            <option>Transferencia</option>
+                        </select>
+                        <span asp-validation-for="Abono.MetodoPago" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary">Registrar abono</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    }
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

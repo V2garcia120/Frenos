@@ -1,0 +1,151 @@
+@page "{id:int}"
+@model FrenosCore.Pages.Facturas.DetalleModel
+@{
+    ViewData["Title"] = "Detalle de factura";
+    var esCredito = Model.CuentaPorCobrar is not null || string.Equals(Model.Factura?.MetodoPago, "Credito", StringComparison.OrdinalIgnoreCase);
+}
+
+@if (TempData["Mensaje"] is string mensaje)
+{
+    <div class="alert alert-success">@mensaje</div>
+}
+
+@if (TempData["MensajeError"] is string mensajeError)
+{
+    <div class="alert alert-danger">@mensajeError</div>
+}
+
+@if (Model.Factura is null)
+{
+    <div class="alert alert-warning">No se encontró la factura.</div>
+    <a asp-page="/Facturas/Index" class="btn btn-outline-secondary">Volver</a>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">Factura @Model.Factura.Numero</h1>
+        <a asp-page="/Facturas/Index" class="btn btn-outline-secondary">Volver al listado</a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">Resumen de factura</div>
+        <div class="card-body row g-3">
+            <div class="col-md-3"><strong>Id:</strong> @Model.Factura.Id</div>
+            <div class="col-md-3"><strong>Origen:</strong> @Model.Factura.TipoOrigen</div>
+            <div class="col-md-3"><strong>Estado:</strong> @Model.Factura.Estado</div>
+            <div class="col-md-3"><strong>Método pago:</strong> @(Model.Factura.MetodoPago ?? "-")</div>
+            <div class="col-md-6"><strong>Cliente:</strong> @Model.Factura.ClienteNombre</div>
+            <div class="col-md-6"><strong>Fecha:</strong> @Model.Factura.Fecha.ToString("dd/MM/yyyy HH:mm")</div>
+            <div class="col-md-4"><strong>Subtotal:</strong> @Model.Factura.Subtotal.ToString("C")</div>
+            <div class="col-md-4"><strong>ITBIS:</strong> @Model.Factura.Itbis.ToString("C")</div>
+            <div class="col-md-4"><strong>Total:</strong> @Model.Factura.Total.ToString("C")</div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">Detalle de items</div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Descripción</th>
+                            <th class="text-end">Cantidad</th>
+                            <th class="text-end">Precio unitario</th>
+                            <th class="text-end">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Factura.Items)
+                        {
+                            <tr>
+                                <td>@item.Tipo</td>
+                                <td>@item.Descripcion</td>
+                                <td class="text-end">@item.Cantidad</td>
+                                <td class="text-end">@item.PrecioUnitario.ToString("C")</td>
+                                <td class="text-end">@item.Subtotal.ToString("C")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.CuentaPorCobrar is not null)
+    {
+        <div class="card mb-4 border-warning">
+            <div class="card-header bg-warning-subtle">Cuenta por cobrar</div>
+            <div class="card-body row g-3">
+                <div class="col-md-3"><strong>Id:</strong> @Model.CuentaPorCobrar.Id</div>
+                <div class="col-md-3"><strong>Estado:</strong> @Model.CuentaPorCobrar.Estado</div>
+                <div class="col-md-3"><strong>Vencimiento:</strong> @Model.CuentaPorCobrar.Vencimiento.ToString("dd/MM/yyyy")</div>
+                <div class="col-md-3"><strong>Saldo:</strong> @Model.CuentaPorCobrar.Saldo.ToString("C")</div>
+                <div class="col-12">
+                    <a asp-page="/CuentasPorCobrar/Detalle" asp-route-id="@Model.CuentaPorCobrar.Id" class="btn btn-outline-warning">Ir a detalle de CxC</a>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (Model.Factura.Estado == "Pendiente")
+    {
+        <div class="card mb-4">
+            <div class="card-header">Acciones de pago</div>
+            <div class="card-body">
+                @if (!esCredito)
+                {
+                    <div class="d-flex gap-2 mb-3">
+                        <form method="post" asp-page-handler="MarcarCredito" class="d-inline">
+                            <button type="submit" class="btn btn-outline-warning">Marcar como crédito</button>
+                        </form>
+                    </div>
+
+                    <form method="post" asp-page-handler="RegistrarPago" class="row g-3">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <div class="col-md-4">
+                            <label asp-for="Pago.MetodoPago" class="form-label">Método de pago</label>
+                            <select asp-for="Pago.MetodoPago" class="form-select">
+                                <option>Efectivo</option>
+                                <option>Tarjeta</option>
+                                <option>Transferencia</option>
+                                <option>Credito</option>
+                            </select>
+                            <span asp-validation-for="Pago.MetodoPago" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Pago.MontoPagado" class="form-label">Monto pagado</label>
+                            <input asp-for="Pago.MontoPagado" class="form-control" />
+                            <span asp-validation-for="Pago.MontoPagado" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary">Registrar pago</button>
+                        </div>
+                    </form>
+                }
+                else
+                {
+                    <div class="alert alert-info mb-0">Esta factura es a crédito. Los pagos se registran desde la cuenta por cobrar.</div>
+                }
+            </div>
+        </div>
+    }
+
+    @if (Model.EsAdmin && Model.Factura.Estado == "Pendiente")
+    {
+        <div class="card mb-4 border-danger">
+            <div class="card-header bg-danger-subtle">Acciones administrativas</div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="Anular" class="d-inline">
+                    <button type="submit" class="btn btn-outline-danger" onclick="return confirm('¿Seguro que deseas anular esta factura?');">Anular factura</button>
+                </form>
+                <div class="form-text mt-2">Solo se anula si está pendiente y no tiene abonos registrados.</div>
+            </div>
+        </div>
+    }
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

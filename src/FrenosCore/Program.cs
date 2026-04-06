@@ -64,6 +64,7 @@ builder.Services.AddScoped<IServiciciosService, ServiciosService>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IVehiculoService, VehiculoService>();
 builder.Services.AddScoped<IFacturaService, FacturaService>();
+builder.Services.AddScoped<ICuentasPorCobrarService, CuentasPorCobrarService>();
 builder.Services.AddScoped<IOrdenService, OrdenService>();
 builder.Services.AddScoped<IDiagnosticoService, DiagnosticoService>();
 builder.Services.AddScoped<ICotizacionService, CotizacionService>();

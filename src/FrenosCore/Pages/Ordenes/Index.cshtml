@@ -2,13 +2,17 @@
 @model FrenosCore.Pages.Ordenes.IndexModel
 @{
     ViewData["Title"] = "Órdenes";
+    var esTecnico = User.IsInRole("Tecnico") || User.IsInRole("Técnico");
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h3 mb-0">Listado de órdenes</h1>
     <div class="d-flex gap-2">
         <a asp-page="/Ordenes/Create" class="btn btn-primary">Crear orden</a>
-        <a asp-page="/Ordenes/MIsOrdenes" class="btn btn-outline-primary">Mis órdenes</a>
+        @if (esTecnico)
+        {
+            <a asp-page="/Ordenes/MIsOrdenes" class="btn btn-outline-primary">Mis órdenes</a>
+        }
     </div>
 </div>
 

@@ -15,9 +15,12 @@ namespace FrenosCore.Controllers.Api
         public async Task<IActionResult> Listar(
        [FromQuery] int pagina = 1,
        [FromQuery] int tam = 20,
-       [FromQuery] string? estado = null)
+       [FromQuery] string? estado = null,
+       [FromQuery] string? numero = null,
+       [FromQuery] DateTime? fecha = null,
+       [FromQuery] string? tipoOrigen = null)
         {
-            var resultado = await facturas.ListarAsync(pagina, tam, estado);
+            var resultado = await facturas.ListarAsync(pagina, tam, estado, numero, fecha, tipoOrigen);
             return Ok(ApiResponse<object>.Ok(resultado));
         }
 

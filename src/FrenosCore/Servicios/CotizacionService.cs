@@ -1,4 +1,5 @@
 ﻿using FrenosCore.Data;
+using FrenosCore.Modelos.Dtos;
 using FrenosCore.Modelos.Dtos.Cotizacion;
 using FrenosCore.Modelos.Entidades;
 using Microsoft.EntityFrameworkCore;
@@ -13,10 +14,34 @@ namespace FrenosCore.Servicios
         {
             _context = context;
         }
-        public async Task<CotizacionResponse> ListarAsync(int pagina, int tam)
+
+        public async Task<PaginadoResponse<CotizacionResponse>> ListarAsync(int pagina, int tam)
         {
-            throw new NotImplementedException();
+            pagina = Math.Max(1, pagina);
+            tam = Math.Clamp(tam, 1, 100);
+
+            var query = _context.Cotizacion
+                .AsNoTracking()
+                .Include(c => c.Items)
+                .OrderByDescending(c => c.Fecha)
+                .AsQueryable();
+
+            var totalItems = await query.CountAsync();
+
+            var items = await query
+                .Skip((pagina - 1) * tam)
+                .Take(tam)
+                .Select(c => ToResponse(c))
+                .ToListAsync();
+
+            return new PaginadoResponse<CotizacionResponse>(
+                items,
+                pagina,
+                tam,
+                totalItems,
+                (int)Math.Ceiling(totalItems / (double)tam));
         }
+
         public async Task<CotizacionResponse> ObtenerPorIdAsync(int id)
         {
             var cotizacion = await _context.Cotizacion
@@ -26,13 +51,92 @@ namespace FrenosCore.Servicios
 
             return ToResponse(cotizacion);
         }
+
         public async Task<CotizacionResponse> CrearAsync(CrearCotizacionRequest request)
         {
-            throw new NotImplementedException();
+            if (!await _context.Cliente.AnyAsync(c => c.Id == request.ClienteId))
+                throw new KeyNotFoundException($"Cliente {request.ClienteId} no encontrado.");
+
+            if (!await _context.Vehiculo.AnyAsync(v => v.Id == request.VehiculoId && v.ClienteId == request.ClienteId && v.Activo))
+                throw new KeyNotFoundException($"Vehículo {request.VehiculoId} no encontrado, inactivo o no pertenece al cliente {request.ClienteId}.");
+
+            var detalles = request.Detalles?.ToList() ?? [];
+            if (!detalles.Any())
+                throw new InvalidOperationException("La cotización debe tener al menos un item.");
+
+            var items = detalles.Select(d => new CotizacionItem
+            {
+                Tipo = d.Tipo.Trim(),
+                Descripcion = d.Descripcion.Trim(),
+                Cantidad = d.Cantidad,
+                PrecioUnitario = d.PrecioUnitario,
+                Subtotal = d.Cantidad * d.PrecioUnitario,
+                ItemId = 0
+            }).ToList();
+
+            var subtotal = items.Sum(i => i.Subtotal);
+            var itbis = Math.Round(subtotal * 0.18m, 2);
+
+            var cotizacion = new Cotizacion
+            {
+                ClienteId = request.ClienteId,
+                VehiculoId = request.VehiculoId,
+                Fecha = DateTime.UtcNow,
+                Subtotal = subtotal,
+                Itbis = itbis,
+                Total = subtotal + itbis,
+                Estado = "Pendiente",
+                Notas = string.Empty,
+                ValidaHasta = DateTime.UtcNow.AddDays(3),
+                Items = items
+            };
+
+            _context.Cotizacion.Add(cotizacion);
+            await _context.SaveChangesAsync();
+
+            return ToResponse(cotizacion);
         }
+
         public async Task<CotizacionResponse> ActualizarAsync(int id, ActualizarCotizacionRequest request)
         {
-            throw new NotImplementedException();
+            var cotizacion = await _context.Cotizacion
+                .Include(c => c.Items)
+                .FirstOrDefaultAsync(c => c.Id == id)
+                ?? throw new KeyNotFoundException($"Cotización {id} no encontrada.");
+
+            if (cotizacion.Estado != "Pendiente")
+                throw new InvalidOperationException("Solo se pueden actualizar cotizaciones en estado Pendiente.");
+
+            if (request.Notas is not null)
+                cotizacion.Notas = request.Notas.Trim();
+
+            if (request.ValidaHasta.HasValue)
+                cotizacion.ValidaHasta = request.ValidaHasta.Value;
+
+            if (request.Detalles is not null)
+            {
+                var detalles = request.Detalles.ToList();
+                if (!detalles.Any())
+                    throw new InvalidOperationException("La cotización debe tener al menos un item.");
+
+                _context.RemoveRange(cotizacion.Items);
+                cotizacion.Items = detalles.Select(d => new CotizacionItem
+                {
+                    Tipo = d.Tipo.Trim(),
+                    Descripcion = d.Descripcion.Trim(),
+                    Cantidad = d.Cantidad,
+                    PrecioUnitario = d.PrecioUnitario,
+                    Subtotal = d.Cantidad * d.PrecioUnitario,
+                    ItemId = d.ItemId ?? 0
+                }).ToList();
+
+                cotizacion.Subtotal = cotizacion.Items.Sum(i => i.Subtotal);
+                cotizacion.Itbis = Math.Round(cotizacion.Subtotal * 0.18m, 2);
+                cotizacion.Total = cotizacion.Subtotal + cotizacion.Itbis;
+            }
+
+            await _context.SaveChangesAsync();
+            return ToResponse(cotizacion);
         }
         public async Task<CotizacionItemResponse> ActualizarCotizacionItemAsync(
             int cotizacionId, int itemId, ActualizarCotizacionItemRequest req)
@@ -125,10 +229,12 @@ namespace FrenosCore.Servicios
             {
                 ClienteId = diagnostico.Orden.ClienteId,
                 VehiculoId = diagnostico.Orden.VehiculoId,
+                Fecha = DateTime.UtcNow,
                 Subtotal = subtotal,
                 Itbis = itbis,
                 Total = subtotal + itbis,
                 Estado = "Pendiente",
+                Notas = diagnostico.DescripcionGeneral,
                 ValidaHasta = DateTime.UtcNow.AddDays(3),
                 Items = items
             };

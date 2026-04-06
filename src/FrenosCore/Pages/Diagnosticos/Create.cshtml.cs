@@ -135,6 +135,7 @@ namespace FrenosCore.Pages.Diagnosticos
             try
             {
                 await _diagnosticoService.CrearAsync(request);
+
                 TempData["Mensaje"] = "Diagnóstico creado correctamente.";
                 return RedirectToPage("/Ordenes/Detalle", new { id = ordenId });
             }

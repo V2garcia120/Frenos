@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;
 using FrenosCore.Modelos.Dtos.Diagnostico;
+using FrenosCore.Modelos.Dtos.Producto;
+using FrenosCore.Modelos.Dtos.Servicio;
 using FrenosCore.Servicios;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,13 +14,22 @@ namespace FrenosCore.Pages.Diagnosticos
     public class EditModel : PageModel
     {
         private readonly IDiagnosticoService _diagnosticoService;
+        private readonly IServiciciosService _serviciosService;
+        private readonly IProductoService _productoService;
 
-        public EditModel(IDiagnosticoService diagnosticoService)
+        public EditModel(
+            IDiagnosticoService diagnosticoService,
+            IServiciciosService serviciosService,
+            IProductoService productoService)
         {
             _diagnosticoService = diagnosticoService;
+            _serviciosService = serviciosService;
+            _productoService = productoService;
         }
 
         public DiagnosticoResponse? Diagnostico { get; private set; }
+        public IList<ServicioResponse> Servicios { get; private set; } = [];
+        public IList<ProductoResponse> Productos { get; private set; } = [];
 
         [BindProperty]
         public DiagnosticoInput Input { get; set; } = new();
@@ -35,13 +46,30 @@ namespace FrenosCore.Pages.Diagnosticos
                     return RedirectToPage("/Ordenes/Detalle", new { id = Diagnostico.OrdenId });
                 }
 
+                await CargarCatalogosAsync();
+
                 Input = new DiagnosticoInput
                 {
                     KmIngreso = Diagnostico.KmIngreso,
                     DescripcionGeneral = Diagnostico.DescripcionGeneral,
                     RequiereAtencionUrgente = Diagnostico.RequiereAtencionUrgente,
-                    ObservacionesTecnico = Diagnostico.ObservacionesTecnico
+                    ObservacionesTecnico = Diagnostico.ObservacionesTecnico,
+                    Items = Diagnostico.Items.Select(i => new DiagnosticoItemInput
+                    {
+                        SistemaVehiculo = i.SistemaVehiculo,
+                        Componente = i.Componente,
+                        Condicion = i.Condicion,
+                        AccionRecomendada = i.AccionRecomendada,
+                        Descripcion = i.Descripcion,
+                        ServicioSugeridoId = i.ServicioSugeridoId,
+                        ProductoSugeridoId = i.ProductoSugeridoId,
+                        EsUrgente = i.EsUrgente,
+                        CantidadProductoSugerida = i.CantidadProductoSugerido
+                    }).ToList()
                 };
+
+                if (Input.Items.Count == 0)
+                    Input.Items.Add(new DiagnosticoItemInput());
 
                 return Page();
             }
@@ -64,10 +92,36 @@ namespace FrenosCore.Pages.Diagnosticos
                 return RedirectToPage("/Ordenes/Index");
             }
 
+            await CargarCatalogosAsync();
+
             if (!EsDiagnosticoDelTecnicoActual(Diagnostico!))
             {
                 TempData["MensajeError"] = "No tienes permisos para editar este diagnóstico.";
                 return RedirectToPage("/Ordenes/Detalle", new { id = Diagnostico!.OrdenId });
+            }
+
+            Input.Items ??= [];
+            var itemsConDatos = Input.Items
+                .Where(i =>
+                    !string.IsNullOrWhiteSpace(i.SistemaVehiculo)
+                    || !string.IsNullOrWhiteSpace(i.Componente)
+                    || i.ServicioSugeridoId.HasValue
+                    || i.ProductoSugeridoId.HasValue)
+                .ToList();
+
+            if (itemsConDatos.Count == 0)
+                ModelState.AddModelError(string.Empty, "Debe agregar al menos un item con servicio o producto sugerido.");
+
+            foreach (var item in itemsConDatos)
+            {
+                if (string.IsNullOrWhiteSpace(item.SistemaVehiculo)
+                    || string.IsNullOrWhiteSpace(item.Componente)
+                    || string.IsNullOrWhiteSpace(item.Condicion)
+                    || string.IsNullOrWhiteSpace(item.AccionRecomendada))
+                {
+                    ModelState.AddModelError(string.Empty, "Cada item debe incluir sistema, componente, condición y acción recomendada.");
+                    break;
+                }
             }
 
             if (!ModelState.IsValid)
@@ -81,7 +135,17 @@ namespace FrenosCore.Pages.Diagnosticos
                 RequiereAtencionUrgente: Input.RequiereAtencionUrgente,
                 AprobadoPorCliente: null,
                 FechaAprobacion: null,
-                ObservacionesTecnico: Input.ObservacionesTecnico);
+                ObservacionesTecnico: Input.ObservacionesTecnico,
+                Items: itemsConDatos.Select(i => new CrearDiagnosticoItemRequest(
+                    SistemaVehiculo: i.SistemaVehiculo.Trim(),
+                    Componente: i.Componente.Trim(),
+                    Condicion: i.Condicion,
+                    AccionRecomendada: i.AccionRecomendada,
+                    Descripcion: i.Descripcion,
+                    ServicioSugeridoId: i.ServicioSugeridoId,
+                    ProductoSugeridoId: i.ProductoSugeridoId,
+                    EsUrgente: i.EsUrgente,
+                    CantidadProductoSugerida: i.CantidadProductoSugerida)));
 
             try
             {
@@ -94,6 +158,12 @@ namespace FrenosCore.Pages.Diagnosticos
                 ModelState.AddModelError(string.Empty, ex.Message);
                 return Page();
             }
+        }
+
+        private async Task CargarCatalogosAsync()
+        {
+            Servicios = (await _serviciosService.ListarAsync()).ToList();
+            Productos = (await _productoService.ListarTodosAsync(null)).ToList();
         }
 
         private bool EsDiagnosticoDelTecnicoActual(DiagnosticoResponse diagnostico)
@@ -129,6 +199,21 @@ namespace FrenosCore.Pages.Diagnosticos
 
             [StringLength(2000)]
             public string? ObservacionesTecnico { get; set; }
+
+            public List<DiagnosticoItemInput> Items { get; set; } = [];
+        }
+
+        public class DiagnosticoItemInput
+        {
+            public string SistemaVehiculo { get; set; } = string.Empty;
+            public string Componente { get; set; } = string.Empty;
+            public string Condicion { get; set; } = "Bueno";
+            public string AccionRecomendada { get; set; } = "Revisar";
+            public string? Descripcion { get; set; }
+            public int? ServicioSugeridoId { get; set; }
+            public int? ProductoSugeridoId { get; set; }
+            public bool EsUrgente { get; set; }
+            public int CantidadProductoSugerida { get; set; }
         }
     }
 }

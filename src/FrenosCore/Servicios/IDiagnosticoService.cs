@@ -9,6 +9,8 @@ namespace FrenosCore.Servicios
         Task<DiagnosticoResponse> ListarPorOrdenAsync(int ordenId);
         Task<DiagnosticoResponse> ObtenerPorIdAsync(int id);
         Task<DiagnosticoResponse> ActualizarAsync(int id, ActualizarDiagnosticoRequest request);
+
+        Task AprobarAsync(int id);
         Task EliminarAsync(int id);
     }
 }

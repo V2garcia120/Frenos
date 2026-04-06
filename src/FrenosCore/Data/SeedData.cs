@@ -220,41 +220,308 @@ namespace FrenosCore.Data
 
             if (!await context.Orden.AnyAsync())
             {
+                var ordenRecibida = new Orden
+                {
+                    ClienteId = clienteDemo.Id,
+                    VehiculoId = vehiculoDemo.Id,
+                    TecnicoId = tecnicoAsignadoId,
+                    Estado = "Recibido",
+                    Prioridad = "Normal",
+                    FechaCreacion = DateTime.Now.AddHours(-10),
+                    FechaEntregaEstima = DateTime.Now.AddDays(1),
+                    Notas = "Ruido al frenar en la parte delantera"
+                };
+
+                var ordenEnDiagnostico = new Orden
+                {
+                    ClienteId = clienteDemo.Id,
+                    VehiculoId = vehiculoDemo.Id,
+                    TecnicoId = tecnicoAsignadoId,
+                    Estado = "EnDiagnostico",
+                    Prioridad = "Alta",
+                    FechaCreacion = DateTime.Now.AddHours(-8),
+                    FechaEntregaEstima = DateTime.Now.AddDays(1),
+                    Notas = "Vibración al frenar a alta velocidad"
+                };
+
+                var ordenEnReparacion = new Orden
+                {
+                    ClienteId = clienteDemo.Id,
+                    VehiculoId = vehiculoDemo.Id,
+                    TecnicoId = tecnicoAsignadoId,
+                    Estado = "EnReparacion",
+                    Prioridad = "Urgente",
+                    FechaCreacion = DateTime.Now.AddHours(-6),
+                    FechaEntregaEstima = DateTime.Now.AddHours(6),
+                    Notas = "Cambio de pastillas y rectificado de discos"
+                };
+
+                var ordenCerradaCredito = new Orden
+                {
+                    ClienteId = clienteDemo.Id,
+                    VehiculoId = vehiculoDemo.Id,
+                    TecnicoId = tecnicoAsignadoId,
+                    Estado = "Lista",
+                    Prioridad = "Alta",
+                    FechaCreacion = DateTime.Now.AddDays(-2),
+                    FechaEntregaEstima = DateTime.Now.AddDays(-1),
+                    Notas = "Reparación completada, pendiente de entrega"
+                };
+
+                var ordenCerradaPagada = new Orden
+                {
+                    ClienteId = clienteDemo.Id,
+                    VehiculoId = vehiculoDemo.Id,
+                    TecnicoId = tecnicoAsignadoId,
+                    Estado = "Entregada",
+                    Prioridad = "Normal",
+                    FechaCreacion = DateTime.Now.AddDays(-4),
+                    FechaEntregaEstima = DateTime.Now.AddDays(-3),
+                    FechaEntregaReal = DateTime.Now.AddDays(-2),
+                    Notas = "Servicio completado y vehículo entregado"
+                };
+
                 context.Orden.AddRange(
-                    new Orden
+                    ordenRecibida,
+                    ordenEnDiagnostico,
+                    ordenEnReparacion,
+                    ordenCerradaCredito,
+                    ordenCerradaPagada);
+
+                await context.SaveChangesAsync();
+
+                context.Diagnostico.AddRange(
+                    new Diagnostico
                     {
-                        ClienteId = clienteDemo.Id,
-                        VehiculoId = vehiculoDemo.Id,
+                        OrdenId = ordenEnDiagnostico.Id,
                         TecnicoId = tecnicoAsignadoId,
-                        Estado = "Recibido",
-                        Prioridad = "Normal",
-                        FechaCreacion = DateTime.Now.AddHours(-6),
-                        FechaEntregaEstima = DateTime.Now.AddDays(1),
-                        Notas = "Ruido al frenar en la parte delantera"
+                        KmIngreso = vehiculoDemo.KmActual,
+                        DescripcionGeneral = "Se detecta vibración por desgaste irregular de discos.",
+                        Estado = "Borrador",
+                        RequiereAtencionUrgente = true,
+                        ObservacionesTecnico = "Requiere revisión de discos y pastillas.",
+                        FechaDiagnostico = DateTime.Now.AddHours(-7),
+                        Items =
+                        [
+                            new DiagnosticoItem
+                            {
+                                SistemaVehiculo = "Frenos",
+                                Componente = "Disco delantero",
+                                Condicion = "Malo",
+                                AccionRecomendada = "Reemplazar",
+                                Descripcion = "Superficie irregular con vibración.",
+                                EsUrgente = true
+                            }
+                        ]
                     },
-                    new Orden
+                    new Diagnostico
                     {
-                        ClienteId = clienteDemo.Id,
-                        VehiculoId = vehiculoDemo.Id,
+                        OrdenId = ordenEnReparacion.Id,
                         TecnicoId = tecnicoAsignadoId,
-                        Estado = "EnDiagnostico",
-                        Prioridad = "Alta",
-                        FechaCreacion = DateTime.Now.AddHours(-4),
-                        FechaEntregaEstima = DateTime.Now.AddDays(1),
-                        Notas = "Vibración al frenar a alta velocidad"
+                        KmIngreso = vehiculoDemo.KmActual,
+                        DescripcionGeneral = "Diagnóstico completado y aprobado para reparación.",
+                        Estado = "Completado",
+                        RequiereAtencionUrgente = true,
+                        AprobadoPorCliente = true,
+                        FechaAprobacion = DateTime.Now.AddHours(-5),
+                        ObservacionesTecnico = "En proceso de instalación de nuevos componentes.",
+                        FechaDiagnostico = DateTime.Now.AddHours(-6),
+                        Items =
+                        [
+                            new DiagnosticoItem
+                            {
+                                SistemaVehiculo = "Frenos",
+                                Componente = "Pastillas delanteras",
+                                Condicion = "Malo",
+                                AccionRecomendada = "Reemplazar",
+                                Descripcion = "Pastillas por debajo del mínimo.",
+                                EsUrgente = true
+                            }
+                        ]
                     },
-                    new Orden
+                    new Diagnostico
                     {
-                        ClienteId = clienteDemo.Id,
-                        VehiculoId = vehiculoDemo.Id,
+                        OrdenId = ordenCerradaCredito.Id,
                         TecnicoId = tecnicoAsignadoId,
-                        Estado = "EnReparacion",
-                        Prioridad = "Urgente",
-                        FechaCreacion = DateTime.Now.AddHours(-2),
-                        FechaEntregaEstima = DateTime.Now.AddHours(4),
-                        Notas = "Cambio de pastillas y rectificado de discos"
-                    }
-                );
+                        KmIngreso = vehiculoDemo.KmActual,
+                        DescripcionGeneral = "Trabajo completado y listo para entrega.",
+                        Estado = "Completado",
+                        RequiereAtencionUrgente = false,
+                        AprobadoPorCliente = true,
+                        FechaAprobacion = DateTime.Now.AddDays(-2),
+                        ObservacionesTecnico = "Vehículo probado y funcionando correctamente.",
+                        FechaDiagnostico = DateTime.Now.AddDays(-2).AddHours(2),
+                        Items =
+                        [
+                            new DiagnosticoItem
+                            {
+                                SistemaVehiculo = "Frenos",
+                                Componente = "Sangrado de línea",
+                                Condicion = "Regular",
+                                AccionRecomendada = "Reparar",
+                                Descripcion = "Se realizó purga y ajuste completo.",
+                                EsUrgente = false
+                            }
+                        ]
+                    },
+                    new Diagnostico
+                    {
+                        OrdenId = ordenCerradaPagada.Id,
+                        TecnicoId = tecnicoAsignadoId,
+                        KmIngreso = vehiculoDemo.KmActual,
+                        DescripcionGeneral = "Mantenimiento concluido y entregado.",
+                        Estado = "Completado",
+                        RequiereAtencionUrgente = false,
+                        AprobadoPorCliente = true,
+                        FechaAprobacion = DateTime.Now.AddDays(-4),
+                        ObservacionesTecnico = "Cliente confirma mejoría total del frenado.",
+                        FechaDiagnostico = DateTime.Now.AddDays(-4).AddHours(3),
+                        Items =
+                        [
+                            new DiagnosticoItem
+                            {
+                                SistemaVehiculo = "Frenos",
+                                Componente = "Líquido de frenos",
+                                Condicion = "Regular",
+                                AccionRecomendada = "Reemplazar",
+                                Descripcion = "Cambio total de líquido DOT 4.",
+                                EsUrgente = false
+                            }
+                        ]
+                    });
+
+                await context.SaveChangesAsync();
+
+                var cotizacionCredito = new Cotizacion
+                {
+                    ClienteId = clienteDemo.Id,
+                    VehiculoId = vehiculoDemo.Id,
+                    Fecha = DateTime.Now.AddDays(-2),
+                    Subtotal = 3500m,
+                    Itbis = 630m,
+                    Total = 4130m,
+                    Estado = "Aprobada",
+                    Notas = "Cotización aprobada para orden lista pendiente de entrega.",
+                    ValidaHasta = DateTime.Now.AddDays(5),
+                    Items =
+                    [
+                        new CotizacionItem
+                        {
+                            Tipo = "Servicio",
+                            ItemId = 1,
+                            Descripcion = "Servicio de reparación de frenos",
+                            Cantidad = 1,
+                            PrecioUnitario = 3500m,
+                            Subtotal = 3500m
+                        }
+                    ]
+                };
+
+                var cotizacionPagada = new Cotizacion
+                {
+                    ClienteId = clienteDemo.Id,
+                    VehiculoId = vehiculoDemo.Id,
+                    Fecha = DateTime.Now.AddDays(-4),
+                    Subtotal = 2200m,
+                    Itbis = 396m,
+                    Total = 2596m,
+                    Estado = "Aprobada",
+                    Notas = "Cotización aprobada para orden entregada.",
+                    ValidaHasta = DateTime.Now.AddDays(-1),
+                    Items =
+                    [
+                        new CotizacionItem
+                        {
+                            Tipo = "Producto",
+                            ItemId = 1,
+                            Descripcion = "Pastillas delanteras",
+                            Cantidad = 1,
+                            PrecioUnitario = 2200m,
+                            Subtotal = 2200m
+                        }
+                    ]
+                };
+
+                context.Cotizacion.AddRange(cotizacionCredito, cotizacionPagada);
+                await context.SaveChangesAsync();
+
+                ordenCerradaCredito.CotizacionId = cotizacionCredito.Id;
+                ordenCerradaPagada.CotizacionId = cotizacionPagada.Id;
+                await context.SaveChangesAsync();
+
+                var adminUsuarioId = await context.Usuario
+                    .Where(u => u.Email == "admin@frenos.local")
+                    .Select(u => u.Id)
+                    .FirstAsync();
+
+                var anno = DateTime.Now.Year;
+                var facturaCredito = new Factura
+                {
+                    OrdenId = ordenCerradaCredito.Id,
+                    TipoOrigen = "OrdenReparacion",
+                    ClienteId = clienteDemo.Id,
+                    Numero = $"FAC-{anno}-9001",
+                    Fecha = DateTime.Now.AddDays(-1),
+                    Subtotal = 3500m,
+                    Itbis = 630m,
+                    Total = 4130m,
+                    Estado = "Pendiente",
+                    MetodoPago = "Credito",
+                    EmitidaPor = adminUsuarioId,
+                    Items =
+                    [
+                        new FacturaItem
+                        {
+                            Tipo = "Servicio",
+                            ItemId = 1,
+                            Descripcion = "Servicio de reparación de frenos",
+                            Cantidad = 1,
+                            PrecioUnitario = 3500m,
+                            Subtotal = 3500m
+                        }
+                    ]
+                };
+
+                var facturaPagada = new Factura
+                {
+                    OrdenId = ordenCerradaPagada.Id,
+                    TipoOrigen = "OrdenReparacion",
+                    ClienteId = clienteDemo.Id,
+                    Numero = $"FAC-{anno}-9002",
+                    Fecha = DateTime.Now.AddDays(-2),
+                    Subtotal = 2200m,
+                    Itbis = 396m,
+                    Total = 2596m,
+                    Estado = "Pagada",
+                    MetodoPago = "Efectivo",
+                    EmitidaPor = adminUsuarioId,
+                    Items =
+                    [
+                        new FacturaItem
+                        {
+                            Tipo = "Producto",
+                            ItemId = 1,
+                            Descripcion = "Pastillas delanteras",
+                            Cantidad = 1,
+                            PrecioUnitario = 2200m,
+                            Subtotal = 2200m
+                        }
+                    ]
+                };
+
+                context.Factura.AddRange(facturaCredito, facturaPagada);
+                await context.SaveChangesAsync();
+
+                context.CuentasPorCobrar.Add(new CuentasPorCobrar
+                {
+                    ClienteId = clienteDemo.Id,
+                    FacturaId = facturaCredito.Id,
+                    Monto = facturaCredito.Total,
+                    Saldo = facturaCredito.Total,
+                    Vencimiento = DateTime.Now.AddDays(30),
+                    Estado = "Pendiente",
+                    CreadoEn = DateTime.Now
+                });
 
                 await context.SaveChangesAsync();
             }

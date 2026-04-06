@@ -8,6 +8,7 @@ namespace FrenosCore.Modelos.Dtos.Diagnostico
         bool? RequiereAtencionUrgente,
         bool? AprobadoPorCliente,
         DateTime? FechaAprobacion,
-        string? ObservacionesTecnico
+        string? ObservacionesTecnico,
+        IEnumerable<CrearDiagnosticoItemRequest>? Items
     );
 }

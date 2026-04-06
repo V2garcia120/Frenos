@@ -14,7 +14,8 @@ namespace FrenosCore.Servicios
     
     public class OrdenService(
     AppDbContext db,
-    IFacturaService facturas) : IOrdenService
+    IFacturaService facturas,
+    ICotizacionService cotizaciones) : IOrdenService
     {
         // Estados válidos y sus transiciones permitidas
         private static readonly Dictionary<string, string[]> _transiciones = new()
@@ -239,7 +240,12 @@ namespace FrenosCore.Servicios
             
             if (req.Estado == "Aprobado")
             {
-                if (orden.Diagnostico is null || !orden.Diagnostico.AprobadoPorCliente)
+                if (orden.Diagnostico is null)
+                    throw new InvalidOperationException(
+                        "La orden requiere un diagnóstico aprobado por el cliente " +
+                        "antes de pasar al estado Aprobado.");
+
+                if (!orden.Diagnostico.AprobadoPorCliente)
                     throw new InvalidOperationException(
                         "La orden requiere un diagnóstico aprobado por el cliente " +
                         "antes de pasar al estado Aprobado.");
@@ -276,9 +282,9 @@ namespace FrenosCore.Servicios
                 .FirstOrDefaultAsync(o => o.Id == id)
                 ?? throw new KeyNotFoundException($"Orden {id} no encontrada.");
 
-            if (orden.Estado != "EnReparacion")
+            if (orden.Estado != "Lista")
                 throw new InvalidOperationException(
-                    "Solo se puede cerrar una orden en estado EnReparacion.");
+                    "Solo se puede cerrar una orden en estado Lista.");
 
             if (orden.Diagnostico is null)
                 throw new InvalidOperationException(
@@ -287,6 +293,10 @@ namespace FrenosCore.Servicios
             if (!orden.Diagnostico.AprobadoPorCliente)
                 throw new InvalidOperationException(
                     "No se puede cerrar la orden porque el diagnóstico no ha sido aprobado por el cliente.");
+
+            if (orden.Diagnostico.Estado != "Completado" && orden.Diagnostico.Estado != "Aprobado")
+                throw new InvalidOperationException(
+                    "No se puede cerrar la orden porque el diagnóstico debe estar en estado Aprobado o Completado.");
 
 
             var tecnico = await db.Usuario
@@ -324,13 +334,24 @@ namespace FrenosCore.Servicios
                 if (req.KmAlServicio.HasValue)
                     orden.Vehiculo.KmActual = req.KmAlServicio.Value;
 
+                if (!orden.CotizacionId.HasValue)
+                {
+                    var cotizacion = await cotizaciones.GenerarDesdeDiagnosticoAsync(orden.Diagnostico.Id);
+                    await cotizaciones.AprobarAsync(cotizacion.Id);
+                    orden.CotizacionId = cotizacion.Id;
+                }
+                else if (orden.Cotizacion is not null && orden.Cotizacion.Estado != "Aprobada")
+                {
+                    await cotizaciones.AprobarAsync(orden.CotizacionId.Value);
+                }
+
 
                 orden.Estado = "Lista";
 
                 await db.SaveChangesAsync();
 
 
-                var factura = await facturas.GenerarDesdeOrdenAsync(orden.Id, req.TecnicoId);
+                var factura = await facturas.GenerarDesdeOrdenAsync(orden.Id, req.TecnicoId, req.MetodoPago);
 
                 await facturas.RegistrarPagoAsync(
                     factura.Id,

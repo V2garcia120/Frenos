@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;
+using FrenosCore.Modelos.Dtos.Cotizacion;
 using FrenosCore.Modelos.Dtos.Orden;
 using FrenosCore.Modelos.Dtos.Diagnostico;
 using FrenosCore.Modelos.Dtos.Usuario;
@@ -16,18 +17,22 @@ namespace FrenosCore.Pages.Ordenes
         private readonly IOrdenService _ordenService;
         private readonly IDiagnosticoService _diagnosticoService;
         private readonly IUsuarioService _usuarioService;
+        private readonly ICotizacionService _cotizacionService;
 
         public DetalleModel(
             IOrdenService ordenService,
             IDiagnosticoService diagnosticoService,
-            IUsuarioService usuarioService)
+            IUsuarioService usuarioService,
+            ICotizacionService cotizacionService)
         {
             _ordenService = ordenService;
             _diagnosticoService = diagnosticoService;
             _usuarioService = usuarioService;
+            _cotizacionService = cotizacionService;
         }
 
         public OrdenDetalleResponse? Orden { get; private set; }
+        public CotizacionResponse? Cotizacion { get; private set; }
 
         public IList<UsuarioResponse> Tecnicos { get; private set; } = [];
 
@@ -48,9 +53,24 @@ namespace FrenosCore.Pages.Ordenes
             && Orden.Diagnostico.Estado == "Borrador"
             && Orden.Diagnostico.TecnicoId == UsuarioId.Value;
 
+        public bool PuedeCompletarDiagnostico =>
+            EsTecnico
+            && UsuarioId.HasValue
+            && Orden?.Diagnostico is not null
+            && Orden.Diagnostico.Estado == "Borrador"
+            && Orden.Diagnostico.TecnicoId == UsuarioId.Value;
+
+        public bool PuedeAprobarDiagnostico =>
+            EsTecnico
+            && UsuarioId.HasValue
+            && Orden?.Diagnostico is not null
+            && Orden.Diagnostico.TecnicoId == UsuarioId.Value
+            && Orden.Diagnostico.Estado == "Completado"
+            && !Orden.Diagnostico.AprobadoPorCliente;
+
         public bool PuedeCambiarEstado => EsAdminOMantenimiento && Orden is not null;
 
-        public bool PuedeCerrar => EsAdminOMantenimiento && Orden?.Estado == "EnReparacion";
+        public bool PuedeCerrar => EsAdminOMantenimiento && Orden?.Estado == "Lista";
 
         [BindProperty]
         public DiagnosticoInput DiagnosticoForm { get; set; } = new();
@@ -67,6 +87,31 @@ namespace FrenosCore.Pages.Ordenes
             return Orden is null ? RedirectToPage("/Ordenes/Index") : Page();
         }
 
+        public async Task<IActionResult> OnPostCompletarDiagnosticoAsync(int id)
+        {
+            await PrepararPantallaAsync(id);
+            if (Orden?.Diagnostico is null)
+                return RedirectToPage(new { id });
+
+            if (!PuedeCompletarDiagnostico)
+            {
+                TempData["MensajeError"] = "No tienes permisos para completar este diagnóstico.";
+                return RedirectToPage(new { id });
+            }
+
+            try
+            {
+                await _diagnosticoService.CompletarDiagnosticoAsync(Orden.Diagnostico.Id);
+                TempData["Mensaje"] = "Diagnóstico completado correctamente.";
+                return RedirectToPage(new { id });
+            }
+            catch (Exception ex)
+            {
+                TempData["MensajeError"] = ex.Message;
+                return RedirectToPage(new { id });
+            }
+        }
+
         public async Task<IActionResult> OnPostCrearDiagnosticoAsync(int id)
         {
             await PrepararPantallaAsync(id);
@@ -79,7 +124,8 @@ namespace FrenosCore.Pages.Ordenes
                 return RedirectToPage(new { id });
             }
 
-            if (!ModelState.IsValid)
+            ModelState.ClearValidationState(nameof(DiagnosticoForm));
+            if (!TryValidateModel(DiagnosticoForm, nameof(DiagnosticoForm)))
                 return Page();
 
             var request = new CrearDiagnosticoRequest(
@@ -104,6 +150,32 @@ namespace FrenosCore.Pages.Ordenes
             }
         }
 
+        public async Task<IActionResult> OnPostAprobarDiagnosticoAsync(int id)
+        {
+            await PrepararPantallaAsync(id);
+            if (Orden?.Diagnostico is null)
+                return RedirectToPage(new { id });
+
+            if (!PuedeAprobarDiagnostico)
+            {
+                TempData["MensajeError"] = "No tienes permisos para aprobar este diagnóstico.";
+                return RedirectToPage(new { id });
+            }
+
+            try
+            {
+
+                await _diagnosticoService.AprobarAsync(Orden.Diagnostico.Id);
+                TempData["Mensaje"] = "Diagnóstico aprobado correctamente.";
+                return RedirectToPage(new { id });
+            }
+            catch (Exception ex)
+            {
+                TempData["MensajeError"] = ex.Message;
+                return RedirectToPage(new { id });
+            }
+        }
+
         public async Task<IActionResult> OnPostEditarDiagnosticoAsync(int id)
         {
             await PrepararPantallaAsync(id);
@@ -116,7 +188,8 @@ namespace FrenosCore.Pages.Ordenes
                 return RedirectToPage(new { id });
             }
 
-            if (!ModelState.IsValid)
+            ModelState.ClearValidationState(nameof(DiagnosticoForm));
+            if (!TryValidateModel(DiagnosticoForm, nameof(DiagnosticoForm)))
                 return Page();
 
             var request = new ActualizarDiagnosticoRequest(
@@ -127,7 +200,8 @@ namespace FrenosCore.Pages.Ordenes
                 RequiereAtencionUrgente: DiagnosticoForm.RequiereAtencionUrgente,
                 AprobadoPorCliente: null,
                 FechaAprobacion: null,
-                ObservacionesTecnico: DiagnosticoForm.ObservacionesTecnico);
+                ObservacionesTecnico: DiagnosticoForm.ObservacionesTecnico,
+                Items: null);
 
             try
             {
@@ -151,19 +225,20 @@ namespace FrenosCore.Pages.Ordenes
                 return RedirectToPage(new { id });
             }
 
-            if (!ModelState.IsValid)
+            ModelState.Clear();
+            if (!TryValidateModel(EstadoForm, nameof(EstadoForm)))
                 return Page();
 
             try
             {
-                await _ordenService.CambiarEstadoAsync(id, new CambiarEstadoOrdenRequest(EstadoForm.Estado));
+                await _ordenService.CambiarEstadoAsync(id, new CambiarEstadoOrdenRequest(EstadoForm.Estado.Trim()));
                 TempData["Mensaje"] = "Estado actualizado correctamente.";
                 return RedirectToPage(new { id });
             }
             catch (Exception ex)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
-                return Page();
+                TempData["MensajeError"] = ex.Message;
+                return RedirectToPage(new { id });
             }
         }
 
@@ -176,7 +251,8 @@ namespace FrenosCore.Pages.Ordenes
                 return RedirectToPage(new { id });
             }
 
-            if (!ModelState.IsValid)
+            ModelState.Clear();
+            if (!TryValidateModel(CerrarForm, nameof(CerrarForm)))
                 return Page();
 
             var request = new CerrarOrdenRequest(
@@ -196,8 +272,8 @@ namespace FrenosCore.Pages.Ordenes
             }
             catch (Exception ex)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
-                return Page();
+                TempData["MensajeError"] = ex.Message;
+                return RedirectToPage(new { id });
             }
         }
 
@@ -208,6 +284,20 @@ namespace FrenosCore.Pages.Ordenes
             try
             {
                 Orden = await _ordenService.ObtenerPorIdAsync(id);
+                Cotizacion = null;
+
+                if (Orden.CotizacionId.HasValue)
+                {
+                    try
+                    {
+                        Cotizacion = await _cotizacionService.ObtenerPorIdAsync(Orden.CotizacionId.Value);
+                    }
+                    catch (KeyNotFoundException)
+                    {
+                        Cotizacion = null;
+                    }
+                }
+
                 EstadoForm.Estado = string.IsNullOrWhiteSpace(EstadoForm.Estado)
                     ? Orden.Estado
                     : EstadoForm.Estado;
@@ -237,6 +327,7 @@ namespace FrenosCore.Pages.Ordenes
             {
                 TempData["MensajeError"] = "No se encontró la orden.";
                 Orden = null;
+                Cotizacion = null;
             }
         }
 
