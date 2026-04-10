@@ -1,13 +1,20 @@
 ﻿using FrenosCore.Data;
+using FrenosCore.Helpers;
 using FrenosCore.Modelos.Dtos;
 using FrenosCore.Modelos.Dtos.Factura;
+using FrenosCore.Modelos.Dtos.Log;
 using FrenosCore.Modelos.Entidades;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 
 namespace FrenosCore.Servicios;
 
-public class FacturaService(AppDbContext db) : IFacturaService
+public class FacturaService(
+    AppDbContext db,
+    IAudtiLog auditLog,
+    IUsuarioActualService usuarioActual,
+    ILogger<FacturaService> logger) : IFacturaService
 {
     private const decimal TasaItbis = 0.18m;
 
@@ -80,6 +87,7 @@ public class FacturaService(AppDbContext db) : IFacturaService
 
     public async Task<FacturaResponse> GenerarDesdeOrdenAsync(int ordenId, int emisorId, string? metodoPago)
     {
+        logger.LogInformation("Generando factura desde orden {OrdenId}", ordenId);
    
         var orden = await db.Orden
             .Include(o => o.Cliente)
@@ -149,6 +157,22 @@ public class FacturaService(AppDbContext db) : IFacturaService
         await db.Entry(factura).Reference(f => f.Cliente).LoadAsync();
         await db.Entry(factura).Reference(f => f.EmitidaPorUsuario).LoadAsync();
 
+        await RegistrarAuditoriaAsync(
+            factura.Id,
+            "Crear",
+            "Factura",
+            string.Empty,
+            JsonSerializer.Serialize(new
+            {
+                factura.Id,
+                factura.OrdenId,
+                factura.Numero,
+                factura.Estado,
+                factura.Total
+            }));
+
+        logger.LogInformation("Factura generada {FacturaId} para orden {OrdenId}", factura.Id, ordenId);
+
         return ToResponse(factura, orden);
     }
 
@@ -164,6 +188,14 @@ public class FacturaService(AppDbContext db) : IFacturaService
             .Include(f => f.Items)
             .FirstOrDefaultAsync(f => f.Id == id)
             ?? throw new KeyNotFoundException($"Factura {id} no encontrada.");
+
+        var antes = JsonSerializer.Serialize(new
+        {
+            factura.Id,
+            factura.Estado,
+            factura.MetodoPago,
+            factura.Total
+        });
 
         if (factura.Estado != "Pendiente")
             throw new InvalidOperationException(
@@ -210,6 +242,22 @@ public class FacturaService(AppDbContext db) : IFacturaService
         }
 
         await db.SaveChangesAsync();
+
+        await RegistrarAuditoriaAsync(
+            factura.Id,
+            "RegistrarPago",
+            "Factura",
+            antes,
+            JsonSerializer.Serialize(new
+            {
+                factura.Id,
+                factura.Estado,
+                factura.MetodoPago,
+                factura.Total
+            }));
+
+        logger.LogInformation("Pago registrado en factura {FacturaId} con método {Metodo}", factura.Id, factura.MetodoPago);
+
         return ToResponse(factura);
     }
 
@@ -219,6 +267,13 @@ public class FacturaService(AppDbContext db) : IFacturaService
             .Include(f => f.Items)
             .FirstOrDefaultAsync(f => f.Id == id)
             ?? throw new KeyNotFoundException($"Factura {id} no encontrada.");
+
+        var antes = JsonSerializer.Serialize(new
+        {
+            factura.Id,
+            factura.Estado,
+            factura.Numero
+        });
 
         if (factura.Estado != "Pendiente")
             throw new InvalidOperationException(
@@ -238,6 +293,39 @@ public class FacturaService(AppDbContext db) : IFacturaService
 
         factura.Estado = "Anulada";
         await db.SaveChangesAsync();
+
+        await RegistrarAuditoriaAsync(
+            factura.Id,
+            "Anular",
+            "Factura",
+            antes,
+            JsonSerializer.Serialize(new
+            {
+                factura.Id,
+                factura.Estado,
+                factura.Numero
+            }));
+
+        logger.LogInformation("Factura anulada {FacturaId}", factura.Id);
+    }
+
+    private async Task RegistrarAuditoriaAsync(int registroId, string accion, string tabla, string valorAntes, string valorDespues)
+    {
+        try
+        {
+            await auditLog.RegistrarAsync(new AuditEntry(
+                UsuarioId: usuarioActual.Id,
+                ResgistroId: registroId,
+                Accion: accion,
+                Tabla: tabla,
+                Ip: usuarioActual.Ip,
+                ValorAntes: valorAntes,
+                ValorDespues: valorDespues));
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "No se pudo registrar auditoría en {Tabla} para registro {RegistroId}", tabla, registroId);
+        }
     }
 
 

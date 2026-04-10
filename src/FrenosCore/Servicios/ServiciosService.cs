@@ -1,7 +1,10 @@
 ﻿using FrenosCore.Data;
+using FrenosCore.Helpers;
+using FrenosCore.Modelos.Dtos.Log;
 using FrenosCore.Modelos.Dtos.Servicio;
 using FrenosCore.Modelos.Entidades;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 
 namespace FrenosCore.Servicios
@@ -9,14 +12,22 @@ namespace FrenosCore.Servicios
     public class ServiciosService : IServiciciosService
     {
         public readonly AppDbContext _context;
+        private readonly IAudtiLog _auditLog;
+        private readonly IUsuarioActualService _usuarioActual;
+        private readonly ILogger<ServiciosService> _logger;
 
-        public ServiciosService(AppDbContext context)
+        public ServiciosService(AppDbContext context, IAudtiLog auditLog, IUsuarioActualService usuarioActual, ILogger<ServiciosService> logger)
         {
             _context = context;
+            _auditLog = auditLog;
+            _usuarioActual = usuarioActual;
+            _logger = logger;
         }
 
         public async Task<ServicioResponse> CrearAsync(CrearServicioRequest request)
         {
+            _logger.LogInformation("Creando servicio: {Nombre}", request.Nombre);
+
             var servicio = new Servicio
             {
                 Nombre = request.Nombre.Trim(),
@@ -30,6 +41,9 @@ namespace FrenosCore.Servicios
 
             _context.Servicio.Add(servicio);
             await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Servicio creado: {ServicioId}", servicio.Id);
+            await RegistrarAuditoriaAsync(servicio.Id, "Crear", "Servicio", string.Empty, JsonSerializer.Serialize(ToResponse(servicio)));
 
             return ToResponse(servicio);
         }
@@ -79,6 +93,8 @@ namespace FrenosCore.Servicios
                 .FirstOrDefaultAsync(s => s.Id == id && s.Activo)
                 ?? throw new KeyNotFoundException($"Servicio con ID {id} no encontrado.");
 
+            var antes = JsonSerializer.Serialize(ToResponse(servicio));
+
             servicio.Nombre = request.Nombre.Trim();
             servicio.Descripcion = request.Descripcion.Trim();
             servicio.Precio = request.Precio;
@@ -88,6 +104,9 @@ namespace FrenosCore.Servicios
 
             await _context.SaveChangesAsync();
 
+            _logger.LogInformation("Servicio actualizado: {ServicioId}", id);
+            await RegistrarAuditoriaAsync(id, "Actualizar", "Servicio", antes, JsonSerializer.Serialize(ToResponse(servicio)));
+
             return ToResponse(servicio);
         }
         public async Task<bool> EliminarAsync(int id)
@@ -96,10 +115,34 @@ namespace FrenosCore.Servicios
                 .FirstOrDefaultAsync(s => s.Id == id && s.Activo)
                 ?? throw new KeyNotFoundException($"Servicio con ID {id} no encontrado.");
 
+            var antes = JsonSerializer.Serialize(ToResponse(servicio));
+
             servicio.Activo = false;
             await _context.SaveChangesAsync();
 
+            _logger.LogInformation("Servicio desactivado: {ServicioId}", id);
+            await RegistrarAuditoriaAsync(id, "Eliminar", "Servicio", antes, JsonSerializer.Serialize(ToResponse(servicio)));
+
             return true;
+        }
+
+        private async Task RegistrarAuditoriaAsync(int registroId, string accion, string tabla, string valorAntes, string valorDespues)
+        {
+            try
+            {
+                await _auditLog.RegistrarAsync(new AuditEntry(
+                    UsuarioId: _usuarioActual.Id,
+                    ResgistroId: registroId,
+                    Accion: accion,
+                    Tabla: tabla,
+                    Ip: _usuarioActual.Ip,
+                    ValorAntes: valorAntes,
+                    ValorDespues: valorDespues));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudo registrar auditoría en {Tabla} para registro {RegistroId}", tabla, registroId);
+            }
         }
 
         public static ServicioResponse ToResponse(Servicio servicio)
