@@ -7,7 +7,7 @@
 
         public string Accion { get; set; }
         public string Tabla { get; set; }
-        public string RegistroId { get; set; }
+        public int RegistroId { get; set; }
         public string ValorAntes { get; set; }
         public string ValorDespues { get; set; }
         public string Ip { get; set; }

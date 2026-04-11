@@ -1,12 +1,15 @@
 ﻿using FrenosCore.Data;
+using FrenosCore.Helpers;
 using FrenosCore.Modelos.Dtos;
 
+using FrenosCore.Modelos.Dtos.Log;
 using FrenosCore.Modelos.Dtos.Orden;
 using FrenosCore.Modelos.Dtos.Diagnostico;
 using FrenosCore.Modelos.Dtos.Factura;
 using FrenosCore.Modelos.Entidades;
 
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace FrenosCore.Servicios
 {
@@ -15,7 +18,10 @@ namespace FrenosCore.Servicios
     public class OrdenService(
     AppDbContext db,
     IFacturaService facturas,
-    ICotizacionService cotizaciones) : IOrdenService
+    ICotizacionService cotizaciones,
+    IAudtiLog auditLog,
+    IUsuarioActualService usuarioActual,
+    ILogger<OrdenService> logger) : IOrdenService
     {
         // Estados válidos y sus transiciones permitidas
         private static readonly Dictionary<string, string[]> _transiciones = new()
@@ -137,6 +143,7 @@ namespace FrenosCore.Servicios
         
         public async Task<OrdenResponse> CrearAsync(CrearOrdenRequest req)
         {
+            logger.LogInformation("Creando orden para cliente {ClienteId} y vehículo {VehiculoId}", req.ClienteId, req.VehiculoId);
 
             var cliente = await db.Cliente.FindAsync(req.ClienteId)
                 ?? throw new KeyNotFoundException(
@@ -203,6 +210,22 @@ namespace FrenosCore.Servicios
             db.Orden.Add(orden);
             await db.SaveChangesAsync();
 
+            await RegistrarAuditoriaAsync(
+                orden.Id,
+                "Crear",
+                "Orden",
+                string.Empty,
+                JsonSerializer.Serialize(new
+                {
+                    orden.Id,
+                    orden.ClienteId,
+                    orden.VehiculoId,
+                    orden.Estado,
+                    orden.Prioridad
+                }));
+
+            logger.LogInformation("Orden creada {OrdenId}", orden.Id);
+
             return new OrdenResponse(
                 orden.Id, orden.ClienteId, cliente.Nombre,
                 orden.VehiculoId,
@@ -226,6 +249,8 @@ namespace FrenosCore.Servicios
                 .Include(o => o.Diagnostico)
                 .FirstOrDefaultAsync(o => o.Id == id)
                 ?? throw new KeyNotFoundException($"Orden {id} no encontrada.");
+
+            var estadoAnterior = orden.Estado;
 
             
             if (!_transiciones.TryGetValue(orden.Estado, out var estadosSiguientes))
@@ -259,6 +284,15 @@ namespace FrenosCore.Servicios
 
             await db.SaveChangesAsync();
 
+            await RegistrarAuditoriaAsync(
+                orden.Id,
+                "CambiarEstado",
+                "Orden",
+                JsonSerializer.Serialize(new { Estado = estadoAnterior }),
+                JsonSerializer.Serialize(new { Estado = orden.Estado }));
+
+            logger.LogInformation("Orden {OrdenId} cambió de estado {EstadoAnterior} a {EstadoNuevo}", orden.Id, estadoAnterior, orden.Estado);
+
             return new OrdenResponse(
                 orden.Id, orden.ClienteId, orden.Cliente.Nombre,
                 orden.VehiculoId,
@@ -274,6 +308,8 @@ namespace FrenosCore.Servicios
         
         public async Task<CerrarOrdenResponse> CerrarAsync(int id, CerrarOrdenRequest req)
         {
+            logger.LogInformation("Cerrando orden {OrdenId}", id);
+
             var orden = await db.Orden
                 .Include(o => o.Vehiculo)
                 .Include(o => o.Diagnostico)
@@ -359,6 +395,20 @@ namespace FrenosCore.Servicios
 
                 await transaccion.CommitAsync();
 
+                await RegistrarAuditoriaAsync(
+                    orden.Id,
+                    "Cerrar",
+                    "Orden",
+                    JsonSerializer.Serialize(new { Estado = "Lista" }),
+                    JsonSerializer.Serialize(new
+                    {
+                        Estado = orden.Estado,
+                        FacturaId = factura.Id,
+                        factura.Numero
+                    }));
+
+                logger.LogInformation("Orden cerrada {OrdenId} con factura {FacturaId}", orden.Id, factura.Id);
+
                 return new CerrarOrdenResponse(
                     HistorialId: historial.Id,
                     FacturaId: factura.Id,
@@ -370,6 +420,25 @@ namespace FrenosCore.Servicios
             {
                 await transaccion.RollbackAsync();
                 throw;
+            }
+        }
+
+        private async Task RegistrarAuditoriaAsync(int registroId, string accion, string tabla, string valorAntes, string valorDespues)
+        {
+            try
+            {
+                await auditLog.RegistrarAsync(new AuditEntry(
+                    UsuarioId: usuarioActual.Id,
+                    ResgistroId: registroId,
+                    Accion: accion,
+                    Tabla: tabla,
+                    Ip: usuarioActual.Ip,
+                    ValorAntes: valorAntes,
+                    ValorDespues: valorDespues));
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "No se pudo registrar auditoría en {Tabla} para registro {RegistroId}", tabla, registroId);
             }
         }
 

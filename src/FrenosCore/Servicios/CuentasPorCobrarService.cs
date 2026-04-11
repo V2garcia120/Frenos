@@ -1,17 +1,26 @@
 using FrenosCore.Data;
+using FrenosCore.Helpers;
 using FrenosCore.Modelos.Dtos;
 using FrenosCore.Modelos.Dtos.CuentasPorCobrar;
+using FrenosCore.Modelos.Dtos.Log;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace FrenosCore.Servicios
 {
     public class CuentasPorCobrarService : ICuentasPorCobrarService
     {
         private readonly AppDbContext _context;
+        private readonly IAudtiLog _auditLog;
+        private readonly IUsuarioActualService _usuarioActual;
+        private readonly ILogger<CuentasPorCobrarService> _logger;
 
-        public CuentasPorCobrarService(AppDbContext context)
+        public CuentasPorCobrarService(AppDbContext context, IAudtiLog auditLog, IUsuarioActualService usuarioActual, ILogger<CuentasPorCobrarService> logger)
         {
             _context = context;
+            _auditLog = auditLog;
+            _usuarioActual = usuarioActual;
+            _logger = logger;
         }
 
         public async Task<PaginadoResponse<CuentaPorCobrarResponse>> ListarAsync(int pagina, int tam, string? estado)
@@ -87,6 +96,13 @@ namespace FrenosCore.Servicios
                 .FirstOrDefaultAsync(c => c.Id == id)
                 ?? throw new KeyNotFoundException($"Cuenta por cobrar {id} no encontrada.");
 
+            var antes = JsonSerializer.Serialize(new
+            {
+                cxc.Id,
+                cxc.Saldo,
+                cxc.Estado
+            });
+
             return new CuentaPorCobrarDetalleResponse(
                 cxc.Id,
                 cxc.ClienteId,
@@ -118,6 +134,13 @@ namespace FrenosCore.Servicios
                 .Include(c => c.Abonos)
                 .FirstOrDefaultAsync(c => c.Id == id)
                 ?? throw new KeyNotFoundException($"Cuenta por cobrar {id} no encontrada.");
+
+            var antes = JsonSerializer.Serialize(new
+            {
+                cxc.Id,
+                cxc.Saldo,
+                cxc.Estado
+            });
 
             if (cxc.Estado == "Anulada")
                 throw new InvalidOperationException("No se pueden registrar abonos a una cuenta anulada.");
@@ -166,7 +189,42 @@ namespace FrenosCore.Servicios
 
             await _context.SaveChangesAsync();
 
+            await RegistrarAuditoriaAsync(
+                cxc.Id,
+                "RegistrarAbono",
+                "CuentasPorCobrar",
+                antes,
+                JsonSerializer.Serialize(new
+                {
+                    cxc.Id,
+                    cxc.Saldo,
+                    cxc.Estado,
+                    MontoAbono = monto,
+                    MetodoPago = metodoPago
+                }));
+
+            _logger.LogInformation("Abono registrado en CxC {CxCId} por monto {Monto}", cxc.Id, monto);
+
             return await ObtenerPorIdAsync(id);
+        }
+
+        private async Task RegistrarAuditoriaAsync(int registroId, string accion, string tabla, string valorAntes, string valorDespues)
+        {
+            try
+            {
+                await _auditLog.RegistrarAsync(new AuditEntry(
+                    UsuarioId: _usuarioActual.Id,
+                    ResgistroId: registroId,
+                    Accion: accion,
+                    Tabla: tabla,
+                    Ip: _usuarioActual.Ip,
+                    ValorAntes: valorAntes,
+                    ValorDespues: valorDespues));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudo registrar auditoría en {Tabla} para registro {RegistroId}", tabla, registroId);
+            }
         }
     }
 }
