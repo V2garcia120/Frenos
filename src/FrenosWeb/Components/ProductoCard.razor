@@ -1,0 +1,9 @@
+﻿<div style="border:1px solid #ccc; padding:10px; margin:10px;">
+    <h4>@Nombre</h4>
+    <p>Precio: RD$ @Precio</p>
+</div>
+
+@code {
+    [Parameter] public string Nombre { get; set; }
+    [Parameter] public decimal Precio { get; set; }
+}

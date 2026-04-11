@@ -1,0 +1,52 @@
+﻿@page "/catalogo"
+@using FrenosWeb.Models
+@using FrenosWeb.Services
+@using FrenosWeb.Components
+@inject ProductoService productoService
+@inject ServicioService servicioService
+
+<h3>Catálogo de Productos</h3>
+@if (productos == null)
+{
+    <p>Cargando productos...</p>
+}
+else
+{
+    <div class="row">
+        @foreach (var item in productos)
+        {
+            <div class="col-md-4">
+                <ProductoCard Nombre="@item.Nombre" Precio="@item.Precio" />
+            </div>
+        }
+    </div>
+}
+
+<h3 class="mt-4">Nuestros Servicios</h3>
+@if (servicios == null)
+{
+    <p>Cargando servicios...</p>
+}
+else
+{
+    <div class="row">
+        @foreach (var s in servicios)
+        {
+            <div class="col-md-4">
+                @* Reutilizamos el mismo componente de tarjeta *@
+                <ProductoCard Nombre="@s.Nombre" Precio="@s.Precio" />
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<Producto> productos;
+    private List<Servicio> servicios;
+
+    protected override void OnInitialized()
+    {
+        productos = productoService.GetProductos();
+        servicios = servicioService.GetServicios();
+    }
+}
