@@ -41,12 +41,12 @@ else
 }
 
 @code {
-    private List<Producto> productos;
-    private List<Servicio> servicios;
+    private List<Producto> productos = new();
+    private List<Servicio> servicios = new();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        productos = productoService.GetProductos();
-        servicios = servicioService.GetServicios();
+        productos = await productoService.GetProductosAsync();
+        servicios = await servicioService.GetServiciosAsync();
     }
 }
