@@ -1,17 +1,36 @@
 ﻿using FrenosWeb.Models;
+using System.Net.Http.Json;
 
 namespace FrenosWeb.Services
 {
     public class ProductoService
     {
-        public List<Producto> GetProductos()
+        private readonly HttpClient _http;
+
+        public ProductoService(HttpClient http)
         {
-            return new List<Producto>
+            _http = http;
+        }
+
+        public async Task<List<Producto>> GetProductosAsync()
+        {
+            try
             {
-                new Producto { Id = 1, Nombre = "Pastillas de freno", Precio = 1500 },
-                new Producto { Id = 2, Nombre = "Disco de freno", Precio = 3000 },
-                new Producto { Id = 3, Nombre = "Líquido de frenos", Precio = 800 }
+                // Intentamos conectar con la API de Integracion 
+                var respuesta = await _http.GetFromJsonAsync<List<Producto>>("api/productos");
+                return respuesta ?? new List<Producto>();
+            }
+            catch (Exception ex)
+            {
+                // Si la API falla cargamos los datos simulados
+                Console.WriteLine($"[Cyber-Logs] API no disponible: {ex.Message}");
+
+                return new List<Producto>
+            {
+                new Producto { Id = 1, Nombre = "Pastillas de Freno Cerámicas", Precio = 2500, ImagenUrl = "frenos.jpg" },
+                new Producto { Id = 2, Nombre = "Disco de Freno Delantero", Precio = 4500, ImagenUrl = "disco.jpg" }
             };
+            }
         }
     }
 }
