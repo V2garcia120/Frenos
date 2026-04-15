@@ -1,0 +1,123 @@
+﻿@page "/carrito"
+@using FrenosWeb.Models
+@using FrenosWeb.Services
+@inject CarritoStateService carritoService
+@inject NavigationManager navManager
+
+<div class="container mt-4">
+    <h3>🛒 Tu Carrito de Compras</h3>
+
+    @if (!carritoService.Items.Any())
+    {
+        <div class="alert alert-info">
+            Tu carrito está vacío. ¡Ve al catálogo y elige algo!
+        </div>
+        <button class="btn btn-primary" @onclick='() => navManager.NavigateTo("/catalogo")'>
+            Volver al Catálogo
+        </button>
+    }
+    else
+    {
+        <table class="table table-hover mt-3">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Producto/Servicio</th>
+                    <th>Precio</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in carritoService.Items)
+                {
+                    <tr>
+                        <td>@item.Producto.Nombre</td>
+                        <td>
+                            <input type="number"
+                                   min="1"
+                                   class="form-control form-control-sm"
+                                   style="width: 70px; display: inline-block;"
+                                   @bind="item.Cantidad"
+                                   @bind:after="NotifyChange" />
+                        </td>
+                        <td>RD$ @item.Producto.Precio.ToString("N2")</td>
+                        <td>RD$ @item.TotalLinea.ToString("N2")</td>
+                        <td>
+                            <button class="btn btn-danger btn-sm" @onclick="() => Eliminar(item.Producto.Id)">
+                                Eliminar
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="text-right mt-4">
+            <h4>Subtotal: <span class="text-success">RD$ @carritoService.Subtotal.ToString("N2")</span></h4>
+            <hr />
+            <button class="btn btn-secondary mr-2" @onclick="() => carritoService.Limpiar()">
+                Vaciar Carrito
+            </button>
+            @if (!carritoService.Items.Any())
+            {
+                <div class="alert alert-info mt-3">
+                    <span class="bi bi-info-circle-fill"></span>
+                    Tu carrito está vacío. Agrega productos desde el catálogo para continuar.
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(mensajeError))
+            {
+                <div class="alert alert-danger mt-2 animate__animated animate__shakeX">
+                    <strong>¡Atención!</strong> @mensajeError
+                </div>
+            }
+
+            <button class="btn btn-success btn-lg w-100" @onclick="IrAOrden">
+                Confirmar Orden ➡
+            </button>
+            <button class="btn btn-success btn-lg mt-3 w-100"
+                    @onclick="IrAOrden"
+                    disabled="@(!carritoService.Items.Any())">
+                Confirmar Orden ➡
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    private string mensajeError = "";
+
+    void NotifyChange()
+    {
+        carritoService.Actualizar();
+    }
+
+    void Eliminar(int id)
+    {
+        carritoService.Eliminar(id);
+        // Si borra el ultimo item limpiamos cualquier error previo
+        if (!carritoService.Items.Any()) mensajeError = "";
+    }
+
+    void IrAOrden()
+    {
+        // Revisamos si hay algun item con cantidad menor a 1
+        var tieneCantidadesInvalidas = carritoService.Items.Any(x => x.Cantidad < 1);
+
+        if (tieneCantidadesInvalidas)
+        {
+            mensajeError = "⚠️ Revisa las cantidades. No puedes pedir 0 unidades de un producto/servicio.";
+            return; // Detenemos la navegacion
+        }
+
+        if (carritoService.Items.Any())
+        {
+            mensajeError = ""; // Limpiamos si habia error
+            navManager.NavigateTo("/orden");
+        }
+        else
+        {
+            // Bloqueamos la navegacion y avisamos al usuario
+            mensajeError = "No puedes procesar una orden con el carrito vacío. ¡Añade algunos frenos! 🚗";
+        }
+    }
+}

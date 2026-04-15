@@ -16,7 +16,7 @@ else
         @foreach (var item in productos)
         {
             <div class="col-md-4">
-                <ProductoCard Nombre="@item.Nombre" Precio="@item.Precio" />
+                <ProductoCard Id="@item.Id" Nombre="@item.Nombre" Precio="@item.Precio" />
             </div>
         }
     </div>
@@ -33,8 +33,7 @@ else
         @foreach (var s in servicios)
         {
             <div class="col-md-4">
-                @* Reutilizamos el mismo componente de tarjeta *@
-                <ProductoCard Nombre="@s.Nombre" Precio="@s.Precio" />
+                <ProductoCard Id="@s.Id" Nombre="@s.Nombre" Precio="@s.Precio" />
             </div>
         }
     </div>
