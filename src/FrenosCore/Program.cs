@@ -52,6 +52,7 @@ Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
     .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
+    .WriteTo.Console()
     .WriteTo.File(
         path: "logs/tallercore-.txt",
         rollingInterval: RollingInterval.Day,   
