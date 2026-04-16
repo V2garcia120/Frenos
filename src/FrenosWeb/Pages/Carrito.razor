@@ -87,7 +87,7 @@
         ValidarEstadoBoton();
     }
 
-    void ActualizarCantidadManual(CarritoItem item, ChangeEventArgs e)
+    async Task ActualizarCantidadManual(CarritoItem item, ChangeEventArgs e)
     {
         // Capturamos el valor como texto primero
         string valorInput = e.Value?.ToString() ?? "";
@@ -114,13 +114,13 @@
             }
         }
     
-        carritoService.Actualizar();
+        await carritoService.Actualizar();
         StateHasChanged();
     }
 
-    void Eliminar(int id)
+    async Task Eliminar(int id)
     {
-        carritoService.Eliminar(id);
+        await carritoService.Eliminar(id);
         ValidarEstadoBoton();
         if (!botonBloqueado)
         {
@@ -129,9 +129,9 @@
         StateHasChanged();
     }
 
-    void Vaciar()
+    async Task Vaciar()
     {
-        carritoService.Limpiar();
+        await carritoService.Limpiar();
         mensajeError = "";
         botonBloqueado = false;
         StateHasChanged();

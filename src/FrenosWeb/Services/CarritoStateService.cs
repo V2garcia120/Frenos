@@ -1,18 +1,50 @@
 ﻿using FrenosWeb.Models;
+using Microsoft.JSInterop;
+using System.Text.Json;
 
 namespace FrenosWeb.Services
 {
     public class CarritoStateService
     {
+        private readonly IJSRuntime _js;
         public List<CarritoItem> Items { get; private set; } = new();
         // Evento para avisar a la interfaz que algo cambio (para actualizar el contador)
         public event Action? OnChange;
 
-        public void Agregar(Producto producto)
+        public CarritoStateService(IJSRuntime js) => _js = js;
+
+        public async Task InicializarAsync()
+        {
+            try
+            {
+                var json = await _js.InvokeAsync<string>("localStorage.getItem", "carrito_frenos");
+                if (!string.IsNullOrEmpty(json))
+                {
+                    Items = JsonSerializer.Deserialize<List<CarritoItem>>(json) ?? new();
+                    NotifyStateChanged();
+                }
+            }
+            catch (Exception ex)
+            {
+                // No bloqueamos al usuario, pero dejamos evidencia en la consola (F12)
+                Console.WriteLine($"[Cyber-Error] Fallo al cargar el carrito: {ex.Message}");
+
+                // Si el JSON está dañado, mejor limpiamos el storage para evitar que siga fallando
+                await _js.InvokeVoidAsync("localStorage.removeItem", "carrito_frenos");
+            }
+        }
+
+        private async Task GuardarEnLocal()
+        {
+            var json = JsonSerializer.Serialize(Items);
+            await _js.InvokeVoidAsync("localStorage.setItem", "carrito_frenos", json);
+        }
+
+        public async Task Agregar(Producto producto)
         {
             var itemExistente = Items.FirstOrDefault(x =>
-        x.Producto.Id == producto.Id &&
-        x.Producto.Nombre == producto.Nombre);
+                x.Producto.Id == producto.Id &&
+                x.Producto.Nombre == producto.Nombre);
 
             if (itemExistente != null)
             {
@@ -20,31 +52,48 @@ namespace FrenosWeb.Services
             }
             else
             {
-                // Forzamos que la cantidad inicial siempre sea 1
                 Items.Add(new CarritoItem { Producto = producto, Cantidad = 1 });
             }
+
+            await GuardarEnLocal();
             NotifyStateChanged();
         }
 
-        public void ActualizarCantidad(int productoId, int nuevaCantidad)
-        {
-            if (nuevaCantidad < 1) return; // Bloqueo de seguridad
-
-            var item = Items.FirstOrDefault(x => x.Producto.Id == productoId);
-            if (item != null)
-            {
-                item.Cantidad = nuevaCantidad;
-                NotifyStateChanged();
-            }
-        }
-
-        public void Eliminar(int productoId)
+        public async Task Eliminar(int productoId)
         {
             var item = Items.FirstOrDefault(x => x.Producto.Id == productoId);
             if (item != null)
             {
                 Items.Remove(item);
+                await GuardarEnLocal(); 
                 NotifyStateChanged();
+            }
+        }
+
+        public async Task Actualizar()
+        {
+            await GuardarEnLocal(); // Si cambian cantidades en la UI, guardamos
+            NotifyStateChanged();
+        }
+
+        public async Task Limpiar()
+        {
+            Items.Clear();
+            await GuardarEnLocal();
+            NotifyStateChanged();
+        }
+
+        public async Task ActualizarCantidad(int productoId, int nuevaCantidad)
+        {
+            if (nuevaCantidad < 1) return;
+
+            var item = Items.FirstOrDefault(x => x.Producto.Id == productoId);
+            if (item != null)
+            {
+                item.Cantidad = nuevaCantidad;
+
+                await GuardarEnLocal(); 
+                NotifyStateChanged(); 
             }
         }
 
@@ -54,24 +103,15 @@ namespace FrenosWeb.Services
             {
                 foreach (var item in Items)
                 {
-                    if (item.Cantidad < 1)
-                    {
-                        item.Cantidad = 1;
-                    }
+                    if (item.Cantidad < 1) item.Cantidad = 1;
                 }
-
                 return Items.Sum(x => x.TotalLinea);
             }
         }
+
         public decimal Impuesto => Subtotal * 0.18m;
         public decimal TotalFinal => Subtotal + Impuesto;
 
-        public void Limpiar() { Items.Clear(); NotifyStateChanged(); }
         private void NotifyStateChanged() => OnChange?.Invoke();
-
-        public void Actualizar()
-        {
-            NotifyStateChanged();
-        }
     }
 }
