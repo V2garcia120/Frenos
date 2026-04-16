@@ -10,7 +10,9 @@ namespace FrenosWeb.Services
 
         public void Agregar(Producto producto)
         {
-            var itemExistente = Items.FirstOrDefault(x => x.Producto.Id == producto.Id);
+            var itemExistente = Items.FirstOrDefault(x =>
+        x.Producto.Id == producto.Id &&
+        x.Producto.Nombre == producto.Nombre);
 
             if (itemExistente != null)
             {
