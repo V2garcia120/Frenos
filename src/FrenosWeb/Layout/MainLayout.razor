@@ -1,4 +1,7 @@
 ﻿@inherits LayoutComponentBase
+@using FrenosWeb.Services
+@inject CarritoStateService carritoService
+
 <div class="page">
     <div class="sidebar">
         <NavMenu />
@@ -14,3 +17,10 @@
         </article>
     </main>
 </div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await carritoService.InicializarAsync();
+    }
+}
