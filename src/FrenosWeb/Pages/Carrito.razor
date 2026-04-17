@@ -36,12 +36,14 @@
                             <td class="align-middle text-start">@item.Producto.Nombre</td>
                             <td class="align-middle">
                                 <input type="number"
-                                       min="1"
-                                       class="form-control form-control-sm mx-auto"
+                                       min="0"
+                                       class="form-control form-control-sm mx-auto text-center"
                                        style="width: 80px;"
-                                       value="@item.Cantidad"
-                                       onkeydown="return event.keyCode !== 189 && event.keyCode !== 109"
-                                       @oninput="@((e) => ActualizarCantidadManual(item, e))" />
+                                       @bind="item.Cantidad"
+                                       @bind:event="oninput"
+                                       @onchange="ValidarEstadoBoton"
+                                       @onkeyup="ValidarEstadoBoton"
+                                       onkeydown="return event.keyCode !== 189 && event.keyCode !== 109" />
                             </td>
                             <td class="align-middle">RD$ @item.Producto.Precio.ToString("N2")</td>
                             <td class="align-middle font-weight-bold">RD$ @item.TotalLinea.ToString("N2")</td>
@@ -79,53 +81,17 @@
 
 @code {
     private string mensajeError = "";
-    private bool botonBloqueado = false; // Control directo de estado
+    private bool botonBloqueado = false;
 
-    // Sincronizamos el estado del boton al cargar la pagina
     protected override void OnInitialized()
     {
         ValidarEstadoBoton();
-    }
-
-    async Task ActualizarCantidadManual(CarritoItem item, ChangeEventArgs e)
-    {
-        // Capturamos el valor como texto primero
-        string valorInput = e.Value?.ToString() ?? "";
-
-        // Si está vacío (Backspace total), lo tratamos como 0 para bloquear
-        if (string.IsNullOrWhiteSpace(valorInput))
-        {
-            item.Cantidad = 0;
-            mensajeError = "⚠️ La cantidad no puede estar vacía.";
-            ValidarEstadoBoton();
-        }
-        else if (int.TryParse(valorInput, out int nuevaCantidad))
-        {
-            item.Cantidad = nuevaCantidad;
-            ValidarEstadoBoton();
-        
-            if (nuevaCantidad <= 0)
-            {
-                mensajeError = "⚠️ Cantidad no válida. Debe ser al menos 1.";
-            }
-            else
-            {
-                if (!botonBloqueado) mensajeError = "";
-            }
-        }
-    
-        await carritoService.Actualizar();
-        StateHasChanged();
     }
 
     async Task Eliminar(int id)
     {
         await carritoService.Eliminar(id);
         ValidarEstadoBoton();
-        if (!botonBloqueado)
-        {
-            mensajeError = "";
-        }
         StateHasChanged();
     }
 
@@ -140,6 +106,18 @@
     void ValidarEstadoBoton()
     {
         botonBloqueado = carritoService.Items.Any(x => x.Cantidad <= 0);
+
+        if (botonBloqueado)
+        {
+            var tieneVacioOZero = carritoService.Items.Any(x => x.Cantidad <= 0);
+            mensajeError = "⚠️ La cantidad debe ser al menos 1.";
+        }
+        else
+        {
+            mensajeError = "";
+        }
+        
+        _ = carritoService.Actualizar();
     }
 
     void IrAOrden()
