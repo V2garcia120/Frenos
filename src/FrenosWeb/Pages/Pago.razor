@@ -1,0 +1,135 @@
+﻿@page "/pago"
+@using FrenosWeb.Services
+@inject CarritoStateService carritoService
+@inject NavigationManager navManager
+@inject PagoService pagoService
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-dark text-white text-center py-3">
+                    <h4 class="mb-0">💳 Checkout Seguro</h4>
+                </div>
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <small class="text-muted">Total a pagar (con ITBIS)</small>
+                        <h2 class="text-success font-weight-bold">RD$ @carritoService.TotalFinal.ToString("N2")</h2>
+                    </div>
+
+                    <form @onsubmit="ProcesarPago">
+                        <div class="mb-3">
+                            <label class="form-label">Nombre en la tarjeta</label>
+                            <input type="text" class="form-control" placeholder="Ej. JUAN PEREZ"
+                                   @bind="nombreTarjeta" @bind:event="oninput" @onkeyup="ValidarNombre" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Número de Tarjeta</label>
+                            <input type="text" class="form-control" placeholder="0000 0000 0000 0000" maxlength="16"
+                                   oninput="this.value = this.value.replace(/[^0-9]/g, '')" required />
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Expiración (MM/AA)</label>
+                                <input type="text" class="form-control" placeholder="MM/AA" maxlength="5"
+                                       @bind="expiracion" @bind:event="oninput" @onkeyup="ValidarExpiracion" required />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">CVV</label>
+                                <input type="password" class="form-control" placeholder="***" maxlength="3"
+                                       oninput="this.value = this.value.replace(/[^0-9]/g, '')" required />
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(mensajeError))
+                        {
+                            <div class="alert alert-danger mt-3 mb-0 py-2 shadow-sm text-center">
+                                <small>@mensajeError</small>
+                            </div>
+                        }
+
+                        @if (estaProcesando)
+                        {
+                            <div class="text-center my-3">
+                                <div class="spinner-border text-primary" role="status"></div>
+                                <p class="mt-2 text-primary">Validando transacción...</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <button type="submit" class="btn btn-success btn-lg w-100 shadow mt-3">
+                                🔒 Confirmar Pago
+                            </button>
+                        }
+                    </form> 
+                </div>
+                <div class="card-footer text-center bg-light">
+                    <small class="text-muted">Protegido por SSL (Simulado) 🛡️</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool estaProcesando = false;
+    private string expiracion = "";
+    private string nombreTarjeta = "";
+    private string? mensajeError;
+
+    private async Task ProcesarPago()
+    {
+        estaProcesando = true;
+        mensajeError = null;
+
+        bool resultado;
+        if (nombreTarjeta == "ERROR")
+        {
+            await Task.Delay(2000); 
+            resultado = false;
+        }
+        else
+        {
+            resultado = await pagoService.ProcesarPagoSimuladoAsync(carritoService.TotalFinal);
+        }
+
+        if (resultado)
+        {
+            await carritoService.Limpiar();
+            estaProcesando = false;
+            navManager.NavigateTo("/misordenes");
+        }
+        else
+        {
+            estaProcesando = false;
+            mensajeError = "❌ Transacción Declinada: Verifique los datos o contacte a su banco.";
+        }
+    }
+
+    private void ValidarExpiracion(KeyboardEventArgs e)
+    {
+        var soloNumeros = new string(expiracion.Where(char.IsDigit).ToArray());
+        if (soloNumeros.Length >= 2)
+        {
+            int mes = int.Parse(soloNumeros.Substring(0, 2));
+            if (mes > 12) soloNumeros = "12" + soloNumeros.Substring(2);
+            if (mes == 0) soloNumeros = "01" + soloNumeros.Substring(2);
+        }
+        if (soloNumeros.Length > 2)
+        {
+            expiracion = soloNumeros.Insert(2, "/");
+        }
+        else
+        {
+            expiracion = soloNumeros;
+        }
+    }
+
+    private void ValidarNombre()
+    {
+        var filtrado = new string(nombreTarjeta.Where(c => char.IsLetter(c) || char.IsWhiteSpace(c)).ToArray());
+        nombreTarjeta = filtrado.ToUpper();
+    }
+}

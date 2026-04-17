@@ -2,6 +2,7 @@
 @using FrenosWeb.Services
 @inject CarritoStateService carritoService
 @inject NavigationManager navManager
+@inject OrdenWebService ordenService
 
 <div class="container mt-5">
     <div class="card border-primary shadow-lg">
@@ -66,12 +67,13 @@
 </div>
 
 @code {
-    private void ConfirmarOrden()
+    private async Task ConfirmarOrden()
     {
-        // En la Fase 5, aqui llamariamos a Diana (Integracion) para guardar la orden
-        // en la base de datos de "Ordenes Pendientes".
-        // Por ahora, solo avanzamos en el flujo simulado.
-        
-        navManager.NavigateTo("/pago");
+        var exito = await ordenService.CrearOrdenAsync(carritoService.Items);
+    
+        if (exito)
+        {
+            navManager.NavigateTo("/pago");
+        }
     }
 }
