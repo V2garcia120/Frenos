@@ -35,6 +35,7 @@ else
             <div class="col-md-4"><strong>Vehículo:</strong> @Model.Orden.VehiculoInfo</div>
             <div class="col-md-2"><strong>Estado:</strong> @Model.Orden.Estado</div>
             <div class="col-md-2"><strong>Prioridad:</strong> @Model.Orden.Prioridad</div>
+            <div class="col-md-4"><strong>Tecnico Encargado:</strong> @Model.Orden.TecnicoNombre</div>
             <div class="col-md-4"><strong>Ingreso:</strong> @Model.Orden.FechaIngreso.ToString("dd/MM/yyyy HH:mm")</div>
             <div class="col-md-4"><strong>Entrega estimada:</strong> @(Model.Orden.FechaEntregaEstimada?.ToString("dd/MM/yyyy HH:mm") ?? "-")</div>
             <div class="col-md-4"><strong>Entrega real:</strong> @(Model.Orden.FechaEntregaReal?.ToString("dd/MM/yyyy HH:mm") ?? "-")</div>
