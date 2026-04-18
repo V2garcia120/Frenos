@@ -38,7 +38,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// 4. Registro de Servicios propios e Inyección de Dependencias
+// 4. Registro de Servicios propios e Inyecciï¿½n de Dependencias
 builder.Services.AddScoped<ICacheService, CacheService>();
 builder.Services.AddScoped<IColaSyncService, ColaSyncService>();
 
@@ -48,21 +48,24 @@ builder.Services.AddHostedService<SyncHostedService>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+//builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
-// 6. Migraciones automáticas al iniciar (Crea las tablas si no existen)
+// 6. Migraciones automï¿½ticas al iniciar (Crea las tablas si no existen)
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<IntegracionDbContext>();
     await db.Database.MigrateAsync();
 }
 
-// 7. Configuración del Pipeline (EL ORDEN IMPORTA)
+// 7. Configuraciï¿½n del Pipeline (EL ORDEN IMPORTA)
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    //app.MapOpenApi();
 }
 
 // El Middleware de Log debe ir ANTES de Auth para captar intentos fallidos

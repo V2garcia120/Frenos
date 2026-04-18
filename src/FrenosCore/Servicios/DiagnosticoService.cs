@@ -1,7 +1,10 @@
 using FrenosCore.Data;
+using FrenosCore.Helpers;
 using FrenosCore.Modelos.Dtos.Diagnostico;
+using FrenosCore.Modelos.Dtos.Log;
 using FrenosCore.Modelos.Entidades;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace FrenosCore.Servicios
 {
@@ -9,14 +12,22 @@ namespace FrenosCore.Servicios
     {
         private readonly AppDbContext _context;
         private readonly ICotizacionService _CotizcionServ;
-        public DiagnosticoService(AppDbContext context, ICotizacionService service)
+        private readonly IAudtiLog _auditLog;
+        private readonly IUsuarioActualService _usuarioActual;
+        private readonly ILogger<DiagnosticoService> _logger;
+
+        public DiagnosticoService(AppDbContext context, ICotizacionService service, IAudtiLog auditLog, IUsuarioActualService usuarioActual, ILogger<DiagnosticoService> logger)
         {
             _context = context;
             _CotizcionServ = service;
+            _auditLog = auditLog;
+            _usuarioActual = usuarioActual;
+            _logger = logger;
         }
 
         public async Task<DiagnosticoResponse> CrearAsync(CrearDiagnosticoRequest req)
         {
+            _logger.LogInformation("Creando diagnóstico para orden {OrdenId}", req.OrdenId);
 
             var orden = await _context.Orden
                 .Include(o => o.Vehiculo)
@@ -88,6 +99,19 @@ namespace FrenosCore.Servicios
                 .Include(i => i.ProductoSugerido)
                 .LoadAsync();
 
+            await RegistrarAuditoriaAsync(
+                diagnostico.Id,
+                "Crear",
+                "Diagnostico",
+                string.Empty,
+                JsonSerializer.Serialize(new
+                {
+                    diagnostico.Id,
+                    diagnostico.OrdenId,
+                    diagnostico.Estado,
+                    TotalItems = diagnostico.Items.Count
+                }));
+
             return ToResponse(diagnostico, orden, tecnico);
         }
         public async Task<DiagnosticoItemResponse> AgregarItemAsync(
@@ -137,7 +161,14 @@ namespace FrenosCore.Servicios
             var diagnostico = await _context.Diagnostico
                 .AsNoTracking()
                 .Include(d => d.Tecnico)
+                .Include(d => d.Orden)
+                    .ThenInclude(o => o.Cliente)
+                .Include(d => d.Orden)
+                    .ThenInclude(o => o.Vehiculo)
                 .Include(d => d.Items)
+                    .ThenInclude(i => i.ServicioSugerido)
+                .Include(d => d.Items)
+                    .ThenInclude(i => i.ProductoSugerido)
                 .Where(d => d.OrdenId == ordenId)
                 .OrderByDescending(d => d.FechaDiagnostico)
                 .FirstOrDefaultAsync()
@@ -151,7 +182,14 @@ namespace FrenosCore.Servicios
             var diagnostico = await _context.Diagnostico
                 .AsNoTracking()
                 .Include(d => d.Tecnico)
+                .Include(d => d.Orden)
+                    .ThenInclude(o => o.Cliente)
+                .Include(d => d.Orden)
+                    .ThenInclude(o => o.Vehiculo)
                 .Include(d => d.Items)
+                    .ThenInclude(i => i.ServicioSugerido)
+                .Include(d => d.Items)
+                    .ThenInclude(i => i.ProductoSugerido)
                 .FirstOrDefaultAsync(d => d.Id == id)
                 ?? throw new KeyNotFoundException($"Diagnóstico con ID {id} no encontrado.");
 
@@ -162,9 +200,24 @@ namespace FrenosCore.Servicios
         {
             var diagnostico = await _context.Diagnostico
                 .Include(d => d.Tecnico)
+                .Include(d => d.Orden)
+                    .ThenInclude(o => o.Cliente)
+                .Include(d => d.Orden)
+                    .ThenInclude(o => o.Vehiculo)
                 .Include(d => d.Items)
+                    .ThenInclude(i => i.ServicioSugerido)
+                .Include(d => d.Items)
+                    .ThenInclude(i => i.ProductoSugerido)
                 .FirstOrDefaultAsync(d => d.Id == id)
                 ?? throw new KeyNotFoundException($"Diagnóstico con ID {id} no encontrado.");
+
+            var antes = JsonSerializer.Serialize(new
+            {
+                diagnostico.Id,
+                diagnostico.Estado,
+                diagnostico.TecnicoId,
+                TotalItems = diagnostico.Items.Count
+            });
 
             if (diagnostico.Estado != "Borrador")
                 throw new InvalidOperationException("Solo se pueden editar Borradores");
@@ -185,7 +238,49 @@ namespace FrenosCore.Servicios
             if (request.RequiereAtencionUrgente.HasValue) diagnostico.RequiereAtencionUrgente = request.RequiereAtencionUrgente.Value;
             if (request.ObservacionesTecnico is not null) diagnostico.ObservacionesTecnico = request.ObservacionesTecnico.Trim();
 
+            if (request.Items is not null)
+            {
+                var nuevosItems = request.Items.ToList();
+                if (nuevosItems.Any())
+                    await ValidarItemsAsync(nuevosItems);
+
+                _context.DiagnosticoItem.RemoveRange(diagnostico.Items);
+                diagnostico.Items = nuevosItems.Select(i => new DiagnosticoItem
+                {
+                    DiagnosticoId = diagnostico.Id,
+                    SistemaVehiculo = i.SistemaVehiculo.Trim(),
+                    Componente = i.Componente.Trim(),
+                    Condicion = i.Condicion,
+                    AccionRecomendada = i.AccionRecomendada,
+                    Descripcion = i.Descripcion?.Trim(),
+                    ServicioSugeridoId = i.ServicioSugeridoId,
+                    ProductoSugeridoId = i.ProductoSugeridoId,
+                    CantidadProductoSugerido = i.CantidadProductoSugerida,
+                    EsUrgente = i.EsUrgente
+                }).ToList();
+            }
+
             await _context.SaveChangesAsync();
+
+            await _context.Entry(diagnostico)
+                .Collection(d => d.Items)
+                .Query()
+                .Include(i => i.ServicioSugerido)
+                .Include(i => i.ProductoSugerido)
+                .LoadAsync();
+
+            await RegistrarAuditoriaAsync(
+                diagnostico.Id,
+                "Actualizar",
+                "Diagnostico",
+                antes,
+                JsonSerializer.Serialize(new
+                {
+                    diagnostico.Id,
+                    diagnostico.Estado,
+                    diagnostico.TecnicoId,
+                    TotalItems = diagnostico.Items.Count
+                }));
 
             return ToResponse(diagnostico, diagnostico.Orden, diagnostico.Tecnico);
         }
@@ -196,25 +291,97 @@ namespace FrenosCore.Servicios
                 .FirstOrDefaultAsync(d => d.Id == id)
                 ?? throw new KeyNotFoundException($"Diagnóstico con ID {id} no encontrado.");
 
+            var antes = JsonSerializer.Serialize(new
+            {
+                diagnostico.Id,
+                diagnostico.OrdenId,
+                diagnostico.Estado
+            });
+
             _context.Diagnostico.Remove(diagnostico);
             await _context.SaveChangesAsync();
+
+            await RegistrarAuditoriaAsync(id, "Eliminar", "Diagnostico", antes, string.Empty);
         }
 
         public async Task<DiagnosticoResponse> CompletarDiagnosticoAsync(int id)
         {
             var diagnostico = await _context.Diagnostico
+                .Include(d => d.Tecnico)
                 .Include(d => d.Items)
+                    .ThenInclude(i => i.ServicioSugerido)
+                .Include(d => d.Items)
+                    .ThenInclude(i => i.ProductoSugerido)
                 .Include(d => d.Orden)
+                    .ThenInclude(o => o.Cliente)
+                .Include(d => d.Orden)
+                    .ThenInclude(o => o.Vehiculo)
                 .FirstOrDefaultAsync(d => d.Id == id)
                 ?? throw new KeyNotFoundException($"Diagnóstico con ID {id} no encontrado.");
+
+            var estadoAnterior = diagnostico.Estado;
 
             diagnostico.Estado = "Completado";
             await _context.SaveChangesAsync();
 
-            var cotizacion = await _CotizcionServ.GenerarDesdeDiagnosticoAsync(diagnostico.Id);
+            if (!diagnostico.Orden.CotizacionId.HasValue)
+            {
+                var cotizacion = await _CotizcionServ.GenerarDesdeDiagnosticoAsync(diagnostico.Id);
+                diagnostico.Orden.CotizacionId = cotizacion.Id;
+                await _context.SaveChangesAsync();
+            }
+
+            await RegistrarAuditoriaAsync(
+                diagnostico.Id,
+                "Completar",
+                "Diagnostico",
+                JsonSerializer.Serialize(new { Estado = estadoAnterior }),
+                JsonSerializer.Serialize(new { Estado = diagnostico.Estado }));
 
             return ToResponse(diagnostico, diagnostico.Orden, diagnostico.Tecnico);
         }
+        public async Task AprobarAsync(int id)
+        {
+            var diagnostico = await _context.Diagnostico.FindAsync(id)
+                ?? throw new KeyNotFoundException($"El diagnostico con id: {id} no fue encontrado");
+
+            var estadoAnterior = diagnostico.Estado;
+
+            diagnostico.AprobadoPorCliente = true;
+            diagnostico.Estado = "Completado";
+
+            await _context.SaveChangesAsync();
+
+            await RegistrarAuditoriaAsync(
+                diagnostico.Id,
+                "Aprobar",
+                "Diagnostico",
+                JsonSerializer.Serialize(new { Estado = estadoAnterior, diagnostico.AprobadoPorCliente }),
+                JsonSerializer.Serialize(new { Estado = diagnostico.Estado, diagnostico.AprobadoPorCliente }));
+
+
+
+        }
+
+        private async Task RegistrarAuditoriaAsync(int registroId, string accion, string tabla, string valorAntes, string valorDespues)
+        {
+            try
+            {
+                await _auditLog.RegistrarAsync(new AuditEntry(
+                    UsuarioId: _usuarioActual.Id,
+                    ResgistroId: registroId,
+                    Accion: accion,
+                    Tabla: tabla,
+                    Ip: _usuarioActual.Ip,
+                    ValorAntes: valorAntes,
+                    ValorDespues: valorDespues));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudo registrar auditoría en {Tabla} para registro {RegistroId}", tabla, registroId);
+            }
+        }
+
         private async Task ValidarItemsAsync(IEnumerable<CrearDiagnosticoItemRequest> items)
         {
 
@@ -259,14 +426,15 @@ namespace FrenosCore.Servicios
 
 
         private static DiagnosticoResponse ToResponse(
-            Diagnostico d, Orden orden, Usuario tecnico) => new(
+            Diagnostico d, Orden? orden, Usuario? tecnico) => new(
                 Id: d.Id,
                 OrdenId: d.OrdenId,
-                VehiculoInfo: $"{orden.Vehiculo.Marca} {orden.Vehiculo.Modelo} " +
-                                         $"{orden.Vehiculo.Anno} · {orden.Vehiculo.Placa}",
-                ClienteNombre: orden.Cliente.Nombre,
+                VehiculoInfo: orden?.Vehiculo is null
+                    ? string.Empty
+                    : $"{orden.Vehiculo.Marca} {orden.Vehiculo.Modelo} {orden.Vehiculo.Anno} · {orden.Vehiculo.Placa}",
+                ClienteNombre: orden?.Cliente?.Nombre ?? string.Empty,
                 TecnicoId: d.TecnicoId,
-                TecnicoNombre: tecnico.Nombre,
+                TecnicoNombre: tecnico?.Nombre ?? string.Empty,
                 KmIngreso: d.KmIngreso,
                 DescripcionGeneral: d.DescripcionGeneral,
                 Estado: d.Estado,

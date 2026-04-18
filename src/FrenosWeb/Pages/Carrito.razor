@@ -1,0 +1,133 @@
+﻿@page "/carrito"
+@using FrenosWeb.Models
+@using FrenosWeb.Services
+@inject CarritoStateService carritoService
+@inject NavigationManager navManager
+
+<div class="container mt-4">
+    <h3>🛒 Tu Carrito de Compras</h3>
+
+    @if (!carritoService.Items.Any())
+    {
+        <div class="alert alert-info shadow-sm mt-3">
+            <span class="bi bi-cart-x"></span> Tu carrito está vacío. ¡Ve al catálogo y elige algo!
+        </div>
+        <button class="btn btn-primary" @onclick='() => navManager.NavigateTo("/catalogo")'>
+            Volver al Catálogo
+        </button>
+    }
+    else
+    {
+        <div class="card shadow-sm mt-3">
+            <table class="table table-hover mb-0 text-center">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="text-start">Producto/Servicio</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unitario</th>
+                        <th>Total</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in carritoService.Items)
+                    {
+                        <tr>
+                            <td class="align-middle text-start">@item.Producto.Nombre</td>
+                            <td class="align-middle">
+                                <input type="number"
+                                       min="0"
+                                       class="form-control form-control-sm mx-auto text-center"
+                                       style="width: 80px;"
+                                       @bind="item.Cantidad"
+                                       @bind:event="oninput"
+                                       @onchange="ValidarEstadoBoton"
+                                       @onkeyup="ValidarEstadoBoton"
+                                       onkeydown="return event.keyCode !== 189 && event.keyCode !== 109" />
+                            </td>
+                            <td class="align-middle">RD$ @item.Producto.Precio.ToString("N2")</td>
+                            <td class="align-middle font-weight-bold">RD$ @item.TotalLinea.ToString("N2")</td>
+                            <td class="align-middle">
+                                <button class="btn btn-danger btn-sm" @onclick="() => Eliminar(item.Producto.Id)">
+                                    <span class="bi bi-trash"></span> Eliminar
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-4 text-end">
+            <h4 class="mb-3">Subtotal: <span class="text-success font-weight-bold">RD$ @carritoService.Subtotal.ToString("N2")</span></h4>
+            
+            <button class="btn btn-outline-secondary mb-3" @onclick="Vaciar">Vaciar Carrito</button>
+
+            @if (!string.IsNullOrEmpty(mensajeError))
+            {
+                <div class="alert alert-danger shadow-sm mb-3 text-center">
+                    <strong>¡Atención!</strong> @mensajeError
+                </div>
+            }
+
+            <button class="btn @(botonBloqueado ? "btn-secondary" : "btn-success") btn-lg w-100 shadow"
+                    @onclick="IrAOrden"
+                    disabled="@(botonBloqueado || !carritoService.Items.Any())">
+                @(botonBloqueado ? "Corrija las cantidades o elimine el producto/servicio ⚠️" : "Confirmar Orden ➡")
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    private string mensajeError = "";
+    private bool botonBloqueado = false;
+
+    protected override void OnInitialized()
+    {
+        ValidarEstadoBoton();
+    }
+
+    async Task Eliminar(int id)
+    {
+        await carritoService.Eliminar(id);
+        ValidarEstadoBoton();
+        StateHasChanged();
+    }
+
+    async Task Vaciar()
+    {
+        await carritoService.Limpiar();
+        mensajeError = "";
+        botonBloqueado = false;
+        StateHasChanged();
+    }
+
+    void ValidarEstadoBoton()
+    {
+        botonBloqueado = carritoService.Items.Any(x => x.Cantidad <= 0);
+
+        if (botonBloqueado)
+        {
+            var tieneVacioOZero = carritoService.Items.Any(x => x.Cantidad <= 0);
+            mensajeError = "⚠️ La cantidad debe ser al menos 1.";
+        }
+        else
+        {
+            mensajeError = "";
+        }
+        
+        _ = carritoService.Actualizar();
+    }
+
+    void IrAOrden()
+    {
+        ValidarEstadoBoton();
+        if (botonBloqueado) return;
+
+        if (carritoService.Items.Any())
+        {
+            navManager.NavigateTo("/orden");
+        }
+    }
+}

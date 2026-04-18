@@ -2,7 +2,8 @@
 {
     public record FacturaResponse(
         int Id,
-        int OrdenId,
+        int? OrdenId,
+        string TipoOrigen,
         int ClienteId,
         string ClienteNombre,
         string VehiculoInfo,

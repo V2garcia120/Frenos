@@ -1,0 +1,35 @@
+﻿@using FrenosWeb.Services
+@inject CarritoStateService carritoService
+
+<div style="border:1px solid #ccc; padding:15px; margin:10px; border-radius: 8px; box-shadow: 2px 2px 5px #eee;">
+    <h4>@Nombre</h4>
+    <p>Precio: <strong>RD$ @Precio.ToString("N2")</strong></p>
+    
+    @* Cambiamos el botón para que Blazor sepa que la acción es asíncrona *@
+    <button @onclick="AgregarAlCarrito"
+            style="background-color: #28a745; color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px;">
+        🛒 Agregar al Carrito
+    </button>
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    [Parameter] public string Nombre { get; set; } = string.Empty;
+    [Parameter] public decimal Precio { get; set; }
+
+    // 🛡️ Cambiamos de 'void' a 'async Task' para poder usar 'await'
+    private async Task AgregarAlCarrito()
+    {
+        var productoAAgregar = new FrenosWeb.Models.Producto
+        {
+            Id = this.Id,
+            Nombre = this.Nombre,
+            Precio = this.Precio
+        };
+
+        // ⚠️ WARNING FIXED: Ahora sí esperamos a que el servicio termine de guardar
+        await carritoService.Agregar(productoAAgregar);
+
+        Console.WriteLine($"[Web-Pamela] Producto agregado: {Nombre}");
+    }
+}

@@ -1,8 +1,11 @@
 ﻿using FrenosCore.Data;
+using FrenosCore.Helpers;
 using FrenosCore.Modelos.Dtos;
 using FrenosCore.Modelos.Dtos.Cliente;
+using FrenosCore.Modelos.Dtos.Log;
 using FrenosCore.Modelos.Entidades;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace FrenosCore.Servicios
 
@@ -10,9 +13,16 @@ namespace FrenosCore.Servicios
     public class ClienteService : IClienteService
     {
         private readonly AppDbContext _context;
-        public ClienteService(AppDbContext context)
+        private readonly IAudtiLog _auditLog;
+        private readonly IUsuarioActualService _usuarioActual;
+        private readonly ILogger<ClienteService> _logger;
+
+        public ClienteService(AppDbContext context, IAudtiLog auditLog, IUsuarioActualService usuarioActual, ILogger<ClienteService> logger)
         {
             _context = context;
+            _auditLog = auditLog;
+            _usuarioActual = usuarioActual;
+            _logger = logger;
         }
 
         public async Task<PaginadoResponse<ClienteResponse>> ListarAsync(int pagina, int tam, string? busqueda)
@@ -111,6 +121,8 @@ namespace FrenosCore.Servicios
 
         public async Task<ClienteResponse> CrearAsync(CrearClienteRequest req)
         {
+            _logger.LogInformation("Creando cliente: {Nombre}", req.Nombre);
+
             if (!string.IsNullOrWhiteSpace(req.Cedula))
             {
                 var cedulaExiste = await _context.Cliente
@@ -134,6 +146,9 @@ namespace FrenosCore.Servicios
             _context.Cliente.Add(cliente);
             await _context.SaveChangesAsync();
 
+            _logger.LogInformation("Cliente creado: {ClienteId}", cliente.Id);
+            await RegistrarAuditoriaAsync(cliente.Id, "Crear", "Cliente", string.Empty, JsonSerializer.Serialize(ToResponse(cliente)));
+
             return ToResponse(cliente);
 
         }
@@ -142,6 +157,8 @@ namespace FrenosCore.Servicios
         {
             var cliente = await _context.Cliente.FindAsync(id)
             ?? throw new KeyNotFoundException($"Cliente {id} no encontrado.");
+
+            var antes = JsonSerializer.Serialize(ToResponse(cliente));
 
   
             if (cliente.EsAnonimo)
@@ -169,6 +186,9 @@ namespace FrenosCore.Servicios
 
             await _context.SaveChangesAsync();
 
+            _logger.LogInformation("Cliente actualizado: {ClienteId}", id);
+            await RegistrarAuditoriaAsync(id, "Actualizar", "Cliente", antes, JsonSerializer.Serialize(ToResponse(cliente)));
+
             return ToResponse(cliente);
         }
 
@@ -178,6 +198,8 @@ namespace FrenosCore.Servicios
                 .Include(c => c.Facturas)
                 .FirstOrDefaultAsync(c => c.Id == id)
                 ?? throw new KeyNotFoundException($"Cliente {id} no encontrado.");
+
+            var antes = JsonSerializer.Serialize(ToResponse(cliente));
 
             if (cliente.EsAnonimo)
                 throw new InvalidOperationException(
@@ -189,7 +211,29 @@ namespace FrenosCore.Servicios
 
             _context.Cliente.Remove(cliente);
             await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Cliente eliminado: {ClienteId}", id);
+            await RegistrarAuditoriaAsync(id, "Eliminar", "Cliente", antes, string.Empty);
             return true;
+        }
+
+        private async Task RegistrarAuditoriaAsync(int registroId, string accion, string tabla, string valorAntes, string valorDespues)
+        {
+            try
+            {
+                await _auditLog.RegistrarAsync(new AuditEntry(
+                    UsuarioId: _usuarioActual.Id,
+                    ResgistroId: registroId,
+                    Accion: accion,
+                    Tabla: tabla,
+                    Ip: _usuarioActual.Ip,
+                    ValorAntes: valorAntes,
+                    ValorDespues: valorDespues));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudo registrar auditoría en {Tabla} para registro {RegistroId}", tabla, registroId);
+            }
         }
 
         private static ClienteResponse ToResponse(Cliente c) => new(

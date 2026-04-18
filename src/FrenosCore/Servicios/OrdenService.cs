@@ -1,11 +1,15 @@
 ﻿using FrenosCore.Data;
+using FrenosCore.Helpers;
 using FrenosCore.Modelos.Dtos;
 
+using FrenosCore.Modelos.Dtos.Log;
 using FrenosCore.Modelos.Dtos.Orden;
 using FrenosCore.Modelos.Dtos.Diagnostico;
+using FrenosCore.Modelos.Dtos.Factura;
 using FrenosCore.Modelos.Entidades;
 
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace FrenosCore.Servicios
 {
@@ -13,7 +17,11 @@ namespace FrenosCore.Servicios
     
     public class OrdenService(
     AppDbContext db,
-    IFacturaService facturas) : IOrdenService
+    IFacturaService facturas,
+    ICotizacionService cotizaciones,
+    IAudtiLog auditLog,
+    IUsuarioActualService usuarioActual,
+    ILogger<OrdenService> logger) : IOrdenService
     {
         // Estados válidos y sus transiciones permitidas
         private static readonly Dictionary<string, string[]> _transiciones = new()
@@ -28,7 +36,7 @@ namespace FrenosCore.Servicios
 
       
         public async Task<PaginadoResponse<OrdenResponse>> ListarAsync(
-            int pagina, int tam, string? estado, string? prioridad)
+            int pagina, int tam, string? estado, string? prioridad, int? tecnicoId, DateTime? fecha)
         {
             pagina = Math.Max(1, pagina);
             tam = Math.Clamp(tam, 1, 100);
@@ -37,6 +45,7 @@ namespace FrenosCore.Servicios
                 .AsNoTracking()
                 .Include(o => o.Cliente)
                 .Include(o => o.Vehiculo)
+                .Include(o => o.TecnicoAsignado)
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(estado))
@@ -44,6 +53,16 @@ namespace FrenosCore.Servicios
 
             if (!string.IsNullOrWhiteSpace(prioridad))
                 query = query.Where(o => o.Prioridad == prioridad);
+
+            if (tecnicoId.HasValue)
+                query = query.Where(o => o.TecnicoId == tecnicoId.Value);
+
+            if (fecha.HasValue)
+            {
+                var inicio = fecha.Value.Date;
+                var fin = inicio.AddDays(1);
+                query = query.Where(o => o.FechaCreacion >= inicio && o.FechaCreacion < fin);
+            }
 
             var totalItems = await query.CountAsync();
 
@@ -57,6 +76,8 @@ namespace FrenosCore.Servicios
                     o.Cliente.Nombre,
                     o.VehiculoId,
                     $"{o.Vehiculo.Marca} {o.Vehiculo.Modelo} {o.Vehiculo.Anno} · {o.Vehiculo.Placa}",
+                    o.TecnicoId,
+                    o.TecnicoAsignado != null ? o.TecnicoAsignado.Nombre : null,
                     o.CotizacionId,
                     o.Estado,
                     o.Prioridad,
@@ -83,6 +104,7 @@ namespace FrenosCore.Servicios
                 .AsNoTracking()
                 .Include(o => o.Cliente)
                 .Include(o => o.Vehiculo)
+                .Include(o => o.TecnicoAsignado)
                 .Include(o => o.Diagnostico)
                     .ThenInclude(d => d!.Items)
                         .ThenInclude(i => i.ServicioSugerido)
@@ -105,6 +127,8 @@ namespace FrenosCore.Servicios
                 ClienteNombre: orden.Cliente.Nombre,
                 VehiculoId: orden.VehiculoId,
                 VehiculoInfo: $"{orden.Vehiculo.Marca} {orden.Vehiculo.Modelo} {orden.Vehiculo.Anno} · {orden.Vehiculo.Placa}",
+                TecnicoId: orden.TecnicoId,
+                TecnicoNombre: orden.TecnicoAsignado?.Nombre,
                 CotizacionId: orden.CotizacionId,
                 Estado: orden.Estado,
                 Prioridad: orden.Prioridad,
@@ -119,6 +143,7 @@ namespace FrenosCore.Servicios
         
         public async Task<OrdenResponse> CrearAsync(CrearOrdenRequest req)
         {
+            logger.LogInformation("Creando orden para cliente {ClienteId} y vehículo {VehiculoId}", req.ClienteId, req.VehiculoId);
 
             var cliente = await db.Cliente.FindAsync(req.ClienteId)
                 ?? throw new KeyNotFoundException(
@@ -138,6 +163,20 @@ namespace FrenosCore.Servicios
                 throw new ArgumentException(
                     $"Prioridad '{req.Prioridad}' no válida. " +
                     $"Valores permitidos: {string.Join(", ", prioridadesValidas)}.");
+
+            Usuario? tecnicoAsignado = null;
+            if (req.TecnicoId.HasValue)
+            {
+                tecnicoAsignado = await db.Usuario
+                    .Include(u => u.Rol)
+                    .FirstOrDefaultAsync(u => u.Id == req.TecnicoId.Value && u.Activo)
+                    ?? throw new KeyNotFoundException($"Técnico {req.TecnicoId.Value} no encontrado o inactivo.");
+
+                var esTecnico = tecnicoAsignado.Rol.Nombre.Contains("tecnico", StringComparison.OrdinalIgnoreCase)
+                                || tecnicoAsignado.Rol.Nombre.Contains("técnico", StringComparison.OrdinalIgnoreCase);
+                if (!esTecnico)
+                    throw new InvalidOperationException("El usuario asignado no tiene rol de técnico.");
+            }
 
 
             if (req.CotizacionId.HasValue)
@@ -159,6 +198,7 @@ namespace FrenosCore.Servicios
             {
                 ClienteId = req.ClienteId,
                 VehiculoId = req.VehiculoId,
+                TecnicoId = req.TecnicoId,
                 CotizacionId = req.CotizacionId,
                 Estado = "Recibido",
                 Prioridad = req.Prioridad,
@@ -170,10 +210,28 @@ namespace FrenosCore.Servicios
             db.Orden.Add(orden);
             await db.SaveChangesAsync();
 
+            await RegistrarAuditoriaAsync(
+                orden.Id,
+                "Crear",
+                "Orden",
+                string.Empty,
+                JsonSerializer.Serialize(new
+                {
+                    orden.Id,
+                    orden.ClienteId,
+                    orden.VehiculoId,
+                    orden.Estado,
+                    orden.Prioridad
+                }));
+
+            logger.LogInformation("Orden creada {OrdenId}", orden.Id);
+
             return new OrdenResponse(
                 orden.Id, orden.ClienteId, cliente.Nombre,
                 orden.VehiculoId,
                 $"{vehiculo.Marca} {vehiculo.Modelo} {vehiculo.Anno} · {vehiculo.Placa}",
+                orden.TecnicoId,
+                tecnicoAsignado?.Nombre,
                 orden.CotizacionId, orden.Estado, orden.Prioridad,
                 orden.FechaCreacion, orden.FechaEntregaEstima,
                 orden.FechaEntregaReal, orden.Notas,
@@ -187,9 +245,12 @@ namespace FrenosCore.Servicios
             var orden = await db.Orden
                 .Include(o => o.Cliente)
                 .Include(o => o.Vehiculo)
+                .Include(o => o.TecnicoAsignado)
                 .Include(o => o.Diagnostico)
                 .FirstOrDefaultAsync(o => o.Id == id)
                 ?? throw new KeyNotFoundException($"Orden {id} no encontrada.");
+
+            var estadoAnterior = orden.Estado;
 
             
             if (!_transiciones.TryGetValue(orden.Estado, out var estadosSiguientes))
@@ -204,7 +265,12 @@ namespace FrenosCore.Servicios
             
             if (req.Estado == "Aprobado")
             {
-                if (orden.Diagnostico is null || !orden.Diagnostico.AprobadoPorCliente)
+                if (orden.Diagnostico is null)
+                    throw new InvalidOperationException(
+                        "La orden requiere un diagnóstico aprobado por el cliente " +
+                        "antes de pasar al estado Aprobado.");
+
+                if (!orden.Diagnostico.AprobadoPorCliente)
                     throw new InvalidOperationException(
                         "La orden requiere un diagnóstico aprobado por el cliente " +
                         "antes de pasar al estado Aprobado.");
@@ -218,10 +284,21 @@ namespace FrenosCore.Servicios
 
             await db.SaveChangesAsync();
 
+            await RegistrarAuditoriaAsync(
+                orden.Id,
+                "CambiarEstado",
+                "Orden",
+                JsonSerializer.Serialize(new { Estado = estadoAnterior }),
+                JsonSerializer.Serialize(new { Estado = orden.Estado }));
+
+            logger.LogInformation("Orden {OrdenId} cambió de estado {EstadoAnterior} a {EstadoNuevo}", orden.Id, estadoAnterior, orden.Estado);
+
             return new OrdenResponse(
                 orden.Id, orden.ClienteId, orden.Cliente.Nombre,
                 orden.VehiculoId,
                 $"{orden.Vehiculo.Marca} {orden.Vehiculo.Modelo} {orden.Vehiculo.Anno} · {orden.Vehiculo.Placa}",
+                orden.TecnicoId,
+                orden.TecnicoAsignado?.Nombre,
                 orden.CotizacionId, orden.Estado, orden.Prioridad,
                 orden.FechaCreacion, orden.FechaEntregaEstima,
                 orden.FechaEntregaReal, orden.Notas,
@@ -231,16 +308,31 @@ namespace FrenosCore.Servicios
         
         public async Task<CerrarOrdenResponse> CerrarAsync(int id, CerrarOrdenRequest req)
         {
+            logger.LogInformation("Cerrando orden {OrdenId}", id);
+
             var orden = await db.Orden
                 .Include(o => o.Vehiculo)
+                .Include(o => o.Diagnostico)
                 .Include(o => o.Cotizacion)
                     .ThenInclude(c => c!.Items)
                 .FirstOrDefaultAsync(o => o.Id == id)
                 ?? throw new KeyNotFoundException($"Orden {id} no encontrada.");
 
-            if (orden.Estado != "EnReparacion")
+            if (orden.Estado != "Lista")
                 throw new InvalidOperationException(
-                    "Solo se puede cerrar una orden en estado EnReparacion.");
+                    "Solo se puede cerrar una orden en estado Lista.");
+
+            if (orden.Diagnostico is null)
+                throw new InvalidOperationException(
+                    "No se puede cerrar la orden porque no tiene diagnóstico registrado.");
+
+            if (!orden.Diagnostico.AprobadoPorCliente)
+                throw new InvalidOperationException(
+                    "No se puede cerrar la orden porque el diagnóstico no ha sido aprobado por el cliente.");
+
+            if (orden.Diagnostico.Estado != "Completado" && orden.Diagnostico.Estado != "Aprobado")
+                throw new InvalidOperationException(
+                    "No se puede cerrar la orden porque el diagnóstico debe estar en estado Aprobado o Completado.");
 
 
             var tecnico = await db.Usuario
@@ -278,15 +370,44 @@ namespace FrenosCore.Servicios
                 if (req.KmAlServicio.HasValue)
                     orden.Vehiculo.KmActual = req.KmAlServicio.Value;
 
+                if (!orden.CotizacionId.HasValue)
+                {
+                    var cotizacion = await cotizaciones.GenerarDesdeDiagnosticoAsync(orden.Diagnostico.Id);
+                    await cotizaciones.AprobarAsync(cotizacion.Id);
+                    orden.CotizacionId = cotizacion.Id;
+                }
+                else if (orden.Cotizacion is not null && orden.Cotizacion.Estado != "Aprobada")
+                {
+                    await cotizaciones.AprobarAsync(orden.CotizacionId.Value);
+                }
+
 
                 orden.Estado = "Lista";
 
                 await db.SaveChangesAsync();
 
 
-                var factura = await facturas.GenerarDesdeOrdenAsync(orden.Id, req.TecnicoId);
+                var factura = await facturas.GenerarDesdeOrdenAsync(orden.Id, req.TecnicoId, req.MetodoPago);
+
+                await facturas.RegistrarPagoAsync(
+                    factura.Id,
+                    new RegistrarPagoRequest(req.MetodoPago, factura.Total));
 
                 await transaccion.CommitAsync();
+
+                await RegistrarAuditoriaAsync(
+                    orden.Id,
+                    "Cerrar",
+                    "Orden",
+                    JsonSerializer.Serialize(new { Estado = "Lista" }),
+                    JsonSerializer.Serialize(new
+                    {
+                        Estado = orden.Estado,
+                        FacturaId = factura.Id,
+                        factura.Numero
+                    }));
+
+                logger.LogInformation("Orden cerrada {OrdenId} con factura {FacturaId}", orden.Id, factura.Id);
 
                 return new CerrarOrdenResponse(
                     HistorialId: historial.Id,
@@ -299,6 +420,25 @@ namespace FrenosCore.Servicios
             {
                 await transaccion.RollbackAsync();
                 throw;
+            }
+        }
+
+        private async Task RegistrarAuditoriaAsync(int registroId, string accion, string tabla, string valorAntes, string valorDespues)
+        {
+            try
+            {
+                await auditLog.RegistrarAsync(new AuditEntry(
+                    UsuarioId: usuarioActual.Id,
+                    ResgistroId: registroId,
+                    Accion: accion,
+                    Tabla: tabla,
+                    Ip: usuarioActual.Ip,
+                    ValorAntes: valorAntes,
+                    ValorDespues: valorDespues));
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "No se pudo registrar auditoría en {Tabla} para registro {RegistroId}", tabla, registroId);
             }
         }
 

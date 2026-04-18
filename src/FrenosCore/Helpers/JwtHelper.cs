@@ -15,7 +15,7 @@ namespace FrenosCore.Helpers
         public string GenerarToken(string userId, string email, string rol)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = new SymmetricSecurityKey(System.Text.Encoding.ASCII.GetBytes(_configuration["Jwt:SecretKey"]));
+            var key = new SymmetricSecurityKey(System.Text.Encoding.ASCII.GetBytes(_configuration["Jwt:Secret"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var claims = new[]
             {

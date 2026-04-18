@@ -159,6 +159,11 @@ namespace FrenosCore.Data
                  .HasForeignKey(o => o.VehiculoId)
                  .OnDelete(DeleteBehavior.Restrict);
 
+                e.HasOne(o => o.TecnicoAsignado)
+                 .WithMany(u => u.OrdenesAsignadas)
+                 .HasForeignKey(o => o.TecnicoId)
+                 .OnDelete(DeleteBehavior.SetNull);
+
                 e.HasOne(o => o.Cotizacion)
                  .WithOne(c => c.Orden)
                  .HasForeignKey<Orden>(o => o.CotizacionId)
@@ -222,6 +227,7 @@ namespace FrenosCore.Data
                 e.Property(f => f.Subtotal).HasPrecision(10, 2);
                 e.Property(f => f.Itbis).HasPrecision(10, 2);
                 e.Property(f => f.Total).HasPrecision(10, 2);
+                e.Property(f => f.TipoOrigen).IsRequired().HasMaxLength(30);
                 e.Property(f => f.Estado).IsRequired().HasMaxLength(20);
                 e.Property(f => f.MetodoPago).HasMaxLength(40);
 

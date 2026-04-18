@@ -3,6 +3,7 @@
 @model FrenosCore.Pages.Productos.IndexModel
 @{
     ViewData["Title"] = "Productos";
+    var puedeGestionar = User.IsInRole("Administrador") || User.IsInRole("Admin") || User.IsInRole("Mantenimiento") || User.IsInRole("Mantemineto");
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -31,7 +32,10 @@
                 <button type="submit" class="btn btn-outline-primary w-100">Buscar</button>
             </div>
             <div class="col-md-2 d-flex align-items-end">
-                <a asp-page="/Productos/Create" class="btn btn-primary w-100">Crear producto</a>
+                @if (puedeGestionar)
+                {
+                    <a asp-page="/Productos/Create" class="btn btn-primary w-100">Crear producto</a>
+                }
             </div>
         </form>
     </div>
@@ -50,14 +54,17 @@
                         <th class="text-end">Costo</th>
                         <th class="text-end">Stock</th>
                         <th class="text-end">Stock mínimo</th>
-                        <th class="text-end">Acciones</th>
+                        @if (puedeGestionar)
+                        {
+                            <th class="text-end">Acciones</th>
+                        }
                     </tr>
                 </thead>
                 <tbody>
                     @if (Model.Productos.Count == 0)
                     {
                         <tr>
-                            <td colspan="7" class="text-center py-4">No hay productos para mostrar.</td>
+                            <td colspan="@(puedeGestionar ? 7 : 6)" class="text-center py-4">No hay productos para mostrar.</td>
                         </tr>
                     }
                     else
@@ -74,12 +81,15 @@
                                 <td class="text-end">@producto.Costo.ToString("C")</td>
                                 <td class="text-end">@producto.Stock</td>
                                 <td class="text-end">@producto.StockMinimo</td>
-                                <td class="text-end">
-                                    <a asp-page="/Productos/Edit" asp-route-id="@producto.Id" class="btn btn-sm btn-outline-primary me-1">Editar</a>
-                                    <form method="post" asp-page-handler="Eliminar" asp-route-id="@producto.Id" class="d-inline">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar este producto?');">Eliminar</button>
-                                    </form>
-                                </td>
+                                @if (puedeGestionar)
+                                {
+                                    <td class="text-end">
+                                        <a asp-page="/Productos/Edit" asp-route-id="@producto.Id" class="btn btn-sm btn-outline-primary me-1">Editar</a>
+                                        <form method="post" asp-page-handler="Eliminar" asp-route-id="@producto.Id" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar este producto?');">Eliminar</button>
+                                        </form>
+                                    </td>
+                                }
                             </tr>
                         }
                     }

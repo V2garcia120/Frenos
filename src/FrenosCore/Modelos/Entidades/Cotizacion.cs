@@ -9,8 +9,8 @@
         public decimal Subtotal { get; set; }
         public decimal Itbis { get; set; }
         public decimal Total { get; set; }
-        public string Estado { get; set; }
-        public string Notas { get; set; }
+        public string Estado { get; set; } = "Pendiente";
+        public string Notas { get; set; } = string.Empty;
         public DateTime ValidaHasta { get; set; }
 
         public Cliente Cliente { get; set; } = null!;

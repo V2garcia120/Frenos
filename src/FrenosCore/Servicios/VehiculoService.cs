@@ -1,21 +1,32 @@
 using FrenosCore.Data;
+using FrenosCore.Helpers;
+using FrenosCore.Modelos.Dtos.Log;
 using FrenosCore.Modelos.Dtos.Vehiculo;
 using FrenosCore.Modelos.Entidades;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace FrenosCore.Servicios
 {
     public class VehiculoService : IVehiculoService
     {
         private readonly AppDbContext _context;
+        private readonly IAudtiLog _auditLog;
+        private readonly IUsuarioActualService _usuarioActual;
+        private readonly ILogger<VehiculoService> _logger;
 
-        public VehiculoService(AppDbContext context)
+        public VehiculoService(AppDbContext context, IAudtiLog auditLog, IUsuarioActualService usuarioActual, ILogger<VehiculoService> logger)
         {
             _context = context;
+            _auditLog = auditLog;
+            _usuarioActual = usuarioActual;
+            _logger = logger;
         }
 
         public async Task<VehiculoResponse> RegistrarAsync(RegistrarVehiculoRequest request)
         {
+            _logger.LogInformation("Registrando vehículo con placa: {Placa}", request.Placa);
+
             var clienteExiste = await _context.Cliente.AnyAsync(c => c.Id == request.ClienteId);
             if (!clienteExiste)
                 throw new KeyNotFoundException($"Cliente con ID {request.ClienteId} no encontrado.");
@@ -42,6 +53,9 @@ namespace FrenosCore.Servicios
 
             _context.Vehiculo.Add(vehiculo);
             await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Vehículo registrado: {VehiculoId}", vehiculo.Id);
+            await RegistrarAuditoriaAsync(vehiculo.Id, "Crear", "Vehiculo", string.Empty, JsonSerializer.Serialize(ToResponse(vehiculo)));
 
             return ToResponse(vehiculo);
         }
@@ -71,6 +85,8 @@ namespace FrenosCore.Servicios
                 .FirstOrDefaultAsync(v => v.Id == id)
                 ?? throw new KeyNotFoundException($"Vehículo con ID {id} no encontrado.");
 
+            var antes = JsonSerializer.Serialize(ToResponse(vehiculo));
+
             if (!string.IsNullOrWhiteSpace(request.Placa))
             {
                 var nuevaPlaca = request.Placa.Trim().ToUpper();
@@ -92,6 +108,9 @@ namespace FrenosCore.Servicios
 
             await _context.SaveChangesAsync();
 
+            _logger.LogInformation("Vehículo actualizado: {VehiculoId}", id);
+            await RegistrarAuditoriaAsync(id, "Actualizar", "Vehiculo", antes, JsonSerializer.Serialize(ToResponse(vehiculo)));
+
             return ToResponse(vehiculo);
         }
 
@@ -101,8 +120,32 @@ namespace FrenosCore.Servicios
                 .FirstOrDefaultAsync(v => v.Id == id)
                 ?? throw new KeyNotFoundException($"Vehículo con ID {id} no encontrado.");
 
+            var antes = JsonSerializer.Serialize(ToResponse(vehiculo));
+
             vehiculo.Activo = false;
             await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Vehículo desactivado: {VehiculoId}", id);
+            await RegistrarAuditoriaAsync(id, "Eliminar", "Vehiculo", antes, JsonSerializer.Serialize(ToResponse(vehiculo)));
+        }
+
+        private async Task RegistrarAuditoriaAsync(int registroId, string accion, string tabla, string valorAntes, string valorDespues)
+        {
+            try
+            {
+                await _auditLog.RegistrarAsync(new AuditEntry(
+                    UsuarioId: _usuarioActual.Id,
+                    ResgistroId: registroId,
+                    Accion: accion,
+                    Tabla: tabla,
+                    Ip: _usuarioActual.Ip,
+                    ValorAntes: valorAntes,
+                    ValorDespues: valorDespues));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudo registrar auditoría en {Tabla} para registro {RegistroId}", tabla, registroId);
+            }
         }
 
         private static VehiculoResponse ToResponse(Vehiculo vehiculo)

@@ -17,7 +17,7 @@ namespace FrenosCore.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.5")
+                .HasAnnotation("ProductVersion", "9.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -80,10 +80,9 @@ namespace FrenosCore.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("RegistroId")
-                        .IsRequired()
+                    b.Property<int>("RegistroId")
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("int");
 
                     b.Property<string>("Tabla")
                         .IsRequired()
@@ -143,6 +142,10 @@ namespace FrenosCore.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Telefono")
                         .IsRequired()
@@ -441,12 +444,17 @@ namespace FrenosCore.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");
 
-                    b.Property<int>("OrdenId")
+                    b.Property<int?>("OrdenId")
                         .HasColumnType("int");
 
                     b.Property<decimal>("Subtotal")
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("TipoOrigen")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
 
                     b.Property<decimal>("Total")
                         .HasPrecision(10, 2)
@@ -462,7 +470,8 @@ namespace FrenosCore.Migrations
                         .IsUnique();
 
                     b.HasIndex("OrdenId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[OrdenId] IS NOT NULL");
 
                     b.ToTable("Factura", (string)null);
                 });
@@ -597,6 +606,9 @@ namespace FrenosCore.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<int?>("TecnicoId")
+                        .HasColumnType("int");
+
                     b.Property<int>("VehiculoId")
                         .HasColumnType("int");
 
@@ -607,6 +619,8 @@ namespace FrenosCore.Migrations
                     b.HasIndex("CotizacionId")
                         .IsUnique()
                         .HasFilter("[CotizacionId] IS NOT NULL");
+
+                    b.HasIndex("TecnicoId");
 
                     b.HasIndex("VehiculoId");
 
@@ -977,8 +991,7 @@ namespace FrenosCore.Migrations
                     b.HasOne("FrenosCore.Modelos.Entidades.Orden", "Orden")
                         .WithOne("Factura")
                         .HasForeignKey("FrenosCore.Modelos.Entidades.Factura", "OrdenId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Cliente");
 
@@ -1038,6 +1051,11 @@ namespace FrenosCore.Migrations
                         .HasForeignKey("FrenosCore.Modelos.Entidades.Orden", "CotizacionId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("FrenosCore.Modelos.Entidades.Usuario", "TecnicoAsignado")
+                        .WithMany("OrdenesAsignadas")
+                        .HasForeignKey("TecnicoId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("FrenosCore.Modelos.Entidades.Vehiculo", "Vehiculo")
                         .WithMany("Ordenes")
                         .HasForeignKey("VehiculoId")
@@ -1047,6 +1065,8 @@ namespace FrenosCore.Migrations
                     b.Navigation("Cliente");
 
                     b.Navigation("Cotizacion");
+
+                    b.Navigation("TecnicoAsignado");
 
                     b.Navigation("Vehiculo");
                 });
@@ -1144,6 +1164,8 @@ namespace FrenosCore.Migrations
                     b.Navigation("FacturasEmitidas");
 
                     b.Navigation("HistorialesReparacionTecnico");
+
+                    b.Navigation("OrdenesAsignadas");
                 });
 
             modelBuilder.Entity("FrenosCore.Modelos.Entidades.Vehiculo", b =>

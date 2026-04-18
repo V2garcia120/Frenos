@@ -1,0 +1,264 @@
+@page
+@model FrenosCore.Pages.Dashboard.AdminModel
+@{
+    ViewData["Title"] = "Dashboard Admin";
+    var variacionHoy = Model.VariacionHoy;
+    var variacionMes = Model.VariacionMes;
+    var claseVariacionHoy = variacionHoy >= 0 ? "admin-text-success" : "admin-text-danger";
+    var claseVariacionMes = variacionMes >= 0 ? "admin-text-success" : "admin-text-danger";
+    var maxServicio = Model.Data.ServiciosMasSolicitados.Any() ? Model.Data.ServiciosMasSolicitados.Max(s => s.Cantidad) : 1;
+    var maxEstado = Model.Data.EstadoOrdenes.Any() ? Model.Data.EstadoOrdenes.Max(s => s.Cantidad) : 1;
+}
+
+<style>
+    .admin-dashboard {
+        background: #f8f9fa;
+        border-radius: 1rem;
+        padding: 1.25rem;
+        color: #212529;
+    }
+
+    .admin-card {
+        background: #ffffff;
+        border: 1px solid #dee2e6;
+        border-radius: .9rem;
+    }
+
+    .admin-kpi-title {
+        color: #6c757d;
+        font-size: .9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .admin-kpi-value {
+        font-size: 2.1rem;
+        line-height: 1;
+        font-weight: 700;
+        color: #212529;
+    }
+
+    .admin-text-success {
+        color: #22c55e;
+        font-weight: 600;
+    }
+
+    .admin-text-danger {
+        color: #ef4444;
+        font-weight: 600;
+    }
+
+    .admin-text-warning {
+        color: #f59e0b;
+        font-weight: 600;
+    }
+
+    .admin-section-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #212529;
+    }
+
+    .admin-muted {
+        color: #6c757d;
+    }
+
+    .admin-alert-item,
+    .admin-cxc-item {
+        border-top: 1px solid #e9ecef;
+    }
+
+    .admin-badge-icon {
+        width: 2.25rem;
+        height: 2.25rem;
+        border-radius: .65rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: #fff;
+        flex: 0 0 auto;
+    }
+
+    .admin-bg-danger { background: #dc3545; }
+    .admin-bg-warning { background: #fd7e14; }
+    .admin-bg-info { background: #0d6efd; }
+
+    .admin-row-title {
+        color: #212529;
+        font-weight: 600;
+    }
+
+    .admin-amount-danger {
+        color: #dc2626;
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    .admin-progress {
+        background: #e9ecef;
+        border-radius: 999px;
+        height: 10px;
+        overflow: hidden;
+    }
+
+    .admin-progress > span {
+        display: block;
+        height: 100%;
+        border-radius: 999px;
+    }
+
+    .p-purple { background: #6f42c1; }
+    .p-blue { background: #0d6efd; }
+    .p-indigo { background: #6610f2; }
+    .p-amber { background: #ffc107; }
+    .p-green { background: #198754; }
+</style>
+
+<div class="admin-dashboard">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h4 mb-0">Dashboard de Administración</h1>
+        <small class="admin-muted">Resumen del taller</small>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-lg-3 col-md-6">
+            <div class="admin-card p-3 h-100">
+                <div class="admin-kpi-title">Facturado hoy</div>
+                <div class="admin-kpi-value mt-1">@Model.Data.FacturadoHoy.ToString("C")</div>
+                <div class="@claseVariacionHoy mt-2">@variacionHoy.ToString("+#,0.##;-#,0.##;0")% vs ayer</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="admin-card p-3 h-100">
+                <div class="admin-kpi-title">Facturado este mes</div>
+                <div class="admin-kpi-value mt-1">@Model.Data.FacturadoMes.ToString("C")</div>
+                <div class="@claseVariacionMes mt-2">@variacionMes.ToString("+#,0.##;-#,0.##;0")% vs mes anterior</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="admin-card p-3 h-100">
+                <div class="admin-kpi-title">CxC pendiente</div>
+                <div class="admin-kpi-value mt-1">@Model.Data.CxcPendiente.ToString("C")</div>
+                <div class="admin-text-danger mt-2">@Model.Data.CuentasVencidas cuentas vencidas</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="admin-card p-3 h-100">
+                <div class="admin-kpi-title">Ordenes activas</div>
+                <div class="admin-kpi-value mt-1">@Model.Data.OrdenesActivas</div>
+                <div class="admin-text-warning mt-2">@Model.Data.OrdenesUrgentes urgentes</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-6">
+            <div class="admin-card overflow-hidden mb-3">
+                <div class="px-3 py-2 border-bottom border-secondary-subtle">
+                    <div class="admin-section-title">Alertas del sistema</div>
+                </div>
+                @if (!Model.Data.Alertas.Any())
+                {
+                    <div class="p-3 admin-muted">No hay alertas por mostrar.</div>
+                }
+                else
+                {
+                    @for (var i = 0; i < Model.Data.Alertas.Count; i++)
+                    {
+                        var alerta = Model.Data.Alertas[i];
+                        var claseIcono = alerta.Tipo == "danger" ? "admin-bg-danger" : alerta.Tipo == "warning" ? "admin-bg-warning" : "admin-bg-info";
+                        var icono = alerta.Tipo == "danger" ? "⚠" : alerta.Tipo == "warning" ? "!" : "i";
+                        <div class="p-3 d-flex gap-3 align-items-start @(i > 0 ? "admin-alert-item" : string.Empty)">
+                            <span class="admin-badge-icon @claseIcono">@icono</span>
+                            <div>
+                                <div class="admin-row-title">@alerta.Titulo</div>
+                                <div class="admin-muted">@alerta.Detalle</div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+
+            <div class="admin-card overflow-hidden">
+                <div class="px-3 py-2 border-bottom border-secondary-subtle d-flex justify-content-between">
+                    <div class="admin-section-title">Cuentas por cobrar</div>
+                    <div class="admin-muted">Próximas 7 días</div>
+                </div>
+
+                @if (!Model.Data.CuentasPorCobrarProximas.Any())
+                {
+                    <div class="p-3 admin-muted">No hay cuentas por cobrar en los próximos 7 días.</div>
+                }
+                else
+                {
+                    @for (var i = 0; i < Model.Data.CuentasPorCobrarProximas.Count; i++)
+                    {
+                        var cxc = Model.Data.CuentasPorCobrarProximas[i];
+                        var dias = (cxc.Vencimiento.Date - DateTime.Today).Days;
+                        var textoVencimiento = dias < 0 ? $"Vencida hace {Math.Abs(dias)} días" : dias == 0 ? "Vence hoy" : $"Vence en {dias} días";
+                        var claseMonto = dias < 0 ? "admin-amount-danger" : "admin-text-warning fs-1 fw-bold";
+                        <div class="p-3 d-flex justify-content-between align-items-start @(i > 0 ? "admin-cxc-item" : string.Empty)">
+                            <div>
+                                <div class="admin-row-title">@cxc.Cliente</div>
+                                <div class="admin-muted">@textoVencimiento</div>
+                            </div>
+                            <div class="@claseMonto">@cxc.Saldo.ToString("C")</div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="admin-card p-3 mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="admin-section-title">Servicios más solicitados</div>
+                    <div class="admin-muted">Este mes</div>
+                </div>
+
+                @if (!Model.Data.ServiciosMasSolicitados.Any())
+                {
+                    <div class="admin-muted">Sin datos de servicios en el período.</div>
+                }
+                else
+                {
+                    @foreach (var item in Model.Data.ServiciosMasSolicitados)
+                    {
+                        var width = Math.Max(8, (int)Math.Round((item.Cantidad / (double)maxServicio) * 100));
+                        <div class="row g-3 align-items-center mb-2">
+                            <div class="col-4 admin-row-title">@item.Nombre</div>
+                            <div class="col-6"><div class="admin-progress"><span class="p-purple" style="width: @width%"></span></div></div>
+                            <div class="col-2 text-end admin-muted">@item.Cantidad</div>
+                        </div>
+                    }
+                }
+            </div>
+
+            <div class="admin-card p-3">
+                <div class="admin-section-title mb-3">Estado de ordenes</div>
+
+                @if (!Model.Data.EstadoOrdenes.Any())
+                {
+                    <div class="admin-muted">Sin órdenes activas.</div>
+                }
+                else
+                {
+                    @foreach (var item in Model.Data.EstadoOrdenes)
+                    {
+                        var width = Math.Max(8, (int)Math.Round((item.Cantidad / (double)maxEstado) * 100));
+                        var claseColor = item.Estado.ToLower().Contains("recib") ? "p-blue"
+                            : item.Estado.ToLower().Contains("diagn") ? "p-indigo"
+                            : item.Estado.ToLower().Contains("repar") ? "p-amber"
+                            : "p-green";
+                        <div class="row g-3 align-items-center mb-2">
+                            <div class="col-4 admin-row-title">@item.Estado</div>
+                            <div class="col-6"><div class="admin-progress"><span class="@claseColor" style="width: @width%"></span></div></div>
+                            <div class="col-2 text-end admin-muted">@item.Cantidad</div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>

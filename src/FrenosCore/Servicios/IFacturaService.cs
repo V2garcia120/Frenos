@@ -7,13 +7,13 @@ namespace FrenosCore.Servicios
     public interface IFacturaService
     {
         Task<PaginadoResponse<FacturaResponse>> ListarAsync(
-        int pagina, int tam, string? estado);
+        int pagina, int tam, string? estado, string? numero, DateTime? fecha, string? tipoOrigen);
 
 
         Task<FacturaResponse> ObtenerPorIdAsync(int id);
 
 
-        Task<FacturaResponse> GenerarDesdeOrdenAsync(int ordenId, int emisorId);
+        Task<FacturaResponse> GenerarDesdeOrdenAsync(int ordenId, int emisorId, string? metodoPago);
 
 
         Task<FacturaResponse> RegistrarPagoAsync(int id, RegistrarPagoRequest request);

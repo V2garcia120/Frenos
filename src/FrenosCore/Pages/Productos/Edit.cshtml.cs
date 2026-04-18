@@ -1,11 +1,13 @@
 using System.ComponentModel.DataAnnotations;
 using FrenosCore.Modelos.Dtos.Producto;
 using FrenosCore.Servicios;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace FrenosCore.Pages.Productos
 {
+    [Authorize(Policy = "Mantenimiento")]
     public class EditModel : PageModel
     {
         private readonly IProductoService _productoService;

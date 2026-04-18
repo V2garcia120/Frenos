@@ -1,0 +1,56 @@
+@page "{id:int}"
+@model FrenosCore.Pages.Clientes.EditModel
+@{
+    ViewData["Title"] = "Editar cliente";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Editar cliente</h1>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" class="row g-3">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="col-md-6">
+                <label asp-for="Input.Nombre" class="form-label"></label>
+                <input asp-for="Input.Nombre" class="form-control" />
+                <span asp-validation-for="Input.Nombre" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Input.Cedula" class="form-label"></label>
+                <input asp-for="Input.Cedula" class="form-control" />
+                <span asp-validation-for="Input.Cedula" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Input.Telefono" class="form-label"></label>
+                <input asp-for="Input.Telefono" class="form-control" />
+                <span asp-validation-for="Input.Telefono" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Input.Email" class="form-label"></label>
+                <input asp-for="Input.Email" class="form-control" />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+
+            <div class="col-12">
+                <label asp-for="Input.Direccion" class="form-label"></label>
+                <input asp-for="Input.Direccion" class="form-control" />
+                <span asp-validation-for="Input.Direccion" class="text-danger"></span>
+            </div>
+
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">Actualizar</button>
+                <a asp-page="/Clientes/Index" class="btn btn-outline-secondary ms-2">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

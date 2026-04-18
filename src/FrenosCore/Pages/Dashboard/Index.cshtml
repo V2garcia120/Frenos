@@ -1,0 +1,71 @@
+﻿@page
+@model FrenosCore.Pages.Dashboard.IndexModel
+@{
+    ViewData["Title"] = "Dashboard";
+    var claseCabecera = Model.EsAdmin ? "text-bg-primary" : Model.EsTecnico ? "text-bg-warning" : "text-bg-secondary";
+    var tituloRol = Model.EsAdmin ? "Panel de administración" : Model.EsTecnico ? "Panel técnico" : "Panel general";
+}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body @claseCabecera rounded">
+        <h1 class="h3 mb-1">@tituloRol</h1>
+        <p class="mb-0">Bienvenido. Rol detectado: <strong>@Model.RolUsuario</strong></p>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="h6 text-muted">Productos</h2>
+                <p class="display-6 mb-0">@Model.TotalProductos</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="h6 text-muted">Última actualización</h2>
+                <p class="mb-0 fs-5">@DateTime.Now.ToString("dd/MM/yyyy HH:mm")</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="h6 text-muted">Estado</h2>
+                <span class="badge text-bg-success">Operativo</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.EsAdmin)
+{
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-white fw-semibold">Acciones de administrador</div>
+        <div class="card-body d-flex flex-wrap gap-2">
+            <a asp-page="/Productos/Index" class="btn btn-outline-primary">Gestionar productos</a>
+            <a asp-page="/Productos/Create" class="btn btn-primary">Crear producto</a>
+            <a asp-page="/Privacy" class="btn btn-outline-secondary">Configuración</a>
+        </div>
+    </div>
+}
+else if (Model.EsTecnico)
+{
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-white fw-semibold">Acciones de técnico</div>
+        <div class="card-body d-flex flex-wrap gap-2">
+            <a asp-page="/Productos/Index" class="btn btn-outline-warning">Consultar productos</a>
+            <a asp-page="/Privacy" class="btn btn-outline-secondary">Procedimientos</a>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-secondary">
+        No hay un panel específico para este rol.
+    </div>
+}
