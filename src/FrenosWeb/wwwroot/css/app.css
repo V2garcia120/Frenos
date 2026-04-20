@@ -113,3 +113,12 @@ code {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+.hover-link:hover {
+    color: #ffffff !important;
+    transition: 0.3s;
+}
+
+.nav-link {
+    text-decoration: none !important;
+}

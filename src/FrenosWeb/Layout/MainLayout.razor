@@ -1,26 +1,42 @@
 ﻿@inherits LayoutComponentBase
-@using FrenosWeb.Services
-@inject CarritoStateService carritoService
+@inject AuthService authService
+@inject NavigationManager navManager
 
 <div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
-
     <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+        <div class="top-row px-4 d-flex align-items-center shadow-sm" style="background-color: #1a1a1a; border-bottom: 1px solid #333;">
+    
+            <div class="d-flex align-items-center">
+                <span class="text-white fw-bold me-4" style="font-size: 1.2rem; letter-spacing: 1px;">TALLER DE FRENOS</span>
+        
+                <a href="/" class="nav-link text-white-50 px-3 hover-link">Inicio</a>
+                <a href="catalogo" class="nav-link text-white-50 px-3 hover-link">Catálogo</a>
+            </div>
+
+            <div class="ms-auto d-flex align-items-center">
+                <AuthorizeView>
+                    <Authorized>
+                        <span class="text-white-50 me-3 small">Hola, @context.User.Identity?.Name</span>
+                        <button class="btn btn-sm btn-danger rounded-pill px-3" @onclick="HandleLogout">Cerrar Sesión</button>
+                    </Authorized>
+                    <NotAuthorized>
+                        <a href="login" class="btn btn-sm btn-light text-dark rounded-pill px-4 me-2">Iniciar Sesión</a>
+                        <a href="registro" class="btn btn-sm btn-outline-light rounded-pill px-4">Registrarse</a>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </div>
         </div>
 
-        <article class="content px-4">
+        <article class="content px-4 py-3">
             @Body
         </article>
     </main>
 </div>
 
 @code {
-    protected override async Task OnInitializedAsync()
+    private void HandleLogout()
     {
-        await carritoService.InicializarAsync();
+        authService.Logout();
+        navManager.NavigateTo("/", true);
     }
 }
