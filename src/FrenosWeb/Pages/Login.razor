@@ -35,12 +35,23 @@
                     }
 
                     <button type="submit" class="btn w-100 rounded-pill py-2 fw-bold shadow-sm text-white"
-                            style="background-color: #28a745;">
-                        Iniciar Sesión
+                            style="background-color: #28a745;" disabled="@isProcessing">
+                        @if (isProcessing)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                            <span>Validando...</span>
+                        }
+                        else
+                        {
+                            <span>Iniciar Sesión</span>
+                        }
                     </button>
                     
                     <div class="text-center mt-4">
-                        <span class="text-muted small">¿No tienes cuenta? <a href="registro" class="fw-bold text-decoration-none" style="color: #28a745;">Regístrate aquí</a></span>
+                        <span class="text-muted small">
+                            ¿No tienes cuenta?
+                            <a href="registro" class="fw-bold text-decoration-none" style="color: #0d6efd;">Regístrate aquí</a>
+                        </span>
                     </div>
                 </EditForm>
             </div>
@@ -51,12 +62,25 @@
 @code {
     private FrenosWeb.Models.LoginModel loginModel = new();
     private string errorMessage = "";
+    private bool isProcessing = false; 
 
     private async Task HandleLogin()
     {
         errorMessage = "";
+        isProcessing = true; 
+
+        await Task.Delay(1000);
+
         var success = await authService.Login(loginModel);
-        if (success) navManager.NavigateTo("catalogo");
-        else errorMessage = "Correo o contraseña incorrectos.";
+
+        if (success)
+        {
+            navManager.NavigateTo("catalogo");
+        }
+        else
+        {
+            errorMessage = "Correo o contraseña incorrectos.";
+            isProcessing = false; 
+        }
     }
 }

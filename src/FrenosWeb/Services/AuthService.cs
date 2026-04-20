@@ -1,18 +1,40 @@
 ﻿using FrenosWeb.Models;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Components.Authorization; 
 
 namespace FrenosWeb.Services
 {
-    public class AuthService(HttpClient http)
+    public class AuthService(HttpClient http, AuthenticationStateProvider authProvider)
     {
         public bool IsLoggedIn { get; private set; }
         public UserSession? CurrentUser { get; private set; }
+
+        private void EstablecerSesion(UserSession session)
+        {
+            IsLoggedIn = true;
+            CurrentUser = session;
+
+            if (authProvider is TestAuthStateProvider testProvider)
+            {
+                testProvider.NotifyAuthenticationStateChanged(session.Email);
+            }
+        }
+
+        public void Logout()
+        {
+            IsLoggedIn = false;
+            CurrentUser = null;
+
+            if (authProvider is TestAuthStateProvider testProvider)
+            {
+                testProvider.NotifyAuthenticationStateChanged(null);
+            }
+        }
 
         public async Task<bool> Login(LoginModel model)
         {
             try
             {
-                // 🛡️ 1. Intento Real: Hablar con la API
                 var response = await http.PostAsJsonAsync("api/auth/login", model);
 
                 if (response.IsSuccessStatusCode)
@@ -24,16 +46,13 @@ namespace FrenosWeb.Services
                         return true;
                     }
                 }
-
-                // Si la API responde pero dice que las credenciales están mal
                 return false;
             }
             catch (Exception ex)
             {
-                // 🚨 2. Fallover: Si la API no responde (servidor caído), usamos el simulador
                 Console.WriteLine($"[Cyber-Logs] API de Auth no disponible: {ex.Message}");
 
-                await Task.Delay(1000); // Simulamos latencia
+                await Task.Delay(1000); 
 
                 if (model.Email == "admin@frenos.com" && model.Password == "123456")
                 {
@@ -48,19 +67,6 @@ namespace FrenosWeb.Services
 
                 return false;
             }
-        }
-
-        private void EstablecerSesion(UserSession session)
-        {
-            IsLoggedIn = true;
-            CurrentUser = session;
-            // Aquí podrías guardar el token en el LocalStorage más adelante
-        }
-
-        public void Logout()
-        {
-            IsLoggedIn = false;
-            CurrentUser = null;
         }
     }
 }

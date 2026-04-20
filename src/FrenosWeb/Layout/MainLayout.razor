@@ -1,16 +1,38 @@
 ﻿@inherits LayoutComponentBase
 @inject AuthService authService
 @inject NavigationManager navManager
+@inject CarritoStateService carritoService
+@implements IDisposable
 
 <div class="page">
     <main>
         <div class="top-row px-4 d-flex align-items-center shadow-sm" style="background-color: #1a1a1a; border-bottom: 1px solid #333;">
-    
+
             <div class="d-flex align-items-center">
                 <span class="text-white fw-bold me-4" style="font-size: 1.2rem; letter-spacing: 1px;">TALLER DE FRENOS</span>
-        
+
                 <a href="/" class="nav-link text-white-50 px-3 hover-link">Inicio</a>
                 <a href="catalogo" class="nav-link text-white-50 px-3 hover-link">Catálogo</a>
+
+                <AuthorizeView>
+                    <Authorized>
+                        <div class="px-3">
+                            <a href="carrito" class="nav-link p-0 hover-link d-flex align-items-center" style="color: rgba(255,255,255,0.7);">
+                                <i class="bi bi-cart3 me-2" style="font-size: 1.4rem; color: white;"></i>
+                                <span class="me-1">Carrito</span>
+                                @if (carritoService.Items.Count > 0)
+                                {
+                                    <span class="badge rounded-pill bg-danger"
+                                          style="font-size: 0.65rem; margin-top: -10px; margin-left: -2px;">
+                                        @carritoService.Items.Count
+                                    </span>
+                                }
+                            </a>
+                        </div>
+
+                        <a href="mis-ordenes" class="nav-link text-white-50 px-3 hover-link">Mis Órdenes</a>
+                    </Authorized>
+                </AuthorizeView>
             </div>
 
             <div class="ms-auto d-flex align-items-center">
@@ -34,6 +56,16 @@
 </div>
 
 @code {
+    protected override void OnInitialized()
+    {
+        carritoService.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        carritoService.OnChange -= StateHasChanged;
+    }
+
     private void HandleLogout()
     {
         authService.Logout();

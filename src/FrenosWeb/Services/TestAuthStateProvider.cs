@@ -5,11 +5,30 @@ namespace FrenosWeb.Services
 {
     public class TestAuthStateProvider : AuthenticationStateProvider
     {
-        public override Task<AuthenticationState> GetAuthenticationStateAsync()
+        private AuthenticationState _currentState;
+
+        public TestAuthStateProvider()
         {
-            // Por defecto, devolvemos un usuario anónimo (no logueado)
-            var anonymous = new ClaimsPrincipal(new ClaimsIdentity());
-            return Task.FromResult(new AuthenticationState(anonymous));
+            _currentState = new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+        }
+
+        public override Task<AuthenticationState> GetAuthenticationStateAsync() => Task.FromResult(_currentState);
+
+        public void NotifyAuthenticationStateChanged(string? email)
+        {
+            ClaimsIdentity identity;
+
+            if (!string.IsNullOrEmpty(email))
+            {
+                identity = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, email) }, "apiauth");
+            }
+            else
+            {
+                identity = new ClaimsIdentity();
+            }
+
+            _currentState = new AuthenticationState(new ClaimsPrincipal(identity));
+            NotifyAuthenticationStateChanged(Task.FromResult(_currentState));
         }
     }
 }

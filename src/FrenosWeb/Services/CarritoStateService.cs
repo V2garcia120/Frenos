@@ -8,7 +8,6 @@ namespace FrenosWeb.Services
     {
         private readonly IJSRuntime _js;
         public List<CarritoItem> Items { get; private set; } = new();
-        // Evento para avisar a la interfaz que algo cambio (para actualizar el contador)
         public event Action? OnChange;
 
         public CarritoStateService(IJSRuntime js) => _js = js;
