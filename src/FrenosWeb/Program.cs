@@ -17,5 +17,7 @@ builder.Services.AddScoped<ServicioService>();
 builder.Services.AddScoped<CarritoStateService>();
 builder.Services.AddScoped<OrdenWebService>();
 builder.Services.AddScoped<PagoService>();
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddAuthorizationCore();
 
 await builder.Build().RunAsync();

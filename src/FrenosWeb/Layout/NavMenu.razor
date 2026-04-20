@@ -1,5 +1,7 @@
 ﻿@using FrenosWeb.Services
 @inject CarritoStateService carritoService
+@inject AuthService authService
+@inject NavigationManager navManager
 @implements IDisposable
 
 <div class="top-row ps-3 navbar navbar-dark">
@@ -13,39 +15,59 @@
 
 <div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
     <nav class="nav flex-column">
-        @* Inicio *@
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill" aria-hidden="true"></span> Home
+                <span class="bi bi-house-door-fill"></span> Home
             </NavLink>
         </div>
 
-        @* Catalogo *@
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="catalogo">
-                <span class="bi bi-shop" aria-hidden="true"></span> Catálogo
+                <span class="bi bi-shop"></span> Catálogo
             </NavLink>
         </div>
 
-        @* Carrito con contador en tiempo real *@
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="carrito">
-                <span class="bi bi-cart-fill" aria-hidden="true"></span> Carrito
-                @if (carritoService.Items.Count > 0)
-                {
-                    <span class="badge rounded-pill bg-warning text-dark ms-2">
-                        @carritoService.Items.Count
-                    </span>
-                }
-            </NavLink>
-        </div>
+        <AuthorizeView>
+            <Authorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="mis-ordenes">
+                        <span class="bi bi-clock-history"></span> Mis Órdenes
+                    </NavLink>
+                </div>
+                
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="mis-vehiculos">
+                        <span class="bi bi-car-front-fill"></span> Mis Vehículos
+                    </NavLink>
+                </div>
 
-        @* Mis Ordenes - historial del cliente *@
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="misordenes">
-                <span class="bi bi-clock-history" aria-hidden="true"></span> Mis Órdenes
-            </NavLink>
-        </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="carrito">
+                        <span class="bi bi-cart-fill"></span> Carrito
+                        @if (carritoService.Items.Count > 0)
+                        {
+                            <span class="badge rounded-pill bg-warning text-dark ms-2">
+                                @carritoService.Items.Count
+                            </span>
+                        }
+                    </NavLink>
+                </div>
+
+                <div class="nav-item px-3 mt-3">
+                    <button class="nav-link btn btn-link text-start w-100" @onclick="HandleLogout">
+                        <span class="bi bi-box-arrow-right"></span> Cerrar Sesión
+                    </button>
+                </div>
+            </Authorized>
+
+            <NotAuthorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="login">
+                        <span class="bi bi-person-circle"></span> Iniciar Sesión
+                    </NavLink>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
     </nav>
 </div>
 
@@ -53,20 +75,15 @@
     private bool collapseNavMenu = true;
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
-    private void ToggleNavMenu()
-    {
-        collapseNavMenu = !collapseNavMenu;
-    }
+    private void ToggleNavMenu() => collapseNavMenu = !collapseNavMenu;
 
-    // Suscribirse al evento para que el contador se actualice solo
-    protected override void OnInitialized()
-    {
-        carritoService.OnChange += StateHasChanged;
-    }
+    protected override void OnInitialized() => carritoService.OnChange += StateHasChanged;
 
-    // Desvincular eventos para evitar fugas de memoria
-    public void Dispose()
+    public void Dispose() => carritoService.OnChange -= StateHasChanged;
+
+    private void HandleLogout()
     {
-        carritoService.OnChange -= StateHasChanged;
+        authService.Logout();
+        navManager.NavigateTo("/", true); 
     }
 }

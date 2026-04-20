@@ -1,8 +1,10 @@
 ﻿@page "/carrito"
 @using FrenosWeb.Models
 @using FrenosWeb.Services
+@using Microsoft.AspNetCore.Authorization
 @inject CarritoStateService carritoService
 @inject NavigationManager navManager
+@attribute [Authorize]
 
 <div class="container mt-4">
     <h3>🛒 Tu Carrito de Compras</h3>

@@ -1,0 +1,100 @@
+﻿@page "/registro"
+@using FrenosWeb.Models
+@using System.ComponentModel.DataAnnotations
+@inject NavigationManager navManager
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-0 rounded-4">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <h2 class="fw-bold text-success">Crea tu Cuenta</h2>
+                        <p class="text-muted">Únete a nuestro taller y gestiona tus vehículos</p>
+                    </div>
+
+                    <EditForm Model="regModel" OnValidSubmit="HandleRegistro">
+                        <DataAnnotationsValidator />
+
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">Nombre Completo</label>
+                                <input class="form-control" @bind-value="regModel.Nombre" placeholder="Pamela Luna" />
+                                <ValidationMessage For="@(() => regModel.Nombre)" class="text-danger small" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Correo Electrónico</label>
+                            <input type="email" class="form-control" @bind-value="regModel.Email" placeholder="correo@ejemplo.com" />
+                            <ValidationMessage For="@(() => regModel.Email)" class="text-danger small" />
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Contraseña</label>
+                                <input type="password" class="form-control" @bind-value="regModel.Password" placeholder="******" />
+                                <ValidationMessage For="@(() => regModel.Password)" class="text-danger small" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Confirmar Contraseña</label>
+                                <input type="password" class="form-control" @bind-value="regModel.ConfirmPassword" placeholder="******" />
+                                <ValidationMessage For="@(() => regModel.ConfirmPassword)" class="text-danger small" />
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-success btn-lg w-100 mt-3 shadow-sm" disabled="@isProcessing">
+                            @if (isProcessing)
+                            {
+                                <span class="spinner-border spinner-border-sm"></span>
+                            }
+                            else
+                            {
+
+                                <span>Registrarme</span>
+                            }
+                        </button>
+                    </EditForm>
+
+                    <div class="text-center mt-4">
+                        <p class="small text-muted">¿Ya tienes cuenta? <a href="/login" class="text-decoration-none fw-bold">Inicia sesión</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private RegistroRequest regModel = new();
+    private bool isProcessing;
+
+    private async Task HandleRegistro()
+    {
+        isProcessing = true;
+        // Simulamos el envío a la API
+        await Task.Delay(1500);
+        
+        // Si todo sale bien, lo mandamos al login
+        navManager.NavigateTo("/login");
+        isProcessing = false;
+    }
+
+    // Modelo interno para el formulario
+    public class RegistroRequest
+    {
+        [Required(ErrorMessage = "El nombre es obligatorio")]
+        public string Nombre { get; set; } = "";
+
+        [Required(ErrorMessage = "El correo es obligatorio")]
+        [EmailAddress]
+        public string Email { get; set; } = "";
+
+        [Required(ErrorMessage = "La contraseña es obligatoria")]
+        [MinLength(6)]
+        public string Password { get; set; } = "";
+
+        [Compare("Password", ErrorMessage = "Las contraseñas no coinciden")]
+        public string ConfirmPassword { get; set; } = "";
+    }
+}

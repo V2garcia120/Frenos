@@ -1,8 +1,10 @@
 ﻿@page "/pago"
 @using FrenosWeb.Services
+@using Microsoft.AspNetCore.Authorization
 @inject CarritoStateService carritoService
 @inject NavigationManager navManager
 @inject PagoService pagoService
+@attribute [Authorize]
 
 <div class="container mt-5">
     <div class="row justify-content-center">
