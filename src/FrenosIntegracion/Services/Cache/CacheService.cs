@@ -1,6 +1,8 @@
 ﻿using FrenosIntegracion.Data;
 using FrenosIntegracion.Models.DTOs;
 using FrenosIntegracion.Services.Core;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace FrenosIntegracion.Services.Cache
 {
@@ -100,26 +102,6 @@ namespace FrenosIntegracion.Services.Cache
                 UltimaActualizacion = DateTime.UtcNow;
             }
             catch { /* El caché anterior sigue siendo válido */ }
-        }
-
-        public async Task<IEnumerable<ServicioDto>> ObtenerServiciosAsync()
-        {
-            try
-            {
-                var servicios = await core.ObtenerServiciosAsync();
-                await ActualizarServiciosCacheAsync(servicios);
-                return servicios;
-            }
-            catch
-            {
-                // Si el Core falla, buscamos en nuestra tabla local de servicios
-                return await db.ServiciosCache
-                    .AsNoTracking()
-                    .Where(s => s.Activo)
-                    .Select(s => new ServicioDto(
-                        s.Id, s.Nombre, s.Precio, s.DuracionMin, s.Categoria, s.Activo))
-                    .ToListAsync();
-            }
         }
     }
 }

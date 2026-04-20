@@ -38,6 +38,13 @@ namespace FrenosIntegracion.Models.DTOs
         IEnumerable<SyncResultItem> Resultados
     );
 
+    public record SyncResultItem(
+    string IdLocal,
+    bool Exito,
+    int? FacturaId,
+    string? MensajeError
+    );
+
     public record HealthResponse(
         string Integracion,
         string Core,
