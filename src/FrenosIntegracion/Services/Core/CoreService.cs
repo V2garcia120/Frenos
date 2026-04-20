@@ -1,4 +1,5 @@
 ﻿using FrenosIntegracion.Models.DTOs;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 
@@ -6,7 +7,7 @@ namespace FrenosIntegracion.Services.Core
 {
     public class CoreService(HttpClient http) : ICoreService
     {
-        private static readonly JsonSerializerOptions _json = new()
+        private static readonly JsonSerializerOptions _jsonOptions = new()
         {
             PropertyNameCaseInsensitive = true
         };
@@ -22,7 +23,7 @@ namespace FrenosIntegracion.Services.Core
             var response = await http.GetAsync("/api/productos");
             response.EnsureSuccessStatusCode();
             var json = await response.Content.ReadAsStringAsync();
-            var api = JsonSerializer.Deserialize<ApiWrapper<IEnumerable<ProductoDto>>>(json, _json);
+            var api = JsonSerializer.Deserialize<ApiWrapper<IEnumerable<ProductoDto>>>(json, _jsonOptions);
             return api?.Data ?? [];
         }
 
@@ -35,7 +36,7 @@ namespace FrenosIntegracion.Services.Core
             var response = await http.PostAsync("/api/ordenes", content);
             response.EnsureSuccessStatusCode();
             var json = await response.Content.ReadAsStringAsync();
-            var api = JsonSerializer.Deserialize<ApiWrapper<OrdenWebResponse>>(json, _json);
+            var api = JsonSerializer.Deserialize<ApiWrapper<OrdenWebResponse>>(json, _jsonOptions);
             return api!.Data!;
         }
 
@@ -48,7 +49,7 @@ namespace FrenosIntegracion.Services.Core
             var response = await http.PostAsync("/api/facturas", content);
             response.EnsureSuccessStatusCode();
             var json = await response.Content.ReadAsStringAsync();
-            var api = JsonSerializer.Deserialize<ApiWrapper<CobroResponse>>(json, _json);
+            var api = JsonSerializer.Deserialize<ApiWrapper<CobroResponse>>(json, _jsonOptions);
             return api!.Data!;
         }
 

@@ -1,4 +1,5 @@
-﻿using FrenosIntegracion.Services.Cache;
+﻿using FrenosIntegracion.Helpers;
+using FrenosIntegracion.Services.Cache;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
