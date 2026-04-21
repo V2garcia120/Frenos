@@ -1,7 +1,4 @@
 <Solution>
-  <Folder Name="/Solution Items/">
-    <File Path="src/TallerCaja/TallerCaja.csproj" />
-  </Folder>
   <Project Path="src/FrenosCore/FrenosCore.csproj" />
   <Project Path="src/FrenosIntegracion/FrenosIntegracion.csproj" Id="d386a7c5-d83d-45e9-bade-dd490ff87f80" />
   <Project Path="src/FrenosWeb/FrenosWeb.csproj" />
