@@ -1,13 +1,26 @@
 ﻿@namespace FrenosWeb
-<Router AppAssembly="@typeof(Program).Assembly">
-    <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
-        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
-    </Found>
-    <NotFound>
-        <PageTitle>No encontrado</PageTitle>
-        <LayoutView Layout="@typeof(MainLayout)">
-            <p role="alert">Lo sentimos, no hay nada en esta dirección.</p>
-        </LayoutView>
-    </NotFound>
-</Router>
+
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(Program).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                <NotAuthorized>
+                    <RedirectToLogin />
+                </NotAuthorized>
+                <Authorizing>
+                    <div class="text-center mt-5">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p>Verificando credenciales...</p>
+                    </div>
+                </Authorizing>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+        <NotFound>
+            <PageTitle>No encontrado</PageTitle>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <p role="alert" class="text-center mt-5">Lo sentimos, no hay nada en esta dirección.</p>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>

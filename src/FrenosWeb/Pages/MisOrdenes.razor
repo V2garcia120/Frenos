@@ -1,13 +1,15 @@
-﻿@page "/misordenes"
+﻿@page "/mis-ordenes"
 @using FrenosWeb.Models
 @using FrenosWeb.Services
+@using Microsoft.AspNetCore.Authorization
 @inject NavigationManager navManager
 @inject OrdenWebService ordenService 
+@attribute [Authorize]
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="text-primary fw-bold">
-            <span class="bi bi-clock-history"></span> Mi Historial
+            <span class="bi bi-clock-history"></span> Mi Historial de Órdenes
         </h2>
         <button class="btn btn-outline-primary btn-sm" @onclick='() => navManager.NavigateTo("/catalogo")'>
             + Nuevo Servicio
@@ -81,7 +83,7 @@
     {
         try
         {
-            // 🛡️ Intentamos traer los datos reales de la API
+            // Intentamos traer los datos reales de la API
             // Nota: Aquí llamaríamos a un método en tu OrdenWebService como 'GetHistorialAsync'
             // historial = await ordenService.GetHistorialAsync();
             
@@ -90,7 +92,7 @@
         }
         catch (Exception ex)
         {
-            // 🚨 Si la API falla, cargamos los datos "falsos" para que el profe vea que funciona
+            // Si la API falla, cargamos los datos "falsos" para que el profe vea que funciona
             Console.WriteLine($"[Cyber-Logs] Usando datos locales: {ex.Message}");
             
             await Task.Delay(1000); // Simulamos latencia
