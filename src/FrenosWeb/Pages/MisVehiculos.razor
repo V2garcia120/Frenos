@@ -1,1 +1,236 @@
-﻿
+﻿@page "/mis-vehiculos"
+@using FrenosWeb.Models
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@inject IJSRuntime JS
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold"><i class="bi bi-car-front-fill me-2 text-success"></i> Mis Vehículos</h2>
+        <button class="btn btn-success rounded-pill px-4 shadow-sm" @onclick="AbrirModal">
+            + Agregar Vehículo
+        </button>
+    </div>
+
+    @if (vehiculos == null)
+    {
+        <p>Cargando tus vehículos...</p>
+    }
+    else if (!vehiculos.Any())
+    {
+        <div class="alert alert-light border shadow-sm text-center">
+            No tienes vehículos registrados. ¡Registra tu  primer vehículo para agendar servicios más rápido!
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var v in vehiculos)
+            {
+                <div class="col-md-4 mb-3">
+                    <div class="card border-0 shadow-sm rounded-4 h-100">
+                        <div class="card-body">
+                            <h5 class="fw-bold">@v.Marca @v.Modelo</h5>
+                            <p class="text-muted mb-1">Año: @v.Anio</p>
+                            <p class="badge bg-light text-dark border">Placa: @v.Placa</p>
+                        </div>
+                        <div class="card-footer bg-transparent border-0 text-end d-flex justify-content-between">
+                            <button class="btn btn-sm btn-outline-primary border-0" @onclick="() => PrepararEdicion(v)">
+                                <i class="bi bi-pencil-square"></i> Editar
+                            </button>
+    
+                            <button class="btn btn-sm btn-outline-danger border-0" @onclick="() => EliminarVehiculo(v.Id)">
+                                Eliminar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@if (mostrarModal)
+{
+    <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5);" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow">
+                <div class="modal-header border-0">
+                    <h5 class="fw-bold">@(esEdicion ? "Editar Vehículo" : "Registrar Nuevo Vehículo")</h5>
+                    <button type="button" class="btn-close" @onclick="CerrarModal"></button>
+                </div>
+                <div class="modal-body px-4">
+                    <EditForm Model="nuevoVehiculo" OnValidSubmit="GuardarVehiculo">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="text-danger small" />
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Marca</label>
+                            <InputSelect class="form-select rounded-pill bg-light border-0" @bind-Value="nuevoVehiculo.Marca">
+                                <option value="">Seleccione una marca...</option>
+                                <option value="Toyota">Toyota</option>
+                                <option value="Honda">Honda</option>
+                                <option value="Nissan">Nissan</option>
+                                <option value="Hyundai">Hyundai</option>
+                                <option value="Kia">Kia</option>
+                                <option value="Otro">Otro</option>
+                            </InputSelect>
+
+                            @if (nuevoVehiculo.Marca == "Otro")
+                            {
+                                <input class="form-control rounded-pill bg-light border-0 mt-2"
+                                       @bind-value="marcaManual"
+                                       placeholder="Escribe la marca aquí (Ej: Suzuki)..." />
+                            }
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Modelo</label>
+
+                            @if (nuevoVehiculo.Marca != "Otro" && !string.IsNullOrEmpty(nuevoVehiculo.Marca))
+                            {
+                                <InputSelect class="form-select rounded-pill bg-light border-0" @bind-Value="nuevoVehiculo.Modelo">
+                                    <option value="">Seleccione un modelo...</option>
+                                    @foreach (var modelo in ObtenerModelosPorMarca(nuevoVehiculo.Marca))
+                                    {
+                                        <option value="@modelo">@modelo</option>
+                                    }
+                                    <option value="Otro">Otro</option>
+                                </InputSelect>
+                            }
+
+                            @if (nuevoVehiculo.Marca == "Otro" || nuevoVehiculo.Modelo == "Otro")
+                            {
+                                <input class="form-control rounded-pill bg-light border-0 mt-2"
+                                       @bind-value="modeloManual"
+                                       placeholder="Escribe el modelo aquí..." />
+                            }
+                        </div>
+
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label class="form-label fw-bold small">Año</label>
+                                <InputNumber class="form-control rounded-pill bg-light border-0" @bind-Value="nuevoVehiculo.Anio" min="1950" max="2026" />
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label fw-bold small">Placa</label>
+                                <input class="form-control rounded-pill bg-light border-0" @bind-value="nuevoVehiculo.Placa" placeholder="A123456" />
+                            </div>
+                        </div>
+
+                        <div class="text-end mt-3 mb-2">
+                            <button type="button" class="btn btn-light rounded-pill px-4 me-2" @onclick="CerrarModal">Cancelar</button>
+                            <button type="submit" class="btn btn-success rounded-pill px-4">Guardar Vehículo</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<VehiculoModel> vehiculos = new();
+    private VehiculoModel nuevoVehiculo = new() { Anio = 2026 }; 
+    private bool mostrarModal = false;
+    private string marcaManual = "";
+    private string modeloManual = "";
+    private bool esEdicion = false;
+    private int idVehiculoAEditar;
+
+    protected override void OnInitialized()
+    {
+        // Datos iniciales de prueba
+        vehiculos.Add(new VehiculoModel { Id = 1, Marca = "Toyota", Modelo = "Corolla", Anio = 2022, Placa = "A987456" });
+    }
+
+    private void AbrirModal()
+    {
+        esEdicion = false; // Reset de estado
+        nuevoVehiculo = new VehiculoModel { Anio = 2026 };
+        marcaManual = "";
+        modeloManual = "";
+        mostrarModal = true;
+    }
+
+    private void CerrarModal() => mostrarModal = false;
+    
+    private async Task EliminarVehiculo(int id)
+    {
+        bool confirmado = await JS.InvokeAsync<bool>("confirm", "¿Estás segura de que quieres eliminar este vehículo?");
+    
+        if (confirmado)
+        {
+            var vehiculo = vehiculos.FirstOrDefault(v => v.Id == id);
+            if (vehiculo != null) vehiculos.Remove(vehiculo);
+        }
+    }
+
+    private List<string> ObtenerModelosPorMarca(string marca) => marca switch
+    {
+        "Toyota" => new() { "Corolla", "Camry", "Hilux", "Rav4", "Yaris" },
+        "Honda" => new() { "Civic", "CR-V", "Accord", "Fit", "City" },
+        "Nissan" => new() { "Sentra", "Frontier", "Versa", "March", "X-Trail" },
+        "Hyundai" => new() { "Elantra", "Santa Fe", "Tucson", "Accent", "Sonata" },
+        "Kia" => new() { "Rio", "Sportage", "Picanto", "Sorento", "K5" },
+        _ => new() // Lista vacía para otras marcas
+    };
+
+    private void GuardarVehiculo()
+    {
+        // En el futuro, aquí llamarías a tu API (vehiculoService.Insertar)
+        // Si la marca fue manual, la asignamos
+        if (nuevoVehiculo.Marca == "Otro") nuevoVehiculo.Marca = marcaManual;
+
+        // Si el modelo fue manual (ya sea por marca "Otro" o modelo "Otro"), lo asignamos
+        if (nuevoVehiculo.Modelo == "Otro" || string.IsNullOrEmpty(nuevoVehiculo.Modelo)) nuevoVehiculo.Modelo = modeloManual;
+
+        if (esEdicion)
+        {
+            var original = vehiculos.FirstOrDefault(x => x.Id == idVehiculoAEditar);
+            if (original != null)
+            {
+                original.Marca = nuevoVehiculo.Marca;
+                original.Modelo = nuevoVehiculo.Modelo;
+                original.Anio = nuevoVehiculo.Anio;
+                original.Placa = nuevoVehiculo.Placa;
+            }
+        }
+        else
+        { 
+            nuevoVehiculo.Id = vehiculos.Count > 0 ? vehiculos.Max(x => x.Id) + 1 : 1; 
+            vehiculos.Add(nuevoVehiculo); 
+        }
+        
+        CerrarModal();
+    }
+
+    private void PrepararEdicion(VehiculoModel v)
+    {
+        esEdicion = true;
+        idVehiculoAEditar = v.Id;
+
+        nuevoVehiculo = new VehiculoModel
+        {
+            Marca = v.Marca,
+            Modelo = v.Modelo,
+            Anio = v.Anio,
+            Placa = v.Placa
+        };
+
+        var marcasComunes = new List<string> { "Toyota", "Honda", "Nissan", "Hyundai", "Kia" };
+        if (!marcasComunes.Contains(v.Marca))
+        {
+            marcaManual = v.Marca;
+            nuevoVehiculo.Marca = "Otro";
+        }
+
+        var modelosComunes = ObtenerModelosPorMarca(nuevoVehiculo.Marca);
+        if (!modelosComunes.Contains(v.Modelo))
+        {
+            modeloManual = v.Modelo;
+            nuevoVehiculo.Modelo = "Otro";
+        }
+
+        mostrarModal = true;
+    }
+}

@@ -124,3 +124,16 @@ code {
 .nav-link {
     text-decoration: none !important;
 }
+
+    .nav-link.active {
+        color: #28a745 !important; 
+        font-weight: bold;
+    }
+        .nav-link.active i {
+            color: #28a745 !important;
+        }
+
+.hover-link:hover {
+    color: #ffffff !important;
+    transition: 0.3s;
+}

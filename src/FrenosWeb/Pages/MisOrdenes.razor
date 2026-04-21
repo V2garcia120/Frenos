@@ -1,4 +1,4 @@
-﻿@page "/misordenes"
+﻿@page "/mis-ordenes"
 @using FrenosWeb.Models
 @using FrenosWeb.Services
 @using Microsoft.AspNetCore.Authorization
@@ -83,7 +83,7 @@
     {
         try
         {
-            // 🛡️ Intentamos traer los datos reales de la API
+            // Intentamos traer los datos reales de la API
             // Nota: Aquí llamaríamos a un método en tu OrdenWebService como 'GetHistorialAsync'
             // historial = await ordenService.GetHistorialAsync();
             
@@ -92,7 +92,7 @@
         }
         catch (Exception ex)
         {
-            // 🚨 Si la API falla, cargamos los datos "falsos" para que el profe vea que funciona
+            // Si la API falla, cargamos los datos "falsos" para que el profe vea que funciona
             Console.WriteLine($"[Cyber-Logs] Usando datos locales: {ex.Message}");
             
             await Task.Delay(1000); // Simulamos latencia
