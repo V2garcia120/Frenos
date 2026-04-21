@@ -8,6 +8,13 @@ namespace TallerCaja.Forms
         private readonly IIntegracionService _integracion;
         private readonly ConexionMonitor _monitor;
 
+        public frmLogin()
+        {
+            _integracion = null!;
+            _monitor = null!;
+            InitializeComponent();
+        }
+
         public frmLogin(IIntegracionService integracion, ConexionMonitor monitor)
         {
             _integracion = integracion;
@@ -17,6 +24,13 @@ namespace TallerCaja.Forms
 
         private void frmLogin_Load(object sender, EventArgs e)
         {
+            if (System.ComponentModel.LicenseManager.UsageMode == System.ComponentModel.LicenseUsageMode.Designtime)
+            {
+                lblVersion.Text = "Taller de Frenos - Módulo Caja v1.0";
+                lblEstado.Text = "● Vista de diseño";
+                return;
+            }
+
             lblVersion.Text = $"v{AppConfig.NombreTaller} - Módulo Caja v1.0";
             txtEmail.Focus();
             _ = VerificarConexionAsync();

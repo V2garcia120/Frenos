@@ -16,6 +16,21 @@ namespace TallerCaja.Forms
         private List<ServicioDto> _serviciosCache = new();
         private int _localTurnoId;
 
+        private void MostrarCatalogo(bool mostrar)
+        {
+            splitMain.Panel1Collapsed = !mostrar;
+            btnCatalogo.Text = mostrar ? "📦 Ocultar catálogo" : "📦 Mostrar catálogo";
+        }
+
+        public frmCobro()
+        {
+            _integracion = null!;
+            _local = null!;
+            _queue = null!;
+            _localTurnoId = 0;
+            InitializeComponent();
+        }
+
         public frmCobro(IIntegracionService integracion, ICajaLocalService local, OfflineQueue queue, int turnoLocalId)
         {
             _integracion = integracion;
@@ -27,6 +42,18 @@ namespace TallerCaja.Forms
 
         private async void frmCobro_Load(object sender, EventArgs e)
         {
+            if (System.ComponentModel.LicenseManager.UsageMode == System.ComponentModel.LicenseUsageMode.Designtime)
+            {
+                lblCajero.Text = "Cajero: demo";
+                lblTurno.Text = "Turno: #0";
+                lblFecha.Text = DateTime.Now.ToString("dd/MM/yyyy HH:mm");
+                lblPendientes.Text = "Pendientes offline: 0";
+                MostrarCatalogo(false);
+                return;
+            }
+
+            MostrarCatalogo(false);
+
             lblCajero.Text = $"Cajero: {SessionManager.CajeroNombre}";
             lblTurno.Text = $"Turno: #{SessionManager.TurnoId}";
             lblFecha.Text = DateTime.Now.ToString("dd/MM/yyyy HH:mm");
@@ -139,6 +166,12 @@ namespace TallerCaja.Forms
 
             ActualizarCarritoUI();
             ActualizarTotales();
+            MostrarCatalogo(false);
+        }
+
+        private void btnCatalogo_Click(object sender, EventArgs e)
+        {
+            MostrarCatalogo(splitMain.Panel1Collapsed);
         }
 
         private void lvCatalogo_DoubleClick(object sender, EventArgs e) => btnAgregar_Click(sender, e);

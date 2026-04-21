@@ -9,6 +9,14 @@ namespace TallerCaja.Forms
         private readonly ICajaLocalService _local;
         private readonly int _localTurnoId;
 
+        public frmCierreDia()
+        {
+            _integracion = null!;
+            _local = null!;
+            _localTurnoId = 0;
+            InitializeComponent();
+        }
+
         public frmCierreDia(IIntegracionService integracion, ICajaLocalService local, int localTurnoId)
         {
             _integracion = integracion;
@@ -19,6 +27,17 @@ namespace TallerCaja.Forms
 
         private void frmCierreDia_Load(object sender, EventArgs e)
         {
+            if (System.ComponentModel.LicenseManager.UsageMode == System.ComponentModel.LicenseUsageMode.Designtime)
+            {
+                lblCajero.Text = "Cajero Demo";
+                lblTurno.Text = "#0";
+                lblFechaApertura.Text = DateTime.Now.ToString("dd/MM/yyyy HH:mm");
+                lblTotalVentas.Text = "RD$ 0.00";
+                lblVentasEfectivo.Text = "RD$ 0.00";
+                lblCantVentas.Text = "0 transacciones";
+                return;
+            }
+
             lblCajero.Text = SessionManager.CajeroNombre;
             lblTurno.Text = $"#{SessionManager.TurnoId}";
             lblFechaApertura.Text = DateTime.Now.ToString("dd/MM/yyyy HH:mm");
@@ -34,6 +53,9 @@ namespace TallerCaja.Forms
 
         private void txtEfectivoContado_TextChanged(object sender, EventArgs e)
         {
+            if (System.ComponentModel.LicenseManager.UsageMode == System.ComponentModel.LicenseUsageMode.Designtime)
+                return;
+
             if (decimal.TryParse(txtEfectivoContado.Text, out decimal contado))
             {
                 var ventas = _local.ObtenerVentasDelTurno(_localTurnoId);
@@ -171,9 +193,9 @@ namespace TallerCaja.Forms
 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(500, 500);
+            ClientSize = new Size(560, 540);
             Controls.Add(panelBody); Controls.Add(panelH);
-            FormBorderStyle = FormBorderStyle.FixedDialog; MaximizeBox = false;
+            FormBorderStyle = FormBorderStyle.FixedDialog; MaximizeBox = false; MinimizeBox = false;
             Name = "frmCierreDia"; StartPosition = FormStartPosition.CenterParent;
             Text = "Cierre de Turno"; Load += frmCierreDia_Load;
             ResumeLayout(false);

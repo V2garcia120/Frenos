@@ -10,6 +10,13 @@ namespace TallerCaja.Forms
         private readonly ICajaLocalService _local;
         public int TurnoIdResultante { get; private set; }
 
+        public frmInicioDia()
+        {
+            _integracion = null!;
+            _local = null!;
+            InitializeComponent();
+        }
+
         public frmInicioDia(IIntegracionService integracion, ICajaLocalService local)
         {
             _integracion = integracion;
@@ -19,6 +26,13 @@ namespace TallerCaja.Forms
 
         private void frmInicioDia_Load(object sender, EventArgs e)
         {
+            if (System.ComponentModel.LicenseManager.UsageMode == System.ComponentModel.LicenseUsageMode.Designtime)
+            {
+                lblCajero.Text = "Cajero: demo";
+                lblFecha.Text = $"Fecha: {DateTime.Now:dddd, dd MMMM yyyy}";
+                return;
+            }
+
             lblCajero.Text = $"Cajero: {SessionManager.CajeroNombre}";
             lblFecha.Text = $"Fecha: {DateTime.Now:dddd, dd MMMM yyyy}";
             txtMontoInicial.Focus();

@@ -22,6 +22,18 @@ namespace TallerCaja.Forms
         private CobroRequest? _ultimoRequest;
         private string _metodoPagoActual = "Efectivo";
 
+        public frmPago()
+        {
+            _integracion = null!;
+            _local = null!;
+            _queue = null!;
+            _items = new List<ItemCobroDto>();
+            _cliente = new ClienteDto { Id = 0, Nombre = "Cliente de prueba", EsAnonimo = true };
+            _total = 0m;
+            _localTurnoId = 0;
+            InitializeComponent();
+        }
+
         public frmPago(IIntegracionService integracion, ICajaLocalService local,
             OfflineQueue queue, List<ItemCobroDto> items, ClienteDto cliente,
             decimal total, int localTurnoId)
@@ -38,6 +50,17 @@ namespace TallerCaja.Forms
 
         private void frmPago_Load(object sender, EventArgs e)
         {
+            if (System.ComponentModel.LicenseManager.UsageMode == System.ComponentModel.LicenseUsageMode.Designtime)
+            {
+                lblClienteVal.Text = "Cliente de prueba";
+                lblSubtotalVal.Text = "RD$ 0.00";
+                lblITBISVal.Text = "RD$ 0.00";
+                lblTotalVal.Text = "RD$ 0.00";
+                txtMontoPagado.Text = "0.00";
+                lblCambioVal.Text = "RD$ 0.00";
+                return;
+            }
+
             (_subtotal, _itbis, _) = FacturaCalculator.Calcular(_items);
             MostrarResumen();
             SeleccionarMetodoPago("Efectivo");
