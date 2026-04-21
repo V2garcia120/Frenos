@@ -7,6 +7,11 @@ namespace TallerCaja.Forms
         private readonly string _textoRecibo;
         private readonly CobroResponse _cobro;
 
+        private Label lblEstadoBadge = null!;
+        private TextBox txtRecibo = null!;
+        private Button btnCopiar = null!;
+        private Button btnCerrar = null!;
+
         public frmRecibo()
         {
             _textoRecibo = "=== RECIBO DEMO ===";
@@ -19,6 +24,52 @@ namespace TallerCaja.Forms
             _textoRecibo = textoRecibo;
             _cobro = cobro;
             InitializeComponent();
+        }
+
+        private void InitializeComponent()
+        {
+            lblEstadoBadge = new Label();
+            txtRecibo = new TextBox();
+            btnCopiar = new Button();
+            btnCerrar = new Button();
+            SuspendLayout();
+
+            lblEstadoBadge.BackColor = Color.FromArgb(22, 163, 74);
+            lblEstadoBadge.ForeColor = Color.White;
+            lblEstadoBadge.Location = new Point(12, 12);
+            lblEstadoBadge.Size = new Size(760, 34);
+            lblEstadoBadge.TextAlign = ContentAlignment.MiddleLeft;
+
+            txtRecibo.Font = new Font("Consolas", 10F);
+            txtRecibo.Location = new Point(12, 56);
+            txtRecibo.Multiline = true;
+            txtRecibo.ReadOnly = true;
+            txtRecibo.ScrollBars = ScrollBars.Vertical;
+            txtRecibo.Size = new Size(760, 460);
+
+            btnCopiar.Location = new Point(544, 526);
+            btnCopiar.Size = new Size(110, 36);
+            btnCopiar.Text = "Copiar";
+            btnCopiar.Click += btnCopiar_Click;
+
+            btnCerrar.Location = new Point(662, 526);
+            btnCerrar.Size = new Size(110, 36);
+            btnCerrar.Text = "Cerrar";
+            btnCerrar.Click += btnCerrar_Click;
+
+            AutoScaleDimensions = new SizeF(10F, 25F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(784, 574);
+            Controls.Add(btnCerrar);
+            Controls.Add(btnCopiar);
+            Controls.Add(txtRecibo);
+            Controls.Add(lblEstadoBadge);
+            Name = "frmRecibo";
+            StartPosition = FormStartPosition.CenterParent;
+            Text = "Recibo";
+            Load += frmRecibo_Load;
+            ResumeLayout(false);
+            PerformLayout();
         }
 
         private void frmRecibo_Load(object sender, EventArgs e)
