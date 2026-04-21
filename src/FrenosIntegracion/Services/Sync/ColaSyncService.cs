@@ -149,16 +149,5 @@ namespace FrenosIntegracion.Services.Sync
             return "Respuesta simulada del Core";
         }
 
-        public async Task<object> AbrirTurnoAsync(int cajeroId, decimal montoInicial)
-        {
-            // Aquí es donde harías el HttpClient.PostAsJsonAsync al Core
-            // Por ahora, devolvemos un objeto que simule la respuesta del manual (Pág. 10)
-            return new
-            {
-                turnoId = 101, // ID simulado
-                estado = "Abierto",
-                fechaApertura = DateTime.UtcNow
-            };
-        }
     }
 }
