@@ -36,7 +36,7 @@
                     @foreach (var item in carritoService.Items)
                     {
                         <tr>
-                            <td class="align-middle text-start fw-bold">@item.Producto.Nombre</td>
+                            <td class="align-middle text-start fw-bold">@item.Servicio.Nombre</td>
                             <td class="align-middle">
                                 <input type="number" min="1"
                                        class="form-control form-control-sm mx-auto text-center rounded-pill"
@@ -45,10 +45,10 @@
                                        @bind:event="oninput"
                                        @onchange="ValidarEstadoBoton" />
                             </td>
-                            <td class="align-middle">RD$ @item.Producto.Precio.ToString("N2")</td>
+                            <td class="align-middle">RD$ @item.Servicio.Precio.ToString("N2")</td>
                             <td class="align-middle fw-bold text-primary">RD$ @item.TotalLinea.ToString("N2")</td>
                             <td class="align-middle">
-                                <button class="btn btn-outline-danger btn-sm border-0" @onclick="() => Eliminar(item.Producto.Id)">
+                                <button class="btn btn-outline-danger btn-sm border-0" @onclick="() => Eliminar(item.Servicio.Id)">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </td>
@@ -61,7 +61,7 @@
         @if (carritoService.Items.Any(x => x.Servicio.RequiereVehiculo))
         {
             <div class="mt-4 p-4 border-0 rounded-4 bg-light shadow-sm mb-3">
-                <label class="form-label fw-bold"><i class="bi bi-car-front-fill text-success me-2"></i> ¿Para qué vehículo es el servicio?</label>
+                <label class="form-label fw-bold"><i class="bi bi-car-front-fill text-success me-2"></i>¿Para qué vehículo son estos servicios?</label>
                 
                 @if (misVehiculos == null)
                 {
@@ -77,7 +77,7 @@
                         }
                     </select>
                     <div class="mt-2 ps-2">
-                        <small class="text-muted fst-italic">Nota: Solo se permite un vehículo por orden.</small>
+                        <small class="text-muted fst-italic">Nota: Para servicios en múltiples vehículos, por favor realice órdenes separadas para cada uno. </small>
                     </div>
                 }
                 else
@@ -129,7 +129,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        ValidarEstadoBoton();
+        await ValidarEstadoBoton();
         
         // APP REAL: Aquí llamas al servicio.
         // Si aún no tienes la API, deja la simulación de abajo:
@@ -144,7 +144,7 @@
     async Task Eliminar(int id)
     {
         await carritoService.Eliminar(id);
-        ValidarEstadoBoton();
+        await ValidarEstadoBoton();
     }
 
     async Task Vaciar()
@@ -154,19 +154,19 @@
         botonBloqueado = false;
     }
 
-    void ValidarEstadoBoton()
+    async Task ValidarEstadoBoton()
     {
         botonBloqueado = carritoService.Items.Any(x => x.Cantidad <= 0);
         mensajeError = botonBloqueado ? "⚠️ La cantidad debe ser al menos 1." : "";
-        _ = carritoService.Actualizar();
+        await carritoService.Actualizar();
     }
 
-    void IrAOrden()
+    async Task IrAOrden()
     {
-        ValidarEstadoBoton();
+        await ValidarEstadoBoton();
         if (botonBloqueado) return;
 
-        // 🔍 Verificamos si en el carrito hay algo que necesite carro
+        // Verificamos si en el carrito hay algo que necesite carro
         bool necesitaCarro = carritoService.Items.Any(x => x.Servicio.RequiereVehiculo);
 
         if (necesitaCarro && vehiculoSeleccionadoId == 0)
@@ -175,7 +175,7 @@
             return;
         }
 
-        // Si no necesita carro (ej. solo compró un galón de aceite), mandamos ID 0
+        // Si no necesita carro, mandamos ID 0
         navManager.NavigateTo($"/orden/{(necesitaCarro ? vehiculoSeleccionadoId : 0)}");
     }
 }

@@ -1,8 +1,9 @@
-﻿@page "/orden"
+﻿@page "/orden/{vehiculoId:int}"
 @using FrenosWeb.Services
 @inject CarritoStateService carritoService
 @inject NavigationManager navManager
 @inject OrdenWebService ordenService
+@inject VehiculoService vehiculoService
 
 <div class="container mt-5">
     <div class="card border-primary shadow-lg">
@@ -14,18 +15,35 @@
             @if (!carritoService.Items.Any())
             {
                 <div class="alert alert-warning">
-                    No hay productos en la orden. <a href="catalogo">Vuelve al catálogo aquí.</a>
+                    No hay productos/servicios en la orden. <a href="catalogo">Vuelve al catálogo aquí.</a>
                 </div>
             }
             else
             {
                 <h5>Detalle de la Orden:</h5>
+
+                @if (vehiculoSeleccionado != null)
+                {
+                    <div class="alert alert-info border-0 shadow-sm rounded-4 mb-4 d-flex align-items-center">
+                        <div class="bg-primary text-white rounded-circle p-2 me-3">
+                            <i class="bi bi-car-front-fill fs-5"></i>
+                        </div>
+                        <div>
+                            <span class="text-muted small d-block">Vehículo para el servicio(s):</span>
+                            <strong class="text-dark">
+                                @vehiculoSeleccionado.Marca @vehiculoSeleccionado.Modelo
+                                <span class="badge bg-white text-primary border ms-2">@vehiculoSeleccionado.Placa</span>
+                            </strong>
+                        </div>
+                    </div>
+                }
+
                 <ul class="list-group list-group-flush mb-4">
                     @foreach (var item in carritoService.Items)
                     {
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             <div>
-                                <strong>@item.Producto.Nombre</strong>
+                                <strong>@item.Servicio.Nombre</strong>
                                 <span class="text-muted ms-2">(x @item.Cantidad)</span>
                             </div>
                             <span>RD$ @item.TotalLinea.ToString("N2")</span>
@@ -67,6 +85,18 @@
 </div>
 
 @code {
+    [Parameter] public int vehiculoId { get; set; }
+    private VehiculoModel? vehiculoSeleccionado;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (vehiculoId > 0)
+        {
+            var misVehiculos = await vehiculoService.GetVehiculosUsuarioAsync(); 
+            vehiculoSeleccionado = misVehiculos.FirstOrDefault(v => v.Id == vehiculoId);
+        }
+    }
+
     private async Task ConfirmarOrden()
     {
         var exito = await ordenService.CrearOrdenAsync(carritoService.Items);

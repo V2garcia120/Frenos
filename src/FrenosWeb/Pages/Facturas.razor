@@ -1,0 +1,104 @@
+﻿@page "/facturas"
+@using FrenosWeb.Models
+@using FrenosWeb.Services
+@inject FacturaService facturaService
+@inject IJSRuntime JS
+
+<div class="container mt-4 pb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark"><i class="bi bi-receipt-cutoff text-success"></i> Mis Facturas</h2>
+        <span class="badge bg-light text-dark border p-2">Cliente: @usuarioActual</span>
+    </div>
+
+    @if (misFacturas == null)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-success" role="status"></div>
+            <p class="text-muted mt-2">Consultando registros financieros...</p>
+        </div>
+    }
+    else if (!misFacturas.Any())
+    {
+        <div class="alert alert-light border-0 shadow-sm text-center py-5 rounded-4">
+            <i class="bi bi-folder-x display-1 text-muted"></i>
+            <p class="fs-5 mt-3">No tienes facturas registradas todavía.</p>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 text-center">
+                    <thead class="table-dark">
+                        <tr>
+                            <th># Factura</th>
+                            <th>Fecha</th>
+                            <th>Servicio Realizado</th>
+                            <th>Total</th>
+                            <th>Estado de Pago</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var fac in misFacturas)
+                        {
+                            <tr>
+                                <td class="fw-bold text-primary">@fac.NumeroFactura</td>
+                                <td class="text-muted">@fac.Fecha.ToShortDateString()</td>
+                                <td class="text-start px-4">@fac.ServicioRealizado</td>
+                                <td class="fw-bold">RD$ @fac.Total.ToString("N2")</td>
+                                <td>
+                                    <span class="badge rounded-pill @(fac.EstadoPago == "Pagado" ? "bg-success" : "bg-warning text-dark")">
+                                        <i class="bi @(fac.EstadoPago == "Pagado" ? "bi-check-circle-fill" : "bi-exclamation-circle-fill") me-1"></i>
+                                        @fac.EstadoPago
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-2 justify-content-center">
+                                        <button class="btn btn-sm btn-outline-danger rounded-pill px-3 shadow-sm"
+                                                @onclick="() => GenerarPDF(fac.NumeroFactura)">
+                                            <i class="bi bi-file-earmark-pdf-fill"></i> PDF
+                                        </button>
+
+                                        @if (fac.EstadoPago == "Pendiente")
+                                        {
+                                            <button class="btn btn-sm btn-success rounded-pill px-3 shadow-sm"
+                                                    @onclick="() => IniciarPago(fac)">
+                                                <i class="bi bi-credit-card-fill"></i> Pagar
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<FacturaModel>? misFacturas;
+    private string usuarioActual = "Pamela Luna"; 
+
+    protected override async Task OnInitializedAsync()
+    {
+        misFacturas = await facturaService.GetFacturasUsuarioAsync();
+    }
+
+    private async Task GenerarPDF(string id)
+    {
+        await JS.InvokeVoidAsync("alert", $"🔐 Descargando la factura {id}...");
+    }
+
+    private async Task IniciarPago(FacturaModel factura)
+    {
+        await JS.InvokeVoidAsync("alert", $"🔐 Realizando pago de...\n\nFactura: {factura.NumeroFactura}\nMonto: RD$ {factura.Total:N2}");
+    
+        await Task.Delay(2000);
+    
+        factura.EstadoPago = "Pagado"; 
+        await JS.InvokeVoidAsync("alert", "✅ ¡Pago procesado con éxito! Tu factura ha sido actualizada.");
+    }
+}

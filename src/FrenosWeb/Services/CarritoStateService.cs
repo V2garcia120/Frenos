@@ -39,28 +39,29 @@ namespace FrenosWeb.Services
             await _js.InvokeVoidAsync("localStorage.setItem", "carrito_frenos", json);
         }
 
-        public async Task Agregar(Producto producto)
+        public async Task Agregar(Servicio servicio)
         {
             var itemExistente = Items.FirstOrDefault(x =>
-                x.Producto.Id == producto.Id &&
-                x.Producto.Nombre == producto.Nombre);
-
+                x.Servicio.Id == servicio.Id &&
+                x.Servicio.Nombre == servicio.Nombre &&
+                x.Servicio.RequiereVehiculo == servicio.RequiereVehiculo
+                );
             if (itemExistente != null)
             {
                 itemExistente.Cantidad++;
             }
             else
             {
-                Items.Add(new CarritoItem { Producto = producto, Cantidad = 1 });
+                Items.Add(new CarritoItem { Servicio = servicio, Cantidad = 1 });
             }
 
             await GuardarEnLocal();
             NotifyStateChanged();
         }
 
-        public async Task Eliminar(int productoId)
+        public async Task Eliminar(int servicioId)
         {
-            var item = Items.FirstOrDefault(x => x.Producto.Id == productoId);
+            var item = Items.FirstOrDefault(x => x.Servicio.Id == servicioId);
             if (item != null)
             {
                 Items.Remove(item);
@@ -82,11 +83,11 @@ namespace FrenosWeb.Services
             NotifyStateChanged();
         }
 
-        public async Task ActualizarCantidad(int productoId, int nuevaCantidad)
+        public async Task ActualizarCantidad(int servicioId, int nuevaCantidad)
         {
             if (nuevaCantidad < 1) return;
 
-            var item = Items.FirstOrDefault(x => x.Producto.Id == productoId);
+            var item = Items.FirstOrDefault(x => x.Servicio.Id == servicioId);
             if (item != null)
             {
                 item.Cantidad = nuevaCantidad;
