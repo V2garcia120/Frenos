@@ -5,7 +5,6 @@
 
 <div class="row justify-content-center align-items-center" style="min-height: 75vh;">
     <div class="col-md-4">
-        @* Cambiado a 4 para que sea del mismo ancho que el Login *@
         <div class="card shadow-lg border-0 rounded-4">
             <div class="card-body p-5">
                 <div class="text-center mb-4">
@@ -28,6 +27,18 @@
                         <input type="email" class="form-control bg-light border-0 rounded-pill px-3"
                                @bind-value="regModel.Email" placeholder="correo@ejemplo.com" />
                         <ValidationMessage For="@(() => regModel.Email)" class="text-danger small" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Teléfono de Contacto</label>
+                        <input type="text" 
+                               inputmode="numeric" 
+                               maxlength="10" 
+                               oninput="this.value = this.value.replace(/[^0-9]/g, '');" 
+                               class="form-control bg-light border-0 rounded-pill px-3"
+                               @bind-value="regModel.Telefono"
+                               placeholder="8091234567" />
+                        <ValidationMessage For="@(() => regModel.Telefono)" class="text-danger small" />
                     </div>
 
                     <div class="mb-3">
@@ -87,11 +98,15 @@
         public string Nombre { get; set; } = "";
 
         [Required(ErrorMessage = "El correo es obligatorio")]
-        [EmailAddress]
+        [EmailAddress(ErrorMessage = "Correo inválido")]
         public string Email { get; set; } = "";
 
+        [Required(ErrorMessage = "El teléfono es obligatorio")]
+        [RegularExpression(@"^\d{10}$", ErrorMessage = "El teléfono debe tener exactamente 10 dígitos numéricos")]
+        public string Telefono { get; set; } = "";
+
         [Required(ErrorMessage = "La contraseña es obligatoria")]
-        [MinLength(6)]
+        [MinLength(6, ErrorMessage = "Mínimo 6 caracteres")]
         public string Password { get; set; } = "";
 
         [Compare("Password", ErrorMessage = "Las contraseñas no coinciden")]

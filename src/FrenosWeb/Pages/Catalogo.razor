@@ -2,7 +2,6 @@
 @using FrenosWeb.Models
 @using FrenosWeb.Services
 @using FrenosWeb.Components
-@inject ProductoService productoService
 @inject ServicioService servicioService
 @inject AuthService authService
 @inject NavigationManager navManager
@@ -22,7 +21,7 @@ else
                 <ProductoCard Id="@item.Id"
                               Nombre="@item.Nombre"
                               Precio="@item.Precio"
-                              OnAgregar="@(() => HandleAgregarAlCarrito(item.Precio, item.Nombre, item.Id))" />
+                              OnAgregar="@(async () => await HandleAgregarAlCarrito(item))" />
             </div>
         }
     </div>
@@ -42,23 +41,28 @@ else
                 <ProductoCard Id="@s.Id"
                               Nombre="@s.Nombre"
                               Precio="@s.Precio"
-                              OnAgregar="@(() => HandleAgregarAlCarrito(s.Precio, s.Nombre, s.Id))" />
+                              OnAgregar="@(async () => await HandleAgregarAlCarrito(s))" />
             </div>
         }
     </div>
 }
 
 @code {
-    private List<Producto> productos = new();
+    private List<Servicio> productos = new();
     private List<Servicio> servicios = new();
 
     protected override async Task OnInitializedAsync()
     {
-        productos = await productoService.GetProductosAsync();
-        servicios = await servicioService.GetServiciosAsync();
+        var listaProductos = await servicioService.GetProductosDelInventarioAsync();
+        foreach (var p in listaProductos) p.RequiereVehiculo = false;
+        productos = listaProductos;
+
+        var listaServicios = await servicioService.GetServiciosAsync();
+        foreach (var s in listaServicios) s.RequiereVehiculo = true;
+        servicios = listaServicios;
     }
 
-    private void HandleAgregarAlCarrito(decimal precio, string nombre, int id)
+    private async Task HandleAgregarAlCarrito(Servicio itemSeleccionado)
     {
         if (!authService.IsLoggedIn)
         {
@@ -66,8 +70,8 @@ else
         }
         else
         {
-            var item = new Producto { Id = id, Nombre = nombre, Precio = precio };
-            carritoService.Agregar(item);
+            // Pasamos el objeto completo al carrito
+            await carritoService.Agregar(itemSeleccionado);
         }
     }
 }

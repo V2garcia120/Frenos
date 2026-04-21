@@ -12,21 +12,25 @@ namespace FrenosWeb.Services
             _http = http;
         }
 
-        // Obtener la lista de vehículos desde la API
         public async Task<List<VehiculoModel>> GetVehiculosUsuarioAsync()
         {
             try
             {
-                // Cuando tu API esté lista, esta será la ruta:
+                // Intento real a la API
                 var response = await _http.GetFromJsonAsync<List<VehiculoModel>>("api/vehiculos/mis-vehiculos");
                 return response ?? new List<VehiculoModel>();
             }
             catch (Exception ex)
             {
-                // Si la API falla (porque aún la estamos probando), 
-                // imprimimos el error en la consola (F12) para ciber-auditoría
-                Console.WriteLine($"[Cyber-Logs] Error de conexión: {ex.Message}");
-                return new List<VehiculoModel>();
+                // Log para auditoria en consola
+                Console.WriteLine($"[Cyber-Logs] API Vehículos no disponible: {ex.Message}");
+
+                // Importante que coincidan con los IDs que usas en el Carrito
+                return new List<VehiculoModel>
+        {
+            new VehiculoModel { Id = 1, Marca = "Toyota", Modelo = "Corolla", Placa = "A987456" },
+            new VehiculoModel { Id = 2, Marca = "Honda", Modelo = "Civic", Placa = "G123456" }
+        };
             }
         }
 
