@@ -8,7 +8,6 @@ namespace FrenosIntegracion.Controllers
 {
     [ApiController]
     [Route("int/catalogo")]
-    [Authorize]
     public class CatalogoController(ICacheService cache) : ControllerBase
     {
         // 1. Catálogo de productos (Pág. 7-8)

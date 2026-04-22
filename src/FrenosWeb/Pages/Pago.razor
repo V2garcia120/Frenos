@@ -150,7 +150,7 @@
                 
                     if (MontoExterno > 0)
                     {
-                        facturaService.MarcarComoPagada(MontoExterno); // Para simulación local
+                        facturaService.MarcarComoPagadaLocal(MontoExterno); // Para simulación local
                         navManager.NavigateTo("/facturas");
                     }
                     else
@@ -160,7 +160,7 @@
                 }
                 else
                 {
-                    mensajeError = $"❌ Error: {result?.Message?.ToString() ?? "Transacción fallida"}";
+                    mensajeError = $"❌ Error: {result.Error?.Mensaje ?? "Transacción fallida"}";
                 }
             }
             else

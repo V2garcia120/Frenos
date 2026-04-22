@@ -24,7 +24,7 @@ namespace FrenosWeb.Services
                     return await response.Content.ReadFromJsonAsync<ApiResponse<CobroResponse>>();
                 }
 
-                return new ApiResponse<CobroResponse> { Success = false, Message = "Error en el servidor de integración." };
+                return new ApiResponse<CobroResponse> { Success = false, Error = new ApiError { Mensaje = "Error en el servidor de integración." } };
             }
             catch (Exception ex)
             {
@@ -38,12 +38,16 @@ namespace FrenosWeb.Services
         {
             try
             {
-                // Integración aún no nos ha pasado este endpoint, pero siguiendo su lógica sería así:
                 var response = await _http.GetFromJsonAsync<ApiResponse<List<OrdenWebModel>>>("int/ordenes/historial");
-                return response?.Data ?? ObtenerDatosPrueba();
+                if (response != null && response.Success && response.Data != null)
+                {
+                    return response.Data;
+                }
+                return ObtenerDatosPrueba();
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"[Cyber-Logs] Error al obtener historial: {ex.Message}");
                 return ObtenerDatosPrueba();
             }
         }
@@ -51,10 +55,43 @@ namespace FrenosWeb.Services
         private List<OrdenWebModel> ObtenerDatosPrueba()
         {
             return new List<OrdenWebModel>
-            {
-                new OrdenWebModel { NumeroOrden = "ORD-2026-001", Fecha = DateTime.Now.AddDays(-2), Vehiculo = "Toyota Corolla 2022", Placa = "A987456", Total = 12390.00m, EstadoServicio = "Listo", EsServicio = true, TipoServicio = "Mantenimiento" },
-                new OrdenWebModel { NumeroOrden = "ORD-2026-002", Fecha = DateTime.Now, Vehiculo = "Honda Civic 2018", Placa = "G123456", Total = 4500.00m, EstadoServicio = "En diagnóstico", EsServicio = true, TipoServicio = "Frenos" }
-            };
+    {
+        new OrdenWebModel
+        {
+            NumeroOrden = "ORD-2026-001",
+            Fecha = DateTime.Now.AddDays(-2),
+            Vehiculo = "Toyota Corolla 2022",
+            Placa = "A987456",
+            Total = 12390.00m,
+            EstadoServicio = "Listo",
+            EsServicio = true,
+            TipoServicio = "Mantenimiento Preventivo"
+        },
+
+        new OrdenWebModel
+        {
+            NumeroOrden = "ORD-2026-002",
+            Fecha = DateTime.Now.AddDays(-1),
+            Vehiculo = "N/A",
+            Placa = "N/A",
+            Total = 2500.00m,
+            EstadoServicio = "Entregado",
+            EsServicio = false,
+            TipoServicio = "Venta: Pastillas de Freno Cerámicas"
+        },
+
+        new OrdenWebModel
+        {
+            NumeroOrden = "ORD-2026-003",
+            Fecha = DateTime.Now,
+            Vehiculo = "Honda Civic 2018",
+            Placa = "G123456",
+            Total = 4500.00m,
+            EstadoServicio = "En diagnóstico",
+            EsServicio = true,
+            TipoServicio = "Revisión de Sistema de Frenado"
+        }
+    };
         }
     }
 }

@@ -12,11 +12,11 @@ namespace FrenosWeb.Services
         {
             try
             {
-                var resp = await _http.GetFromJsonAsync<ApiResponse<CatalogoResponse>>("int/catalogo/buscar?q=");
+                var resp = await _http.GetFromJsonAsync<ApiResponse<List<Servicio>>>("int/catalogo/servicios");
 
                 if (resp != null && resp.Success && resp.Data != null)
                 {
-                    return resp.Data.Servicios;
+                    return resp.Data;
                 }
                 return ObtenerServiciosPrueba();
             }

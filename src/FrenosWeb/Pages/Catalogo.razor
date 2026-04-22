@@ -54,12 +54,18 @@ else
     protected override async Task OnInitializedAsync()
     {
         var listaProductos = await servicioService.GetProductosDelInventarioAsync();
-        foreach (var p in listaProductos) p.RequiereVehiculo = false;
-        productos = listaProductos;
+        if(listaProductos != null)
+        {
+            foreach (var p in listaProductos) p.RequiereVehiculo = false;
+            productos = listaProductos;
+        }
 
         var listaServicios = await servicioService.GetServiciosAsync();
-        foreach (var s in listaServicios) s.RequiereVehiculo = true;
-        servicios = listaServicios;
+        if (listaServicios != null)
+        {
+            foreach (var s in listaServicios) s.RequiereVehiculo = true;
+            servicios = listaServicios;
+        }
     }
 
     private async Task HandleAgregarAlCarrito(Servicio itemSeleccionado)

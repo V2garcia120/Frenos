@@ -99,11 +99,9 @@
 
     private async Task ConfirmarOrden()
     {
-        var exito = await ordenService.CrearOrdenAsync(carritoService.Items);
-    
-        if (exito)
-        {
-            navManager.NavigateTo("/pago");
-        }
+        // En lugar de llamar al servicio, simplemente navegamos al pago.
+        // La orden real se enviará a Integración desde la página de Pago.razor
+        await Task.Delay(500); // Pequeña demora para efecto visual
+        navManager.NavigateTo("/pago");
     }
 }

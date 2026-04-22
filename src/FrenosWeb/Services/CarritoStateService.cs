@@ -122,9 +122,12 @@ namespace FrenosWeb.Services
                 {
                     ServicioId = i.Servicio.Id,
                     Cantidad = i.Cantidad,
-                    PrecioSnapshot = i.PrecioSnapshot
+                    // Usamos el precio que tiene el servicio en ese momento
+                    PrecioSnapshot = i.Servicio.Precio
                 }).ToList(),
+
                 MetodoPago = metodoPago,
+                // El total con ITBIS 
                 MontoPagado = TotalFinal
             };
         }

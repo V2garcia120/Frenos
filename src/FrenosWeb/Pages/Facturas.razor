@@ -80,11 +80,14 @@
 </div>
 
 @code {
+    [Inject] AuthenticationStateProvider AuthProvider { get; set; }
+    private string usuarioActual = "..."; 
     private List<FacturaModel>? misFacturas;
-    private string usuarioActual = "Pamela Luna"; 
 
     protected override async Task OnInitializedAsync()
     {
+        var state = await AuthProvider.GetAuthenticationStateAsync();
+        usuarioActual = state.User.Identity?.Name?.Split('@')[0] ?? "Usuario";
         misFacturas = await facturaService.GetFacturasUsuarioAsync();
     }
 

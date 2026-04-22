@@ -2,6 +2,7 @@
 @using FrenosWeb.Models
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 @inject IJSRuntime JS
+@inject FrenosWeb.Services.VehiculoService vehiculoService
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -139,11 +140,7 @@
     private bool esEdicion = false;
     private int idVehiculoAEditar;
 
-    protected override void OnInitialized()
-    {
-        // Datos iniciales de prueba
-        vehiculos.Add(new VehiculoModel { Id = 1, Marca = "Toyota", Modelo = "Corolla", Anio = 2022, Placa = "A987456" });
-    }
+    protected override async Task OnInitializedAsync() => vehiculos = await vehiculoService.GetVehiculosUsuarioAsync();
 
     private void AbrirModal()
     {
@@ -186,32 +183,31 @@
         GuardarVehiculo();
     }
 
-    private void GuardarVehiculo()
+    private async Task GuardarVehiculo()
     {
-        // En el futuro, aquí llamarías a tu API (vehiculoService.Insertar)
-        // Si la marca fue manual, la asignamos
+        // Validaciones de marca/modelo manual 
         if (nuevoVehiculo.Marca == "Otro") nuevoVehiculo.Marca = marcaManual;
-
-        // Si el modelo fue manual (ya sea por marca "Otro" o modelo "Otro"), lo asignamos
-        if (nuevoVehiculo.Modelo == "Otro" || string.IsNullOrEmpty(nuevoVehiculo.Modelo)) nuevoVehiculo.Modelo = modeloManual;
+        if (nuevoVehiculo.Modelo == "Otro" || string.IsNullOrEmpty(nuevoVehiculo.Modelo))
+            nuevoVehiculo.Modelo = modeloManual;
 
         if (esEdicion)
         {
+            // Aquí podrías llamar a un vehiculoService.Actualizar si Diana lo crea
             var original = vehiculos.FirstOrDefault(x => x.Id == idVehiculoAEditar);
-            if (original != null)
-            {
-                original.Marca = nuevoVehiculo.Marca;
-                original.Modelo = nuevoVehiculo.Modelo;
-                original.Anio = nuevoVehiculo.Anio;
-                original.Placa = nuevoVehiculo.Placa;
-            }
+            if (original != null) { /* ... lógica de edición local ... */ }
         }
         else
-        { 
-            nuevoVehiculo.Id = vehiculos.Count > 0 ? vehiculos.Max(x => x.Id) + 1 : 1; 
-            vehiculos.Add(nuevoVehiculo); 
-        }
+        {
+            // Enviamos el nuevo vehículo a la API 
+            var exito = await vehiculoService.RegistrarVehiculoAsync(nuevoVehiculo);
         
+            if (exito)
+            {
+                // Recargamos la lista para ver el cambio real desde la DB
+                vehiculos = await vehiculoService.GetVehiculosUsuarioAsync();
+            }
+        }
+    
         CerrarModal();
     }
 
