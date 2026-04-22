@@ -5,101 +5,167 @@ using System.Text.Json;
 
 namespace FrenosIntegracion.Services.Core
 {
-    public class CoreService(HttpClient http) : ICoreService
+    public class CoreService : ICoreService
     {
+        private readonly HttpClient _http;
         private static readonly JsonSerializerOptions _jsonOptions = new()
         {
             PropertyNameCaseInsensitive = true
         };
 
+        // Constructor tradicional para evitar el error CS8863
+        public CoreService(HttpClient http)
+        {
+            _http = http;
+        }
+
         public async Task<bool> EstaDisponibleAsync()
         {
-            try { var r = await http.GetAsync("/health"); return r.IsSuccessStatusCode; }
+            try { var r = await _http.GetAsync("/health"); return r.IsSuccessStatusCode; }
             catch { return false; }
         }
 
-        public async Task<IEnumerable<ProductoDto>> ObtenerProductosAsync()
+        // --- Autenticación ---
+        public async Task<object> AutenticarClienteAsync(LoginRequest request)
         {
-            var response = await http.GetAsync("/api/productos");
+            var response = await _http.PostAsync("/api/auth/cliente", Serializar(request));
             response.EnsureSuccessStatusCode();
-            var json = await response.Content.ReadAsStringAsync();
-            var api = JsonSerializer.Deserialize<ApiWrapper<IEnumerable<ProductoDto>>>(json, _jsonOptions);
-            return api?.Data ?? [];
+            return await Deserializar<object>(response) ?? new { };
         }
 
-        public async Task<OrdenWebResponse> CrearOrdenAsync(
-            CrearOrdenWebRequest request, string token)
+        public async Task<object> AutenticarEmpleadoAsync(LoginRequest request)
         {
-            var content = Serializar(request);
-            http.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", token);
-            var response = await http.PostAsync("/api/ordenes", content);
+            var response = await _http.PostAsync("/api/auth/empleado", Serializar(request));
             response.EnsureSuccessStatusCode();
-            var json = await response.Content.ReadAsStringAsync();
-            var api = JsonSerializer.Deserialize<ApiWrapper<OrdenWebResponse>>(json, _jsonOptions);
-            return api!.Data!;
+            return await Deserializar<object>(response) ?? new { };
         }
 
-        public async Task<CobroResponse> ProcesarCobroAsync(
-            CobroRequest request, string token)
+        // --- Gestión de Órdenes Web (Pág. 7-9) ---
+        // Estos faltaban y causaban el error CS0535
+        public async Task<OrdenWebResponse> CrearOrdenAsync(CrearOrdenWebRequest request, string token)
         {
-            var content = Serializar(request);
-            http.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", token);
-            var response = await http.PostAsync("/api/facturas", content);
+            _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var response = await _http.PostAsync("/api/ordenes", Serializar(request));
             response.EnsureSuccessStatusCode();
-            var json = await response.Content.ReadAsStringAsync();
-            var api = JsonSerializer.Deserialize<ApiWrapper<CobroResponse>>(json, _jsonOptions);
-            return api!.Data!;
+            return (await Deserializar<OrdenWebResponse>(response))!;
         }
 
         public async Task<EstadoOrdenResponse> ObtenerEstadoOrdenAsync(int ordenId, string token)
         {
-            // Configuramos el token de seguridad para la petición
-            http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
-            // Hacemos la llamada al API del Core
-            var response = await http.GetAsync($"/api/ordenes/{ordenId}/estado");
-
-            // Si el Core responde con error (404, 500), esto lanzará una excepción que atrapará nuestro Controller
+            _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var response = await _http.GetAsync($"/api/ordenes/{ordenId}/estado");
             response.EnsureSuccessStatusCode();
+            return (await Deserializar<EstadoOrdenResponse>(response))!;
+        }
 
-            var json = await response.Content.ReadAsStringAsync();
+        // --- Gestión de Turnos y Caja ---
+        public async Task<object> AbrirTurnoAsync(int cajeroId, decimal montoInicial)
+        {
+            var payload = new { cajeroId, montoInicial };
+            var response = await _http.PostAsync("/api/caja/abrir", Serializar(payload));
+            return await Deserializar<object>(response) ?? new { };
+        }
 
-            // Deserializamos la respuesta usando el formato estándar del proyecto
-            var apiResponse = JsonSerializer.Deserialize<ApiResponse<EstadoOrdenResponse>>(json, _jsonOptions);
+        public async Task<object> CerrarTurnoAsync(int turnoId, decimal efectivoContado)
+        {
+            var payload = new { turnoId, efectivoContado };
+            var response = await _http.PostAsync("/api/caja/cerrar", Serializar(payload));
+            return await Deserializar<object>(response) ?? new { };
+        }
 
-            return apiResponse?.Data ?? throw new Exception("No se pudo obtener el estado de la orden.");
+        public async Task<object> RegistrarMovimientoEfectivoAsync(int turnoId, decimal monto, string motivo, string tipo)
+        {
+            var payload = new { turnoId, monto, motivo, tipo };
+            var response = await _http.PostAsync("/api/caja/movimiento", Serializar(payload));
+            return await Deserializar<object>(response) ?? new { };
+        }
+
+        // --- Pagos ---
+        public async Task<object> PagarFacturaAsync(int facturaId, int turnoId, string metodo, decimal monto)
+        {
+            var payload = new { facturaId, turnoId, metodo, monto };
+            var response = await _http.PostAsync($"/api/facturas/{facturaId}/pago", Serializar(payload));
+            return await Deserializar<object>(response) ?? new { };
+        }
+
+        public async Task<object> RegistrarAbonoAsync(int cxcId, int turnoId, decimal monto, string metodo)
+        {
+            var payload = new { cxcId, turnoId, monto, metodo };
+            var response = await _http.PostAsync($"/api/cxc/{cxcId}/abono", Serializar(payload));
+            return await Deserializar<object>(response) ?? new { };
+        }
+
+        // --- Catálogos ---
+        public async Task<IEnumerable<ProductoDto>> ObtenerProductosAsync()
+        {
+            var response = await _http.GetAsync("/api/productos");
+            var data = await Deserializar<IEnumerable<ProductoDto>>(response);
+            return data ?? Enumerable.Empty<ProductoDto>();
         }
 
         public async Task<IEnumerable<ServicioDto>> ObtenerServiciosAsync()
         {
-            // Hacemos la petición GET al endpoint de servicios
-            var response = await http.GetAsync("/api/servicios");
-
-            // Si hay error (ej. 401 o 500), lanzamos excepción
-            response.EnsureSuccessStatusCode();
-
-            var json = await response.Content.ReadAsStringAsync();
-
-            // Deserializamos usando la estructura estándar de tu API
-            var apiResponse = JsonSerializer.Deserialize<ApiResponse<IEnumerable<ServicioDto>>>(json, _jsonOptions);
-
-            // Si viene nulo, devolvemos una lista vacía para evitar errores de null
-            return apiResponse?.Data ?? Enumerable.Empty<ServicioDto>();
+            var response = await _http.GetAsync("/api/servicios");
+            var data = await Deserializar<IEnumerable<ServicioDto>>(response);
+            return data ?? Enumerable.Empty<ServicioDto>();
         }
 
-        private static StringContent Serializar<T>(T obj)
+        public async Task<CobroResponse> ProcesarCobroAsync(CobroRequest request, string token)
         {
-            // Usamos el constructor que acepta (string content, Encoding encoding, string mediaType)
-            return new StringContent(
-                JsonSerializer.Serialize(obj),
-                Encoding.UTF8,
-                "application/json"
-            );
+            _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var response = await _http.PostAsync("/api/facturas", Serializar(request));
+            response.EnsureSuccessStatusCode();
+            return (await Deserializar<CobroResponse>(response))!;
+        }
+
+        // --- Helpers ---
+        private static StringContent Serializar<T>(T obj) =>
+            new(JsonSerializer.Serialize(obj), Encoding.UTF8, "application/json");
+
+        private async Task<T?> Deserializar<T>(HttpResponseMessage response)
+        {
+            var json = await response.Content.ReadAsStringAsync();
+            var wrapper = JsonSerializer.Deserialize<ApiWrapper<T>>(json, _jsonOptions);
+            return wrapper != null ? wrapper.Data : default;
+        }
+
+        public async Task<IEnumerable<object>> ObtenerFacturasPorClienteAsync(int clienteId)
+        {
+            // 1. Hacemos la petición al puerto 7001 (Core)
+            // El Core debería tener un endpoint que filtre por clienteId
+            var response = await _http.GetAsync($"/api/facturas/cliente/{clienteId}");
+
+            // 2. Si no es exitoso (404 o 500), devolvemos lista vacía
+            if (!response.IsSuccessStatusCode)
+                return Enumerable.Empty<object>();
+
+            // 3. Deserializamos usando el helper que ya tienes en la clase
+            var data = await Deserializar<IEnumerable<object>>(response);
+
+            return data ?? Enumerable.Empty<object>();
+        }
+
+        // --- En CoreService.cs ---
+
+        public async Task<IEnumerable<object>> ObtenerVehiculosClienteAsync()
+        {
+            var response = await _http.GetAsync("/api/vehiculos");
+            return await Deserializar<IEnumerable<object>>(response) ?? Enumerable.Empty<object>();
+        }
+
+        public async Task<object> RegistrarVehiculoAsync(object vehiculo)
+        {
+            var response = await _http.PostAsync("/api/vehiculos", Serializar(vehiculo));
+            response.EnsureSuccessStatusCode();
+            return await Deserializar<object>(response) ?? new { };
+        }
+
+        public async Task<IEnumerable<object>> ObtenerHistorialOrdenesAsync()
+        {
+            var response = await _http.GetAsync("/api/ordenes/historial");
+            return await Deserializar<IEnumerable<object>>(response) ?? Enumerable.Empty<object>();
         }
     }
 
     internal record ApiWrapper<T>(bool Success, T? Data, object? Error);
-
 }
