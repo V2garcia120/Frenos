@@ -6,8 +6,15 @@
     var puedeGestionar = User.IsInRole("Administrador") || User.IsInRole("Admin") || User.IsInRole("Mantenimiento") || User.IsInRole("Mantemineto");
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0">Gestión de productos</h1>
+<div class="module-header mb-4">
+    <div>
+        <h1 class="h3 mb-1">📦 Gestión de productos</h1>
+        <p class="text-secondary mb-0">Administra inventario, precios y niveles de stock.</p>
+    </div>
+    @if (puedeGestionar)
+    {
+        <a asp-page="/Productos/Create" class="btn btn-primary">+ Crear producto</a>
+    }
 </div>
 
 @if (TempData["Mensaje"] is string mensaje)
@@ -20,22 +27,16 @@
     <div class="alert alert-danger">@mensajeError</div>
 }
 
-<div class="card mb-4">
-    <div class="card-header">Buscar productos</div>
+<div class="card mb-4 filter-card">
+    <div class="card-header">Filtros de búsqueda</div>
     <div class="card-body">
         <form method="get" class="row g-3">
-            <div class="col-md-8">
+            <div class="col-md-10">
                 <label class="form-label" asp-for="Termino">Término</label>
                 <input asp-for="Termino" class="form-control" placeholder="Nombre o descripción" />
             </div>
             <div class="col-md-2 d-flex align-items-end">
                 <button type="submit" class="btn btn-outline-primary w-100">Buscar</button>
-            </div>
-            <div class="col-md-2 d-flex align-items-end">
-                @if (puedeGestionar)
-                {
-                    <a asp-page="/Productos/Create" class="btn btn-primary w-100">Crear producto</a>
-                }
             </div>
         </form>
     </div>
@@ -76,10 +77,12 @@
                                     <div class="fw-semibold">@producto.Nombre</div>
                                     <div class="small text-muted">@producto.Descripcion</div>
                                 </td>
-                                <td>@producto.Categoria</td>
+                                <td><span class="badge text-bg-light border">@producto.Categoria</span></td>
                                 <td class="text-end">@producto.Precio.ToString("C")</td>
                                 <td class="text-end">@producto.Costo.ToString("C")</td>
-                                <td class="text-end">@producto.Stock</td>
+                                <td class="text-end">
+                                    <span class="badge @(producto.Stock <= producto.StockMinimo ? "text-bg-danger" : "text-bg-success")">@producto.Stock</span>
+                                </td>
                                 <td class="text-end">@producto.StockMinimo</td>
                                 @if (puedeGestionar)
                                 {

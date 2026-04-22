@@ -135,14 +135,15 @@ namespace TallerCaja.Forms
             // lblPendientes
             // 
             lblPendientes.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            lblPendientes.AutoSize = true;
+            lblPendientes.AutoEllipsis = true;
             lblPendientes.Font = new Font("Segoe UI", 9F);
             lblPendientes.ForeColor = Color.FromArgb(251, 146, 60);
-            lblPendientes.Location = new Point(1086, 30);
+            lblPendientes.Location = new Point(810, 30);
             lblPendientes.Margin = new Padding(4, 0, 4, 0);
             lblPendientes.Name = "lblPendientes";
-            lblPendientes.Size = new Size(0, 25);
+            lblPendientes.Size = new Size(270, 25);
             lblPendientes.TabIndex = 4;
+            lblPendientes.TextAlign = ContentAlignment.MiddleRight;
             // 
             // btnCatalogo
             // 
@@ -213,7 +214,7 @@ namespace TallerCaja.Forms
             panelTotales.Margin = new Padding(4, 5, 4, 5);
             panelTotales.Name = "panelTotales";
             panelTotales.Padding = new Padding(21, 17, 21, 17);
-            panelTotales.Size = new Size(906, 283);
+            panelTotales.Size = new Size(751, 283);
             panelTotales.TabIndex = 2;
             // 
             // lblSubtotalLabel
@@ -312,7 +313,7 @@ namespace TallerCaja.Forms
             panelBuscar.Margin = new Padding(4, 5, 4, 5);
             panelBuscar.Name = "panelBuscar";
             panelBuscar.Padding = new Padding(11, 10, 11, 10);
-            panelBuscar.Size = new Size(885, 73);
+            panelBuscar.Size = new Size(1040, 73);
             panelBuscar.TabIndex = 2;
             // 
             // txtBuscar
@@ -324,7 +325,7 @@ namespace TallerCaja.Forms
             txtBuscar.Margin = new Padding(4, 5, 4, 5);
             txtBuscar.Name = "txtBuscar";
             txtBuscar.PlaceholderText = "🔍 Buscar producto o servicio...";
-            txtBuscar.Size = new Size(863, 37);
+            txtBuscar.Size = new Size(1018, 37);
             txtBuscar.TabIndex = 0;
             txtBuscar.TextChanged += txtBuscar_TextChanged;
             // 
@@ -337,7 +338,7 @@ namespace TallerCaja.Forms
             panelAgregar.Margin = new Padding(4, 5, 4, 5);
             panelAgregar.Name = "panelAgregar";
             panelAgregar.Padding = new Padding(11, 10, 11, 10);
-            panelAgregar.Size = new Size(885, 73);
+            panelAgregar.Size = new Size(1040, 73);
             panelAgregar.TabIndex = 1;
             // 
             // btnAgregar
@@ -352,7 +353,7 @@ namespace TallerCaja.Forms
             btnAgregar.Location = new Point(11, 10);
             btnAgregar.Margin = new Padding(4, 5, 4, 5);
             btnAgregar.Name = "btnAgregar";
-            btnAgregar.Size = new Size(863, 53);
+            btnAgregar.Size = new Size(1018, 53);
             btnAgregar.TabIndex = 0;
             btnAgregar.Text = "➕ Agregar al carrito (o doble clic)";
             btnAgregar.UseVisualStyleBackColor = false;
@@ -368,7 +369,7 @@ namespace TallerCaja.Forms
             panelCarritoBtns.Margin = new Padding(4, 5, 4, 5);
             panelCarritoBtns.Name = "panelCarritoBtns";
             panelCarritoBtns.Padding = new Padding(11, 8, 11, 8);
-            panelCarritoBtns.Size = new Size(906, 63);
+            panelCarritoBtns.Size = new Size(751, 63);
             panelCarritoBtns.TabIndex = 1;
             // 
             // btnQuitarItem
@@ -419,7 +420,7 @@ namespace TallerCaja.Forms
             splitMain.Panel1.Controls.Add(panelBuscar);
             splitMain.Panel1.Controls.Add(panelCliente);
             splitMain.Panel1.Controls.Add(lblCatalogoTitle);
-            splitMain.Panel1MinSize = 400;
+            splitMain.Panel1MinSize = 520;
             // 
             // splitMain.Panel2
             // 
@@ -430,7 +431,7 @@ namespace TallerCaja.Forms
             splitMain.Panel2.Controls.Add(lblCarritoTitle);
             splitMain.Panel2MinSize = 380;
             splitMain.Size = new Size(1800, 1107);
-            splitMain.SplitterDistance = 885;
+            splitMain.SplitterDistance = 1040;
             splitMain.SplitterWidth = 9;
             splitMain.TabIndex = 0;
             // 
@@ -445,7 +446,7 @@ namespace TallerCaja.Forms
             lvCatalogo.Location = new Point(0, 133);
             lvCatalogo.Margin = new Padding(4, 5, 4, 5);
             lvCatalogo.Name = "lvCatalogo";
-            lvCatalogo.Size = new Size(885, 828);
+            lvCatalogo.Size = new Size(1040, 828);
             lvCatalogo.TabIndex = 0;
             lvCatalogo.UseCompatibleStateImageBehavior = false;
             lvCatalogo.View = View.Details;
@@ -484,7 +485,7 @@ namespace TallerCaja.Forms
             panelCliente.Margin = new Padding(4, 5, 4, 5);
             panelCliente.Name = "panelCliente";
             panelCliente.Padding = new Padding(11, 10, 11, 10);
-            panelCliente.Size = new Size(885, 73);
+            panelCliente.Size = new Size(1040, 73);
             panelCliente.TabIndex = 3;
             // 
             // lblClienteTitle
@@ -565,7 +566,7 @@ namespace TallerCaja.Forms
             lblCatalogoTitle.Location = new Point(0, 0);
             lblCatalogoTitle.Margin = new Padding(4, 0, 4, 0);
             lblCatalogoTitle.Name = "lblCatalogoTitle";
-            lblCatalogoTitle.Size = new Size(885, 60);
+            lblCatalogoTitle.Size = new Size(1040, 60);
             lblCatalogoTitle.TabIndex = 4;
             lblCatalogoTitle.Text = "  📦 CATÁLOGO DE PRODUCTOS Y SERVICIOS";
             lblCatalogoTitle.TextAlign = ContentAlignment.MiddleLeft;
@@ -581,7 +582,7 @@ namespace TallerCaja.Forms
             lvCarrito.Location = new Point(0, 100);
             lvCarrito.Margin = new Padding(4, 5, 4, 5);
             lvCarrito.Name = "lvCarrito";
-            lvCarrito.Size = new Size(906, 661);
+            lvCarrito.Size = new Size(751, 661);
             lvCarrito.TabIndex = 0;
             lvCarrito.UseCompatibleStateImageBehavior = false;
             lvCarrito.View = View.Details;
@@ -623,7 +624,7 @@ namespace TallerCaja.Forms
             lblItemsCount.Margin = new Padding(4, 0, 4, 0);
             lblItemsCount.Name = "lblItemsCount";
             lblItemsCount.Padding = new Padding(0, 0, 14, 0);
-            lblItemsCount.Size = new Size(906, 40);
+            lblItemsCount.Size = new Size(751, 40);
             lblItemsCount.TabIndex = 3;
             lblItemsCount.Text = "0 items";
             lblItemsCount.TextAlign = ContentAlignment.MiddleRight;
@@ -637,7 +638,7 @@ namespace TallerCaja.Forms
             lblCarritoTitle.Location = new Point(0, 0);
             lblCarritoTitle.Margin = new Padding(4, 0, 4, 0);
             lblCarritoTitle.Name = "lblCarritoTitle";
-            lblCarritoTitle.Size = new Size(906, 60);
+            lblCarritoTitle.Size = new Size(751, 60);
             lblCarritoTitle.TabIndex = 4;
             lblCarritoTitle.Text = "  \U0001f6d2 DETALLE DE VENTA";
             lblCarritoTitle.TextAlign = ContentAlignment.MiddleLeft;

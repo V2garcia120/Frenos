@@ -5,11 +5,14 @@
     var puedeGestionar = User.IsInRole("Administrador") || User.IsInRole("Admin") || User.IsInRole("Mantenimiento") || User.IsInRole("Mantemineto");
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0">Gestión de servicios</h1>
+<div class="module-header mb-4">
+    <div>
+        <h1 class="h3 mb-1">🛠 Gestión de servicios</h1>
+        <p class="text-secondary mb-0">Gestiona catálogo técnico, tarifas y tiempos estimados.</p>
+    </div>
     @if (puedeGestionar)
     {
-        <a asp-page="/Servicios/Create" class="btn btn-primary">Crear servicio</a>
+        <a asp-page="/Servicios/Create" class="btn btn-primary">+ Crear servicio</a>
     }
 </div>
 
@@ -23,8 +26,8 @@
     <div class="alert alert-danger">@mensajeError</div>
 }
 
-<div class="card mb-4">
-    <div class="card-header">Buscar servicios</div>
+<div class="card mb-4 filter-card">
+    <div class="card-header">Filtros de búsqueda</div>
     <div class="card-body">
         <form method="get" class="row g-3">
             <div class="col-md-10">
@@ -69,10 +72,10 @@
                         {
                             <tr>
                                 <td class="fw-semibold">@servicio.Nombre</td>
-                                <td>@servicio.Categoria</td>
+                                <td><span class="badge text-bg-light border">@servicio.Categoria</span></td>
                                 <td>@servicio.Descripcion</td>
                                 <td class="text-end">@servicio.Precio.ToString("C")</td>
-                                <td class="text-end">@servicio.DuracionMinutos min</td>
+                                <td class="text-end"><span class="badge text-bg-info">@servicio.DuracionMinutos min</span></td>
                                 @if (puedeGestionar)
                                 {
                                     <td class="text-end">

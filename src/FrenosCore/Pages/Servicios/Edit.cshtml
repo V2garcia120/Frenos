@@ -4,11 +4,16 @@
     ViewData["Title"] = "Editar servicio";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0">Editar servicio</h1>
+<div class="module-header mb-4">
+    <div>
+        <h1 class="h3 mb-1">Editar servicio</h1>
+        <p class="text-secondary mb-0">Modifica precio, duración o disponibilidad del servicio.</p>
+    </div>
+    <a asp-page="/Servicios/Index" class="btn btn-outline-secondary">← Volver</a>
 </div>
 
-<div class="card">
+<div class="card form-card">
+    <div class="card-header">Datos del servicio</div>
     <div class="card-body">
         <form method="post" class="row g-3">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>

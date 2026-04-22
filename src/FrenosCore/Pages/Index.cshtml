@@ -1,10 +1,51 @@
 ﻿@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Inicio";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<section class="hero-panel mb-4">
+    <div class="row g-4 align-items-center">
+        <div class="col-lg-8">
+            <h1 class="display-6 mb-2">Gestión integral de taller</h1>
+            <p class="mb-0 text-secondary">Controla productos, servicios, órdenes, facturas y cuentas por cobrar desde un solo lugar.</p>
+        </div>
+        <div class="col-lg-4">
+            <div class="d-grid gap-2">
+                <a asp-page="/Ordenes/Index" class="btn btn-primary">Ver órdenes</a>
+                <a asp-page="/Facturas/Index" class="btn btn-outline-primary">Ver facturas</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="row g-3">
+    <div class="col-sm-6 col-xl-3">
+        <a asp-page="/Productos/Index" class="quick-link-card text-decoration-none">
+            <span class="quick-link-icon">PR</span>
+            <strong>Productos</strong>
+            <small>Inventario y costos</small>
+        </a>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <a asp-page="/Servicios/Index" class="quick-link-card text-decoration-none">
+            <span class="quick-link-icon">SV</span>
+            <strong>Servicios</strong>
+            <small>Catálogo técnico</small>
+        </a>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <a asp-page="/Clientes/Index" class="quick-link-card text-decoration-none">
+            <span class="quick-link-icon">CL</span>
+            <strong>Clientes</strong>
+            <small>Historial y datos</small>
+        </a>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <a asp-page="/CuentasPorCobrar/Index" class="quick-link-card text-decoration-none">
+            <span class="quick-link-icon">CX</span>
+            <strong>CxC</strong>
+            <small>Pagos pendientes</small>
+        </a>
+    </div>
+</section>
