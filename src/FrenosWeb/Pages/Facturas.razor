@@ -2,6 +2,7 @@
 @using FrenosWeb.Models
 @using FrenosWeb.Services
 @inject FacturaService facturaService
+@inject NavigationManager navManager
 @inject IJSRuntime JS
 
 <div class="container mt-4 pb-5">
@@ -94,11 +95,6 @@
 
     private async Task IniciarPago(FacturaModel factura)
     {
-        await JS.InvokeVoidAsync("alert", $"🔐 Realizando pago de...\n\nFactura: {factura.NumeroFactura}\nMonto: RD$ {factura.Total:N2}");
-    
-        await Task.Delay(2000);
-    
-        factura.EstadoPago = "Pagado"; 
-        await JS.InvokeVoidAsync("alert", "✅ ¡Pago procesado con éxito! Tu factura ha sido actualizada.");
+        navManager.NavigateTo($"/pago/{factura.Total}");
     }
 }

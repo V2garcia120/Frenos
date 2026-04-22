@@ -12,17 +12,18 @@ namespace FrenosWeb.Services
         {
             try
             {
-                var resp = await _http.GetFromJsonAsync<List<Servicio>>("api/servicios");
-                return resp ?? new();
-            }
-            catch
-            {
-                return new List<Servicio>
+                var resp = await _http.GetFromJsonAsync<ApiResponse<CatalogoResponse>>("int/catalogo/buscar?q=");
+
+                if (resp != null && resp.Success && resp.Data != null)
                 {
-                    new Servicio { Id = 101, Nombre = "Cambio de Pastillas", Precio = 1200, RequiereVehiculo = true },
-                    new Servicio { Id = 102, Nombre = "Rectificación de Discos", Precio = 2000, RequiereVehiculo = true },
-                    new Servicio { Id = 103, Nombre = "Mantenimiento General", Precio = 5000, RequiereVehiculo = true }
-                };
+                    return resp.Data.Servicios;
+                }
+                return ObtenerServiciosPrueba();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Cyber-Logs] Error en Catálogo: {ex.Message}");
+                return ObtenerServiciosPrueba();
             }
         }
 
@@ -30,18 +31,38 @@ namespace FrenosWeb.Services
         {
             try
             {
-                var resp = await _http.GetFromJsonAsync<List<Servicio>>("api/productos");
-                return resp ?? new();
+                var resp = await _http.GetFromJsonAsync<ApiResponse<List<Servicio>>>("int/catalogo/productos");
+
+                if (resp != null && resp.Success && resp.Data != null)
+                {
+                    return resp.Data;
+                }
+                return ObtenerProductosPrueba();
             }
             catch
             {
-                return new List<Servicio>
-                {
-                    new Servicio { Id = 1, Nombre = "Pastillas Cerámicas", Precio = 2500, RequiereVehiculo = false },
-                    new Servicio { Id = 2, Nombre = "Discos de Freno", Precio = 4000, RequiereVehiculo = false },
-                    new Servicio { Id = 3, Nombre = "Líquido de Frenos DOT4", Precio = 800, RequiereVehiculo = false }
-                };
+                return ObtenerProductosPrueba();
             }
         }
+
+        private List<Servicio> ObtenerServiciosPrueba() => new()
+        {
+            new Servicio { Id = 101, Nombre = "Cambio de Pastillas", Precio = 1200, RequiereVehiculo = true },
+            new Servicio { Id = 102, Nombre = "Rectificación de Discos", Precio = 2000, RequiereVehiculo = true },
+            new Servicio { Id = 103, Nombre = "Mantenimiento General", Precio = 5000, RequiereVehiculo = true }
+        };
+
+        private List<Servicio> ObtenerProductosPrueba() => new()
+        {
+            new Servicio { Id = 1, Nombre = "Pastillas Cerámicas", Precio = 2500, RequiereVehiculo = false },
+            new Servicio { Id = 2, Nombre = "Discos de Freno", Precio = 4000, RequiereVehiculo = false },
+            new Servicio { Id = 3, Nombre = "Líquido de Frenos DOT4", Precio = 800, RequiereVehiculo = false }
+        };
+    }
+
+    public class CatalogoResponse
+    {
+        public List<Servicio> Productos { get; set; } = new();
+        public List<Servicio> Servicios { get; set; } = new();
     }
 }

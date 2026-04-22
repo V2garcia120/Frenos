@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
 [Route("int/catalogo")]
-[Authorize]
 public class CatalogoController(ICacheService cache) : ControllerBase
 {
     // GET int/catalogo/productos?categoria=Frenos

@@ -35,14 +35,14 @@ namespace FrenosWeb.Services
         {
             try
             {
-                var response = await http.PostAsJsonAsync("api/auth/login", model);
+                var response = await http.PostAsJsonAsync("int/auth/login", model);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var result = await response.Content.ReadFromJsonAsync<UserSession>();
-                    if (result != null)
+                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<UserSession>>();
+                    if (result != null && result.Success && result.Data != null)
                     {
-                        EstablecerSesion(result);
+                        EstablecerSesion(result.Data);
                         return true;
                     }
                 }
@@ -50,9 +50,7 @@ namespace FrenosWeb.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Cyber-Logs] API de Auth no disponible: {ex.Message}");
-
-                await Task.Delay(1000); 
+                Console.WriteLine($"[Cyber-Logs] Error de conexión con Integración: {ex.Message}");
 
                 if (model.Email == "admin@frenos.com" && model.Password == "123456")
                 {

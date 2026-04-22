@@ -16,25 +16,38 @@ namespace FrenosWeb.Services
         {
             try
             {
-                var response = await _http.GetFromJsonAsync<ApiResponse<List<FacturaModel>>>("api/integracion/facturas");
-                return response?.Data ?? new List<FacturaModel>();
-            }
-            catch
-            {
-                // Si la API no está lista devolvemos datos de prueba para que tu parte no se rompa
-                return new List<FacturaModel>
+                var response = await _http.GetFromJsonAsync<ApiResponse<List<FacturaModel>>>("int/facturas");
+                if(response != null && response.Success && response.Data != null)
                 {
-                    new FacturaModel { NumeroFactura = "FAC-2026-001", ServicioRealizado = "Cambio Pastillas Cerámicas", Total = 4500.00m, EstadoPago = "Pagado", Fecha = DateTime.Now.AddDays(-10) },
-                    new FacturaModel { NumeroFactura = "FAC-2026-002", ServicioRealizado = "Rectificación y Líquido", Total = 3200.00m, EstadoPago = "Pendiente", Fecha = DateTime.Now }
-                };
+                    return response.Data;
+                }
+                {
+                    return ObtenerDatosPrueba();
+                }
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"[Cyber-Logs] Error conectando a Integración: {ex.Message}");
+                return ObtenerDatosPrueba();
             }
         }
-    }
 
-    public class ApiResponse<T>
-    {
-        public bool Success { get; set; }
-        public T? Data { get; set; }
-        public object? Error { get; set; }
+        public void MarcarComoPagada(decimal monto)
+        {
+            // Lógica temporal para la demo: 
+            // Esto solo funcionaría si tuviéramos la lista en memoria.
+            // Por ahora, está puesto para que el compilador no de error.
+            Console.WriteLine($"[Cyber-Logs] Factura de RD$ {monto} marcada como pagada localmente.");
+            // Por ahora solo logueamos, cuando Diana tenga el POST de pago lo conectamos aquí
+        }
+
+        private List<FacturaModel> ObtenerDatosPrueba()
+        {
+            return new List<FacturaModel>
+            {
+                new FacturaModel { NumeroFactura = "FAC-2026-001", ServicioRealizado = "Cambio Pastillas Cerámicas", Total = 4500.00m, EstadoPago = "Pagado", Fecha = DateTime.Now.AddDays(-10) },
+                new FacturaModel { NumeroFactura = "FAC-2026-002", ServicioRealizado = "Rectificación y Líquido", Total = 3200.00m, EstadoPago = "Pendiente", Fecha = DateTime.Now }
+            };
+        }
     }
 }

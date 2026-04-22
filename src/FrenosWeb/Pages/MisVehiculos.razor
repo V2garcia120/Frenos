@@ -59,7 +59,7 @@
                     <button type="button" class="btn-close" @onclick="CerrarModal"></button>
                 </div>
                 <div class="modal-body px-4">
-                    <EditForm Model="nuevoVehiculo" OnValidSubmit="GuardarVehiculo">
+                    <EditForm Model="nuevoVehiculo" OnSubmit="HandleSubmit">
                         <DataAnnotationsValidator />
                         <ValidationSummary class="text-danger small" />
 
@@ -79,7 +79,8 @@
                             {
                                 <input class="form-control rounded-pill bg-light border-0 mt-2"
                                        @bind-value="marcaManual"
-                                       placeholder="Escribe la marca aquí (Ej: Suzuki)..." />
+                                       @bind-value:event="oninput"
+                                       placeholder="Escribe la marca aquí..." />
                             }
                         </div>
 
@@ -102,6 +103,7 @@
                             {
                                 <input class="form-control rounded-pill bg-light border-0 mt-2"
                                        @bind-value="modeloManual"
+                                       @bind-value:event="oninput"
                                        placeholder="Escribe el modelo aquí..." />
                             }
                         </div>
@@ -174,6 +176,15 @@
         "Kia" => new() { "Rio", "Sportage", "Picanto", "Sorento", "K5" },
         _ => new() // Lista vacía para otras marcas
     };
+
+    private void HandleSubmit()
+    {
+        if (nuevoVehiculo.Marca == "Otro") nuevoVehiculo.Marca = marcaManual;
+        if (nuevoVehiculo.Modelo == "Otro" || string.IsNullOrEmpty(nuevoVehiculo.Modelo))
+            nuevoVehiculo.Modelo = modeloManual;
+
+        GuardarVehiculo();
+    }
 
     private void GuardarVehiculo()
     {
