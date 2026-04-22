@@ -144,6 +144,27 @@ namespace FrenosIntegracion.Services.Core
 
             return data ?? Enumerable.Empty<object>();
         }
+
+        // --- En CoreService.cs ---
+
+        public async Task<IEnumerable<object>> ObtenerVehiculosClienteAsync()
+        {
+            var response = await _http.GetAsync("/api/vehiculos");
+            return await Deserializar<IEnumerable<object>>(response) ?? Enumerable.Empty<object>();
+        }
+
+        public async Task<object> RegistrarVehiculoAsync(object vehiculo)
+        {
+            var response = await _http.PostAsync("/api/vehiculos", Serializar(vehiculo));
+            response.EnsureSuccessStatusCode();
+            return await Deserializar<object>(response) ?? new { };
+        }
+
+        public async Task<IEnumerable<object>> ObtenerHistorialOrdenesAsync()
+        {
+            var response = await _http.GetAsync("/api/ordenes/historial");
+            return await Deserializar<IEnumerable<object>>(response) ?? Enumerable.Empty<object>();
+        }
     }
 
     internal record ApiWrapper<T>(bool Success, T? Data, object? Error);
