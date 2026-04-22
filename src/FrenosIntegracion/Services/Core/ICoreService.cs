@@ -24,5 +24,6 @@ namespace FrenosIntegracion.Services.Core
         Task<object> RegistrarAbonoAsync(int cxcId, int turnoId, decimal monto, string metodo);
         Task<CobroResponse> ProcesarCobroAsync(CobroRequest request, string token);
         Task<bool> EstaDisponibleAsync();
+        Task<IEnumerable<object>> ObtenerFacturasPorClienteAsync(int clienteId);
     }
 }

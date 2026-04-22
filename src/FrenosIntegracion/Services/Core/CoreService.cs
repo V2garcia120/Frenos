@@ -128,6 +128,22 @@ namespace FrenosIntegracion.Services.Core
             var wrapper = JsonSerializer.Deserialize<ApiWrapper<T>>(json, _jsonOptions);
             return wrapper != null ? wrapper.Data : default;
         }
+
+        public async Task<IEnumerable<object>> ObtenerFacturasPorClienteAsync(int clienteId)
+        {
+            // 1. Hacemos la petición al puerto 7001 (Core)
+            // El Core debería tener un endpoint que filtre por clienteId
+            var response = await _http.GetAsync($"/api/facturas/cliente/{clienteId}");
+
+            // 2. Si no es exitoso (404 o 500), devolvemos lista vacía
+            if (!response.IsSuccessStatusCode)
+                return Enumerable.Empty<object>();
+
+            // 3. Deserializamos usando el helper que ya tienes en la clase
+            var data = await Deserializar<IEnumerable<object>>(response);
+
+            return data ?? Enumerable.Empty<object>();
+        }
     }
 
     internal record ApiWrapper<T>(bool Success, T? Data, object? Error);
