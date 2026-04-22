@@ -23,8 +23,11 @@
 }
 else
 {
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="h3 mb-0">Orden #@Model.Orden.Id</h1>
+    <div class="module-header mb-4">
+        <div>
+            <h1 class="h3 mb-1">Orden #@Model.Orden.Id</h1>
+            <p class="text-secondary mb-0">Vista integral de diagnóstico, cotización y avance del servicio.</p>
+        </div>
         <a asp-page="@paginaRegreso" class="btn btn-outline-secondary">Volver al listado</a>
     </div>
 
@@ -33,8 +36,8 @@ else
         <div class="card-body row g-3">
             <div class="col-md-4"><strong>Cliente:</strong> @Model.Orden.ClienteNombre</div>
             <div class="col-md-4"><strong>Vehículo:</strong> @Model.Orden.VehiculoInfo</div>
-            <div class="col-md-2"><strong>Estado:</strong> @Model.Orden.Estado</div>
-            <div class="col-md-2"><strong>Prioridad:</strong> @Model.Orden.Prioridad</div>
+            <div class="col-md-2"><strong>Estado:</strong> <span class="badge text-bg-light border">@Model.Orden.Estado</span></div>
+            <div class="col-md-2"><strong>Prioridad:</strong> <span class="badge @(Model.Orden.Prioridad == "Urgente" ? "text-bg-danger" : Model.Orden.Prioridad == "Alta" ? "text-bg-warning" : "text-bg-secondary")">@Model.Orden.Prioridad</span></div>
             <div class="col-md-4"><strong>Tecnico Encargado:</strong> @Model.Orden.TecnicoNombre</div>
             <div class="col-md-4"><strong>Ingreso:</strong> @Model.Orden.FechaIngreso.ToString("dd/MM/yyyy HH:mm")</div>
             <div class="col-md-4"><strong>Entrega estimada:</strong> @(Model.Orden.FechaEntregaEstimada?.ToString("dd/MM/yyyy HH:mm") ?? "-")</div>

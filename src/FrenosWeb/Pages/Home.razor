@@ -1,7 +1,146 @@
 ﻿@page "/"
+@using FrenosWeb.Models
+@using FrenosWeb.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthStateProvider
+@inject VehiculoService vehiculoService
+@inject NavigationManager navManager
 
-<PageTitle>Home</PageTitle>
+<div class="container mt-4 pb-5">
+    <AuthorizeView>
+        <Authorized>
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <h2 class="fw-bold text-dark">
+                        👋 ¡Bienvenido/a, @(context.User.Identity?.Name?.Split('@')[0])!
+                    </h2>
+                    <p class="text-muted">Panel de control del cliente - Taller de Frenos</p>
+                </div>
 
-<h1>Hello, world!</h1>
+                <div class="col-md-6 col-lg-3 mb-4">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white text-center">
+                        <div class="card-body">
+                            <div class="bg-success text-white rounded-circle d-inline-flex p-3 mb-3">
+                                <i class="bi bi-car-front-fill fs-3"></i>
+                            </div>
+                            <h6 class="fw-bold">Mis Vehículos</h6>
+                            <p class="small text-muted mb-3">@(misVehiculos?.Count ?? 0) registrados</p>
+                            <button class="btn btn-sm btn-outline-success rounded-pill w-100" @onclick='() => navManager.NavigateTo("/mis-vehiculos")'>Ver</button>
+                        </div>
+                    </div>
+                </div>
 
-Welcome to your new app.
+                <div class="col-md-6 col-lg-3 mb-4">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white text-center">
+                        <div class="card-body">
+                            <div class="bg-primary text-white rounded-circle d-inline-flex p-3 mb-3">
+                                <i class="bi bi-tools fs-3"></i>
+                            </div>
+                            <h6 class="fw-bold">Estado Actual</h6>
+                            @if (hayOrdenActiva)
+                            {
+                                <span class="badge bg-primary rounded-pill mb-2">En Reparación</span>
+                                <p class="x-small text-muted mb-0">Corolla - A987456</p>
+                            }
+                            else
+                            {
+                                <p class="small text-muted mb-3">Sin servicios activos</p>
+                                <button class="btn btn-sm btn-primary rounded-pill w-100" @onclick='() => navManager.NavigateTo("/catalogo")'>Agendar</button>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-3 mb-4">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white text-center">
+                        <div class="card-body">
+                            <div class="bg-dark text-white rounded-circle d-inline-flex p-3 mb-3">
+                                <i class="bi bi-journal-text fs-3"></i>
+                            </div>
+                            <h6 class="fw-bold">Historial</h6>
+                            <p class="small text-muted mb-3">Servicios realizados</p>
+                            <button class="btn btn-sm btn-outline-dark rounded-pill w-100" @onclick='() => navManager.NavigateTo("/mis-ordenes")'>Consultar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-3 mb-4">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white text-center">
+                        <div class="card-body">
+                            <div class="bg-warning text-dark rounded-circle d-inline-flex p-3 mb-3">
+                                <i class="bi bi-receipt fs-3"></i>
+                            </div>
+                            <h6 class="fw-bold">Facturas</h6>
+                            <p class="small text-muted mb-3">Pagos y comprobantes</p>
+                            <button class="btn btn-sm btn-outline-warning rounded-pill w-100 text-dark"
+                                    @onclick='() => navManager.NavigateTo("/facturas")'>
+                                Ver Pagos
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </Authorized>
+
+        <NotAuthorized>
+            <div class="text-center py-5 mb-5 bg-white rounded-4 shadow-sm border-0">
+                <div class="bg-success text-white d-inline-flex align-items-center justify-content-center rounded-circle mb-4 shadow"
+                     style="width: 120px; height: 120px;">
+                    <i class="bi bi-car-front-fill" style="font-size: 4.5rem;"></i>
+                </div>
+                <h1 class="fw-bold display-5">Taller de Frenos</h1>
+                <p class="text-muted fs-5 mx-auto" style="max-width: 600px;">
+                    Seguridad y confianza en cada frenada. Regístrate para gestionar tus vehículos, ver estados de reparación y facturas.
+                </p>
+                <div class="mt-4 d-flex justify-content-center gap-3">
+                    <button class="btn btn-success btn-lg rounded-pill px-5 shadow" @onclick='() => navManager.NavigateTo("/login")'>
+                        Ingresar
+                    </button>
+                    <button class="btn btn-outline-dark btn-lg rounded-pill px-5" @onclick='() => navManager.NavigateTo("/registro")'>
+                        Crear Cuenta
+                    </button>
+                </div>
+            </div>
+        </NotAuthorized>
+    </AuthorizeView>
+
+    <div class="row g-4 mt-2">
+        <div class="col-md-4">
+            <div class="d-flex align-items-center p-3 bg-light rounded-4 h-100">
+                <i class="bi bi-geo-alt-fill text-success fs-3 me-3"></i>
+                <div class="small">
+                    <h6 class="fw-bold mb-0">Ubicación</h6>
+                    <span class="text-muted">Av. Abraham Lincoln #123, Santo Domingo, R.D.</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="d-flex align-items-center p-3 bg-light rounded-4 h-100">
+                <i class="bi bi-telephone-fill text-success fs-3 me-3"></i>
+                <div class="small">
+                    <h6 class="fw-bold mb-0">Contacto</h6>
+                    <span class="text-muted">T: (809) 555-0199<br />E: info@frenos.do</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="d-flex align-items-center p-3 bg-light rounded-4 h-100">
+                <i class="bi bi-clock-fill text-success fs-3 me-3"></i>
+                <div class="small">
+                    <h6 class="fw-bold mb-0">Horarios</h6>
+                    <span class="text-muted">Lunes - Viernes: 8:00 AM - 6:00 PM<br />Sábados: 8:00 AM - 12:00 PM</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<VehiculoModel>? misVehiculos;
+    private bool hayOrdenActiva = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        misVehiculos = await vehiculoService.GetVehiculosUsuarioAsync();
+    }
+}

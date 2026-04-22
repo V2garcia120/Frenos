@@ -1,3 +1,5 @@
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css");
+
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
@@ -112,4 +114,26 @@ code {
 
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
+}
+
+.hover-link:hover, .hover-link:hover i {
+    color: #ffffff !important;
+    transition: 0.3s;
+}
+
+.nav-link {
+    text-decoration: none !important;
+}
+
+    .nav-link.active {
+        color: #28a745 !important; 
+        font-weight: bold;
+    }
+        .nav-link.active i {
+            color: #28a745 !important;
+        }
+
+.hover-link:hover {
+    color: #ffffff !important;
+    transition: 0.3s;
 }

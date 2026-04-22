@@ -1,0 +1,86 @@
+﻿@page "/login"
+@using FrenosWeb.Services
+@inject AuthService authService
+@inject NavigationManager navManager
+
+<div class="row justify-content-center align-items-center" style="min-height: 75vh;">
+    <div class="col-md-4">
+        <div class="card shadow-lg border-0 rounded-4">
+            <div class="card-body p-5">
+                <div class="text-center mb-4">
+                    <h2 class="fw-bold mt-2">Bienvenido/a</h2>
+                    <p class="text-muted">Ingresa tus credenciales para continuar</p>
+                </div>
+
+                <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+                    <DataAnnotationsValidator />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Correo Electrónico</label>
+                        <input type="email" class="form-control bg-light border-0 rounded-pill px-3"
+                               @bind-value="loginModel.Email" placeholder="ejemplo@correo.com" required />
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Contraseña</label>
+                        <input type="password" class="form-control bg-light border-0 rounded-pill px-3"
+                               @bind-value="loginModel.Password" placeholder="******" required />
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger border-0 rounded-pill py-2 text-center small mb-3">
+                            @errorMessage
+                        </div>
+                    }
+
+                    <button type="submit" class="btn w-100 rounded-pill py-2 fw-bold shadow-sm text-white"
+                            style="background-color: #28a745;" disabled="@isProcessing">
+                        @if (isProcessing)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                            <span>Validando...</span>
+                        }
+                        else
+                        {
+                            <span>Iniciar Sesión</span>
+                        }
+                    </button>
+                    
+                    <div class="text-center mt-4">
+                        <span class="text-muted small">
+                            ¿No tienes cuenta?
+                            <a href="registro" class="fw-bold text-decoration-none" style="color: #0d6efd;">Regístrate aquí</a>
+                        </span>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private FrenosWeb.Models.LoginModel loginModel = new();
+    private string errorMessage = "";
+    private bool isProcessing = false; 
+
+    private async Task HandleLogin()
+    {
+        errorMessage = "";
+        isProcessing = true; 
+
+        await Task.Delay(1000);
+
+        var success = await authService.Login(loginModel);
+
+        if (success)
+        {
+            navManager.NavigateTo("/");
+        }
+        else
+        {
+            errorMessage = "Correo o contraseña incorrectos.";
+            isProcessing = false; 
+        }
+    }
+}

@@ -2,10 +2,12 @@
 @using FrenosWeb.Models
 @using FrenosWeb.Services
 @using FrenosWeb.Components
-@inject ProductoService productoService
 @inject ServicioService servicioService
+@inject AuthService authService
+@inject NavigationManager navManager
+@inject CarritoStateService carritoService
 
-<h3>Catálogo de Productos</h3>
+<h2 class="fw-bold mb-4" style="color: #1a1a1a;">Catálogo de Productos</h2>
 @if (productos == null)
 {
     <p>Cargando productos...</p>
@@ -16,13 +18,16 @@ else
         @foreach (var item in productos)
         {
             <div class="col-md-4">
-                <ProductoCard Id="@item.Id" Nombre="@item.Nombre" Precio="@item.Precio" />
+                <ProductoCard Id="@item.Id"
+                              Nombre="@item.Nombre"
+                              Precio="@item.Precio"
+                              OnAgregar="@(async () => await HandleAgregarAlCarrito(item))" />
             </div>
         }
     </div>
 }
 
-<h3 class="mt-4">Nuestros Servicios</h3>
+<h2 class="fw-bold mt-5 mb-4" style="color: #1a1a1a;">Nuestros Servicios</h2>
 @if (servicios == null)
 {
     <p>Cargando servicios...</p>
@@ -33,19 +38,40 @@ else
         @foreach (var s in servicios)
         {
             <div class="col-md-4">
-                <ProductoCard Id="@s.Id" Nombre="@s.Nombre" Precio="@s.Precio" />
+                <ProductoCard Id="@s.Id"
+                              Nombre="@s.Nombre"
+                              Precio="@s.Precio"
+                              OnAgregar="@(async () => await HandleAgregarAlCarrito(s))" />
             </div>
         }
     </div>
 }
 
 @code {
-    private List<Producto> productos = new();
+    private List<Servicio> productos = new();
     private List<Servicio> servicios = new();
 
     protected override async Task OnInitializedAsync()
     {
-        productos = await productoService.GetProductosAsync();
-        servicios = await servicioService.GetServiciosAsync();
+        var listaProductos = await servicioService.GetProductosDelInventarioAsync();
+        foreach (var p in listaProductos) p.RequiereVehiculo = false;
+        productos = listaProductos;
+
+        var listaServicios = await servicioService.GetServiciosAsync();
+        foreach (var s in listaServicios) s.RequiereVehiculo = true;
+        servicios = listaServicios;
+    }
+
+    private async Task HandleAgregarAlCarrito(Servicio itemSeleccionado)
+    {
+        if (!authService.IsLoggedIn)
+        {
+            navManager.NavigateTo("login");
+        }
+        else
+        {
+            // Pasamos el objeto completo al carrito
+            await carritoService.Agregar(itemSeleccionado);
+        }
     }
 }

@@ -4,13 +4,15 @@
     ViewData["Title"] = "Mis órdenes";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0">Mis órdenes</h1>
-    <a asp-page="/Ordenes/Index" class="btn btn-outline-secondary">Ver todas</a>
+<div class="module-header mb-4">
+    <div>
+        <h1 class="h3 mb-1">Mis órdenes</h1>
+        <p class="text-secondary mb-0">Consulta y da seguimiento a tus órdenes asignadas.</p>
+    </div>
 </div>
 
-<div class="card mb-4">
-    <div class="card-header">Filtros</div>
+<div class="card mb-4 filter-card">
+    <div class="card-header">Filtros de búsqueda</div>
     <div class="card-body">
         <form method="get" class="row g-3">
             <div class="col-md-4">
@@ -77,8 +79,8 @@
                                 <td>@orden.Id</td>
                                 <td>@orden.ClienteNombre</td>
                                 <td>@orden.VehiculoInfo</td>
-                                <td>@orden.Estado</td>
-                                <td>@orden.Prioridad</td>
+                                <td><span class="badge text-bg-light border">@orden.Estado</span></td>
+                                <td><span class="badge @(orden.Prioridad == "Urgente" ? "text-bg-danger" : orden.Prioridad == "Alta" ? "text-bg-warning" : "text-bg-secondary")">@orden.Prioridad</span></td>
                                 <td>@orden.FechaIngreso.ToString("dd/MM/yyyy HH:mm")</td>
                                 <td class="text-end">
                                     <a asp-page="/Ordenes/Detalle" asp-route-id="@orden.Id" class="btn btn-sm btn-outline-primary">Ver detalle</a>

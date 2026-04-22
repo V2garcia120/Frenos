@@ -1,6 +1,6 @@
 <Solution>
-  <Project Path="src/FrenosCaja/FrenosCaja.csproj" Id="7b25d674-2d4b-4811-be25-0352408cc815" />
   <Project Path="src/FrenosCore/FrenosCore.csproj" />
   <Project Path="src/FrenosIntegracion/FrenosIntegracion.csproj" Id="d386a7c5-d83d-45e9-bade-dd490ff87f80" />
   <Project Path="src/FrenosWeb/FrenosWeb.csproj" />
+  <Project Path="src/TallerCaja/TallerCaja.csproj" />
 </Solution>

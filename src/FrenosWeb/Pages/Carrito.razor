@@ -1,24 +1,27 @@
 ﻿@page "/carrito"
 @using FrenosWeb.Models
 @using FrenosWeb.Services
+@using Microsoft.AspNetCore.Authorization
 @inject CarritoStateService carritoService
+@inject VehiculoService vehiculoService
 @inject NavigationManager navManager
+@attribute [Authorize]
 
 <div class="container mt-4">
-    <h3>🛒 Tu Carrito de Compras</h3>
+    <h3 class="fw-bold mb-4">🛒 Tu Carrito de Compras</h3>
 
     @if (!carritoService.Items.Any())
     {
-        <div class="alert alert-info shadow-sm mt-3">
-            <span class="bi bi-cart-x"></span> Tu carrito está vacío. ¡Ve al catálogo y elige algo!
+        <div class="alert alert-info shadow-sm mt-3 border-0 rounded-4">
+            <i class="bi bi-cart-x fs-4 me-2"></i> Tu carrito está vacío. ¡Ve al catálogo y elige algo!
         </div>
-        <button class="btn btn-primary" @onclick='() => navManager.NavigateTo("/catalogo")'>
+        <button class="btn btn-primary rounded-pill px-4" @onclick='() => navManager.NavigateTo("/catalogo")'>
             Volver al Catálogo
         </button>
     }
     else
     {
-        <div class="card shadow-sm mt-3">
+        <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
             <table class="table table-hover mb-0 text-center">
                 <thead class="table-dark">
                     <tr>
@@ -33,23 +36,20 @@
                     @foreach (var item in carritoService.Items)
                     {
                         <tr>
-                            <td class="align-middle text-start">@item.Producto.Nombre</td>
+                            <td class="align-middle text-start fw-bold">@item.Servicio.Nombre</td>
                             <td class="align-middle">
-                                <input type="number"
-                                       min="0"
-                                       class="form-control form-control-sm mx-auto text-center"
+                                <input type="number" min="1"
+                                       class="form-control form-control-sm mx-auto text-center rounded-pill"
                                        style="width: 80px;"
                                        @bind="item.Cantidad"
                                        @bind:event="oninput"
-                                       @onchange="ValidarEstadoBoton"
-                                       @onkeyup="ValidarEstadoBoton"
-                                       onkeydown="return event.keyCode !== 189 && event.keyCode !== 109" />
+                                       @onchange="ValidarEstadoBoton" />
                             </td>
-                            <td class="align-middle">RD$ @item.Producto.Precio.ToString("N2")</td>
-                            <td class="align-middle font-weight-bold">RD$ @item.TotalLinea.ToString("N2")</td>
+                            <td class="align-middle">RD$ @item.Servicio.Precio.ToString("N2")</td>
+                            <td class="align-middle fw-bold text-primary">RD$ @item.TotalLinea.ToString("N2")</td>
                             <td class="align-middle">
-                                <button class="btn btn-danger btn-sm" @onclick="() => Eliminar(item.Producto.Id)">
-                                    <span class="bi bi-trash"></span> Eliminar
+                                <button class="btn btn-outline-danger btn-sm border-0" @onclick="() => Eliminar(item.Servicio.Id)">
+                                    <i class="bi bi-trash"></i>
                                 </button>
                             </td>
                         </tr>
@@ -58,23 +58,65 @@
             </table>
         </div>
 
+        @if (carritoService.Items.Any(x => x.Servicio.RequiereVehiculo))
+        {
+            <div class="mt-4 p-4 border-0 rounded-4 bg-light shadow-sm mb-3">
+                <label class="form-label fw-bold"><i class="bi bi-car-front-fill text-success me-2"></i>¿Para qué vehículo son estos servicios?</label>
+                
+                @if (misVehiculos == null)
+                {
+                    <div class="spinner-border spinner-border-sm text-primary"></div>
+                }
+                else if (misVehiculos.Any())
+                {
+                    <select class="form-select rounded-pill border-0 shadow-sm" @bind="vehiculoSeleccionadoId">
+                        <option value="0">-- Selecciona un vehículo --</option>
+                        @foreach (var v in misVehiculos)
+                        {
+                            <option value="@v.Id">@v.Marca @v.Modelo (@v.Placa)</option>
+                        }
+                    </select>
+                    <div class="mt-2 ps-2">
+                        <small class="text-muted fst-italic">Nota: Para servicios en múltiples vehículos, por favor realice órdenes separadas para cada uno. </small>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-warning border-0 rounded-4 p-3 d-flex justify-content-between align-items-center">
+                        <span>No tienes vehículos registrados.</span>
+                        <a href="/mis-vehiculos" class="btn btn-sm btn-dark rounded-pill">Registrar Vehículo 🚗</a>
+                    </div>
+                }
+            </div>
+        }
+
         <div class="mt-4 text-end">
-            <h4 class="mb-3">Subtotal: <span class="text-success font-weight-bold">RD$ @carritoService.Subtotal.ToString("N2")</span></h4>
+            <h4 class="mb-3">Subtotal: <span class="text-success fw-bold">RD$ @carritoService.Subtotal.ToString("N2")</span></h4>
+    
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary rounded-pill px-4" @onclick="Vaciar">Vaciar Carrito</button>
+
+                <button class="btn @(botonBloqueado || misVehiculos?.Count == 0 ? "btn-secondary" : "btn-success") btn-lg flex-grow-1 rounded-pill shadow"
+                        @onclick="IrAOrden"
+                        disabled="@(botonBloqueado || !carritoService.Items.Any() || misVehiculos?.Count == 0)">
             
-            <button class="btn btn-outline-secondary mb-3" @onclick="Vaciar">Vaciar Carrito</button>
+                    @if (misVehiculos?.Count == 0)
+                    {
+                        <span>Primero registra un vehículo ⚠️</span>
+                    }
+                    else
+                    {
+                        @(botonBloqueado ? "Corrija las cantidades ⚠️" : "Confirmar Orden ➡")
+                    }
+                </button>
+            </div>
 
             @if (!string.IsNullOrEmpty(mensajeError))
             {
-                <div class="alert alert-danger shadow-sm mb-3 text-center">
+                <div class="alert alert-danger border-0 rounded-pill py-2 text-center small mt-3 shadow-sm">
                     <strong>¡Atención!</strong> @mensajeError
                 </div>
             }
-
-            <button class="btn @(botonBloqueado ? "btn-secondary" : "btn-success") btn-lg w-100 shadow"
-                    @onclick="IrAOrden"
-                    disabled="@(botonBloqueado || !carritoService.Items.Any())">
-                @(botonBloqueado ? "Corrija las cantidades o elimine el producto/servicio ⚠️" : "Confirmar Orden ➡")
-            </button>
         </div>
     }
 </div>
@@ -82,17 +124,27 @@
 @code {
     private string mensajeError = "";
     private bool botonBloqueado = false;
+    private List<VehiculoModel>? misVehiculos; 
+    private int vehiculoSeleccionadoId = 0;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        ValidarEstadoBoton();
+        await ValidarEstadoBoton();
+        
+        // APP REAL: Aquí llamas al servicio.
+        // Si aún no tienes la API, deja la simulación de abajo:
+        await Task.Delay(500);
+        misVehiculos = new List<VehiculoModel>
+        {
+            new VehiculoModel { Id = 1, Marca = "Toyota", Modelo = "Corolla", Placa = "A987456" },
+            new VehiculoModel { Id = 2, Marca = "Honda", Modelo = "Civic", Placa = "G123456" }
+        };
     }
 
     async Task Eliminar(int id)
     {
         await carritoService.Eliminar(id);
-        ValidarEstadoBoton();
-        StateHasChanged();
+        await ValidarEstadoBoton();
     }
 
     async Task Vaciar()
@@ -100,34 +152,30 @@
         await carritoService.Limpiar();
         mensajeError = "";
         botonBloqueado = false;
-        StateHasChanged();
     }
 
-    void ValidarEstadoBoton()
+    async Task ValidarEstadoBoton()
     {
         botonBloqueado = carritoService.Items.Any(x => x.Cantidad <= 0);
-
-        if (botonBloqueado)
-        {
-            var tieneVacioOZero = carritoService.Items.Any(x => x.Cantidad <= 0);
-            mensajeError = "⚠️ La cantidad debe ser al menos 1.";
-        }
-        else
-        {
-            mensajeError = "";
-        }
-        
-        _ = carritoService.Actualizar();
+        mensajeError = botonBloqueado ? "⚠️ La cantidad debe ser al menos 1." : "";
+        await carritoService.Actualizar();
     }
 
-    void IrAOrden()
+    async Task IrAOrden()
     {
-        ValidarEstadoBoton();
+        await ValidarEstadoBoton();
         if (botonBloqueado) return;
 
-        if (carritoService.Items.Any())
+        // Verificamos si en el carrito hay algo que necesite carro
+        bool necesitaCarro = carritoService.Items.Any(x => x.Servicio.RequiereVehiculo);
+
+        if (necesitaCarro && vehiculoSeleccionadoId == 0)
         {
-            navManager.NavigateTo("/orden");
+            mensajeError = "❌ Debes seleccionar un vehículo para poder procesar los servicios.";
+            return;
         }
+
+        // Si no necesita carro, mandamos ID 0
+        navManager.NavigateTo($"/orden/{(necesitaCarro ? vehiculoSeleccionadoId : 0)}");
     }
 }

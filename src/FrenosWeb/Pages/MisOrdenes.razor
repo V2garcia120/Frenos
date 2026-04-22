@@ -1,13 +1,16 @@
-﻿@page "/misordenes"
+﻿@page "/mis-ordenes"
 @using FrenosWeb.Models
 @using FrenosWeb.Services
+@using Microsoft.AspNetCore.Authorization
 @inject NavigationManager navManager
 @inject OrdenWebService ordenService 
+@inject IJSRuntime JS
+@attribute [Authorize]
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="text-primary fw-bold">
-            <span class="bi bi-clock-history"></span> Mi Historial
+            <span class="bi bi-clock-history"></span> Mi Historial de Órdenes
         </h2>
         <button class="btn btn-outline-primary btn-sm" @onclick='() => navManager.NavigateTo("/catalogo")'>
             + Nuevo Servicio
@@ -36,7 +39,8 @@
                         <tr>
                             <th>Orden #</th>
                             <th>Fecha</th>
-                            <th>Vehículo / Placa</th>
+                            <th>Servicio/Producto</th>
+                            <th>Vehículo/Placa</th>
                             <th>Estado</th>
                             <th class="text-end">Total</th>
                             <th>Acción</th>
@@ -48,21 +52,38 @@
                             <tr>
                                 <td class="fw-bold">@orden.NumeroOrden</td>
                                 <td class="text-muted">@orden.Fecha.ToString("dd/MM/yyyy")</td>
-                                <td>
-                                    <div class="fw-bold">@orden.Vehiculo</div>
-                                    <small class="text-muted">[@orden.Placa]</small>
+                                <td class="text-start">
+                                    <span class="text-dark fw-semibold">@orden.TipoServicio</span>
                                 </td>
                                 <td>
-                                    <span class="badge rounded-pill @GetEstadoClass(orden.EstadoServicio)">
-                                        @orden.EstadoServicio
-                                    </span>
+                                    @if (orden.EsServicio)
+                                    {
+                                        <div class="fw-bold">@orden.Vehiculo</div>
+                                        <small class="text-muted">[@orden.Placa]</small>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted font-italic" style="font-style: italic;">Venta Directa (Sin Vehículo)</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (orden.EsServicio)
+                                    {
+                                        <span class="badge rounded-pill @GetEstadoClass(orden.EstadoServicio)">
+                                            @orden.EstadoServicio
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge rounded-pill bg-dark">📦 Entregado</span>
+                                    }
                                 </td>
                                 <td class="text-end fw-bold text-success">
                                     RD$ @orden.Total.ToString("N2")
                                 </td>
                                 <td>
-                                    <button class="btn btn-sm btn-light border shadow-sm">
-                                        <span class="bi bi-file-earmark-pdf"></span> Ver Factura
+                                    <button class="btn btn-sm btn-light border shadow-sm" @onclick='() => DescargarComprobante(orden.NumeroOrden)'>
+                                        <span class="bi bi-file-earmark-pdf"></span> Ver Comprobante
                                     </button>
                                 </td>
                             </tr>
@@ -81,7 +102,7 @@
     {
         try
         {
-            // 🛡️ Intentamos traer los datos reales de la API
+            // Intentamos traer los datos reales de la API
             // Nota: Aquí llamaríamos a un método en tu OrdenWebService como 'GetHistorialAsync'
             // historial = await ordenService.GetHistorialAsync();
             
@@ -90,28 +111,41 @@
         }
         catch (Exception ex)
         {
-            // 🚨 Si la API falla, cargamos los datos "falsos" para que el profe vea que funciona
+            // Si la API falla, cargamos los datos "falsos" para que el profe vea que funciona
             Console.WriteLine($"[Cyber-Logs] Usando datos locales: {ex.Message}");
-            
-            await Task.Delay(1000); // Simulamos latencia
+            await Task.Delay(700); 
 
             historial = new List<OrdenWebModel>
             {
-                new OrdenWebModel { 
-                    NumeroOrden = "ORD-2026-001", 
-                    Fecha = DateTime.Now.AddDays(-2), 
-                    Vehiculo = "Toyota Corolla 2022", 
-                    Placa = "A987456", 
-                    Total = 12390.00m, 
-                    EstadoServicio = "Listo" 
+                new OrdenWebModel {
+                    NumeroOrden = "ORD-2026-001",
+                    Fecha = DateTime.Now.AddDays(-2),
+                    TipoServicio = "Mantenimiento General",
+                    EsServicio = true,
+                    Vehiculo = "Toyota Corolla 2022",
+                    Placa = "A987456",
+                    Total = 12390.00m,
+                    EstadoServicio = "Listo"
                 },
-                new OrdenWebModel { 
-                    NumeroOrden = "ORD-2026-002", 
-                    Fecha = DateTime.Now, 
-                    Vehiculo = "Honda Civic 2018", 
-                    Placa = "G123456", 
-                    Total = 4500.00m, 
-                    EstadoServicio = "En proceso" 
+                new OrdenWebModel {
+                    NumeroOrden = "ORD-2026-002",
+                    Fecha = DateTime.Now,
+                    TipoServicio = "Rectificación de Discos",
+                    EsServicio = true,
+                    Vehiculo = "Honda Civic 2018",
+                    Placa = "G123456",
+                    Total = 4500.00m,
+                    EstadoServicio = "En diagnóstico"
+                },
+                new OrdenWebModel {
+                    NumeroOrden = "ORD-2026-003",
+                    Fecha = DateTime.Now.AddDays(-1),
+                    TipoServicio = "Compra: Líquido de Frenos DOT4",
+                    EsServicio = false,
+                    Vehiculo = "-",
+                    Placa = "-",
+                    Total = 850.00m,
+                    EstadoServicio = "Entregado"
                 }
             };
         }
@@ -119,9 +153,16 @@
 
     private string GetEstadoClass(string estado) => estado switch
     {
-        "Listo" => "bg-success",
-        "En proceso" => "bg-primary",
-        "Pendiente" => "bg-warning text-dark",
-        _ => "bg-secondary"
+        "Pendiente" => "bg-warning text-dark",  // Amarillo
+        "En diagnóstico" => "bg-info text-dark", // Cyan
+        "En reparación" => "bg-primary",        // Azul
+        "Listo" => "bg-success",               // Verde
+        "Entregado" => "bg-dark",              // Negro/Gris oscuro
+        _ => "bg-secondary"                     // Color por defecto
     };
+
+    private async Task DescargarComprobante(string nro)
+    {
+        await JS.InvokeVoidAsync("alert", $"Abriendo comprobante de la orden {nro}...");
+    }
 }

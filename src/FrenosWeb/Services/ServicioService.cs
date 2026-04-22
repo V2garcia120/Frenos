@@ -6,30 +6,40 @@ namespace FrenosWeb.Services
     public class ServicioService
     {
         private readonly HttpClient _http;
-
-        public ServicioService(HttpClient http)
-        {
-            _http = http;
-        }
+        public ServicioService(HttpClient http) => _http = http;
 
         public async Task<List<Servicio>> GetServiciosAsync()
         {
             try
             {
-                // Intentamos conectar con la API de Integracion
-                var respuesta = await _http.GetFromJsonAsync<List<Servicio>>("api/servicios");
-                return respuesta ?? new List<Servicio>();
+                var resp = await _http.GetFromJsonAsync<List<Servicio>>("api/servicios");
+                return resp ?? new();
             }
-            catch (Exception ex)
+            catch
             {
-                // Si la API falla cargamos los datos simulados
-                Console.WriteLine($"[Cyber-Logs] API Servicios no disponible: {ex.Message}");
-
                 return new List<Servicio>
                 {
-                    new Servicio { Id = 1, Nombre = "Cambio de Pastillas", Precio = 1200 },
-                    new Servicio { Id = 2, Nombre = "Rectificación de Discos", Precio = 3000 },
-                    new Servicio { Id = 3, Nombre = "Mantenimiento Preventivo", Precio = 5000 }
+                    new Servicio { Id = 101, Nombre = "Cambio de Pastillas", Precio = 1200, RequiereVehiculo = true },
+                    new Servicio { Id = 102, Nombre = "Rectificación de Discos", Precio = 2000, RequiereVehiculo = true },
+                    new Servicio { Id = 103, Nombre = "Mantenimiento General", Precio = 5000, RequiereVehiculo = true }
+                };
+            }
+        }
+
+        public async Task<List<Servicio>> GetProductosDelInventarioAsync()
+        {
+            try
+            {
+                var resp = await _http.GetFromJsonAsync<List<Servicio>>("api/productos");
+                return resp ?? new();
+            }
+            catch
+            {
+                return new List<Servicio>
+                {
+                    new Servicio { Id = 1, Nombre = "Pastillas Cerámicas", Precio = 2500, RequiereVehiculo = false },
+                    new Servicio { Id = 2, Nombre = "Discos de Freno", Precio = 4000, RequiereVehiculo = false },
+                    new Servicio { Id = 3, Nombre = "Líquido de Frenos DOT4", Precio = 800, RequiereVehiculo = false }
                 };
             }
         }

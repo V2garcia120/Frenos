@@ -4,11 +4,16 @@
     ViewData["Title"] = "Crear producto";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0">Crear producto</h1>
+<div class="module-header mb-4">
+    <div>
+        <h1 class="h3 mb-1">Nuevo producto</h1>
+        <p class="text-secondary mb-0">Completa los datos para registrar un producto en inventario.</p>
+    </div>
+    <a asp-page="/Productos/Index" class="btn btn-outline-secondary">← Volver</a>
 </div>
 
-<div class="card">
+<div class="card form-card">
+    <div class="card-header">Información del producto</div>
     <div class="card-body">
         <form method="post" class="row g-3">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>

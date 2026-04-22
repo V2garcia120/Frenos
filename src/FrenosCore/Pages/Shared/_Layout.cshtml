@@ -1,82 +1,88 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - FrenosCore</title>
+    <title>@ViewData["Title"] - Frenos Core</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/FrenosCore.styles.css" asp-append-version="true" />
 </head>
-<body>
+<body class="app-shell">
 @{
     var esAdmin = User.IsInRole("Administrador") || User.IsInRole("Admin");
     var esMantenimiento = User.IsInRole("Mantenimiento") || User.IsInRole("Mantemineto");
     var esTecnico = User.IsInRole("Tecnico") || User.IsInRole("Técnico");
 }
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container">
-                <a class="navbar-brand" asp-area="" asp-page="/Index">FrenosCore</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+        <nav class="navbar navbar-expand-lg navbar-dark app-navbar shadow-sm">
+            <div class="container-xl">
+                <a class="navbar-brand fw-semibold text-white" asp-area="" asp-page="/Index">Frenos Core</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Productos/Index">Productos</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Servicios/Index">Servicios</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Clientes/Index">Clientes</a>
+                <div class="navbar-collapse collapse" id="navbarMain">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Mantenimiento
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" asp-area="" asp-page="/Productos/Index">Productos</a></li>
+                                <li><a class="dropdown-item" asp-area="" asp-page="/Servicios/Index">Servicios</a></li>
+                                <li><a class="dropdown-item" asp-area="" asp-page="/Clientes/Index">Clientes</a></li>
+                            </ul>
                         </li>
                         @if (esAdmin || esMantenimiento)
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-page="/Ordenes/Index">Órdenes</a>
+                                <a class="nav-link" asp-area="" asp-page="/Ordenes/Index">Órdenes</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-page="/Facturas/Index">Facturas</a>
+                                <a class="nav-link" asp-area="" asp-page="/Facturas/Index">Facturas</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-page="/CuentasPorCobrar/Index">CxC</a>
+                                <a class="nav-link" asp-area="" asp-page="/CuentasPorCobrar/Index">CxC</a>
                             </li>
                         }
                         @if (esTecnico)
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-page="/Ordenes/MIsOrdenes">Mis órdenes</a>
+                                <a class="nav-link" asp-area="" asp-page="/Ordenes/MIsOrdenes">Mis órdenes</a>
                             </li>
                         }
                         @if (esAdmin)
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-page="/Usuarios/Index">Usuarios</a>
+                                <a class="nav-link" asp-area="" asp-page="/Usuarios/Index">Usuarios</a>
                             </li>
                         }
-                        <li class="nav-item">
-                            <form method="post" asp-page="/Login/Logout" class="d-inline">
-                                <button type="submit" class="btn nav-link text-dark border-0 bg-transparent">Cerrar Sesion</button>
-                            </form>
-                        </li>
                     </ul>
+
+                    <div class="d-flex align-items-center gap-2">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <span class="app-user-badge">@User.Identity.Name</span>
+                        }
+                        <form method="post" asp-page="/Login/Logout" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-light">Cerrar sesión</button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
+    <div class="container-xl page-shell">
+        <main role="main" class="pb-4">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - FrenosCore - <a asp-area="" asp-page="/Privacy">Privacy</a>
+    <footer class="footer text-muted">
+        <div class="container-xl">
+            &copy; 2026 - Frenos Core - <a asp-area="" asp-page="/Privacy">Privacidad</a>
         </div>
     </footer>
 
