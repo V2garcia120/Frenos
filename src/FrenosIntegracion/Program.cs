@@ -38,6 +38,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowBlazor", policy =>
+    {
+        policy.WithOrigins("https://localhost:7207") // Puerto de FrenosWeb
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 // 4. Registro de Servicios propios e Inyecci�n de Dependencias
 builder.Services.AddScoped<ICacheService, CacheService>();
 builder.Services.AddScoped<IColaSyncService, ColaSyncService>();
@@ -72,6 +82,8 @@ if (app.Environment.IsDevelopment())
 app.UseMiddleware<RequestLogMiddleware>();
 
 app.UseHttpsRedirection();
+
+app.UseCors("AllowBlazor");
 
 app.UseAuthentication(); // Debe ir antes de Authorization
 app.UseAuthorization();

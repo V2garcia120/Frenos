@@ -1,22 +1,73 @@
 ﻿using FrenosIntegracion.Models.DTOs;
 using FrenosIntegracion.Services.Cache;
 using FrenosIntegracion.Services.Core;
+using FrenosIntegracion.Helpers;
 using Microsoft.AspNetCore.Mvc;
 
-[ApiController]
-[Route("int")]
-public class AuthIntController(
-    ICoreService core, ICacheService cache) : ControllerBase
+namespace FrenosIntegracion.Controllers
 {
-    // GET int/auth/health
-    [HttpGet("auth/health")]
-    public async Task<IActionResult> Health()
+    [ApiController]
+    [Route("int/auth")]
+    public class AuthController : ControllerBase
     {
-        var coreDisponible = await core.EstaDisponibleAsync();
-        return Ok(ApiResponse<object>.Ok(new HealthResponse(
-            Integracion: "online",
-            Core: coreDisponible ? "online" : "offline",
-            ModoCache: !coreDisponible,
-            UltimaSync: cache.UltimaActualizacion)));
+        private readonly ICoreService _core;
+        private readonly ICacheService _cache;
+
+        // 1. Usamos constructor tradicional (SIN paréntesis en la clase) para matar el CS8863
+        public AuthController(ICoreService core, ICacheService cache)
+        {
+            _core = core;
+            _cache = cache;
+        }
+
+        // 2. Health Check
+        [HttpGet("health")]
+        public async Task<IActionResult> Health()
+        {
+            // Si aquí te sigue dando ambigüedad, el problema es el archivo de la interfaz duplicado
+            var coreDisponible = await _core.EstaDisponibleAsync();
+
+            var status = new
+            {
+                integracion = "online",
+                core = coreDisponible ? "online" : "offline",
+                modoCache = !coreDisponible,
+                ultimaSync = _cache.UltimaActualizacion
+            };
+
+            return Ok(FrenosIntegracion.Helpers.ApiResponse<object>.Ok(status));
+        }
+
+        [HttpPost("login-cliente")]
+        public async Task<IActionResult> LoginCliente([FromBody] LoginRequest request)
+        {
+            try
+            {
+                var resultado = await _core.AutenticarClienteAsync(request);
+                return Ok(FrenosIntegracion.Helpers.ApiResponse<object>.Ok(resultado));
+            }
+            catch (Exception)
+            {
+                return StatusCode(503, FrenosIntegracion.Helpers.ApiResponse<object>.Fail(
+                    "CORE_UNAVAILABLE",
+                    "El sistema central no está disponible."));
+            }
+        }
+
+        [HttpPost("login-cajero")]
+        public async Task<IActionResult> LoginCajero([FromBody] LoginRequest request)
+        {
+            try
+            {
+                var resultado = await _core.AutenticarEmpleadoAsync(request);
+                return Ok(FrenosIntegracion.Helpers.ApiResponse<object>.Ok(resultado));
+            }
+            catch (Exception)
+            {
+                return StatusCode(503, FrenosIntegracion.Helpers.ApiResponse<object>.Fail(
+                    "CORE_UNAVAILABLE",
+                    "No se puede validar el acceso al cajero."));
+            }
+        }
     }
 }

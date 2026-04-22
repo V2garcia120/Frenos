@@ -1,11 +1,25 @@
-﻿namespace FrenosIntegracion.Services.Sync
+﻿using FrenosIntegracion.Models.DTOs;
+
+namespace FrenosIntegracion.Services.Sync
 {
     public interface IColaSyncService
     {
-        // Este es el método que usa el Worker cada 30 segundos
-        Task ProcesarPendientesAsync();
+        Task<bool> EstaDisponibleAsync();
 
-        // Este lo usaremos luego para que la Caja guarde cosas en la cola
-        Task<string> EncolarOperacionAsync(string canal, string tipo, object payload);
+        // Autenticación (Pág. 7)
+        Task<object> AutenticarClienteAsync(LoginRequest request);
+        Task<object> AutenticarEmpleadoAsync(LoginRequest request);
+
+        // Turnos y Caja (Pág. 10-11)
+        Task<object> AbrirTurnoAsync(int cajeroId, decimal montoInicial);
+        Task<object> RegistrarMovimientoEfectivoAsync(int turnoId, decimal monto, string motivo, string tipo);
+
+        // Facturación y Pagos (Pág. 12-13)
+        Task<object> PagarFacturaAsync(int facturaId, int turnoId, string metodo, decimal monto);
+        Task<object> RegistrarAbonoAsync(int cxcId, int turnoId, decimal monto, string metodo);
+
+        Task<object> ProcesarLoteOfflineAsync(SyncRequest request);
+        Task EncolarOperacionAsync(string canal, string tipo, object payload);
+        Task ProcesarPendientesAsync();
     }
 }
