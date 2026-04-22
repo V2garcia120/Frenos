@@ -72,6 +72,11 @@ namespace FrenosCore.Data
                 .Select(r => r.Id)
                 .FirstAsync();
 
+            var rolCajaId = await context.Rol
+                .Where(r => r.Nombre == "Caja")
+                .Select(r => r.Id)
+                .FirstAsync();
+
             await AsegurarUsuarioAsync(
                 context,
                 email: "admin@frenos.local",
@@ -93,6 +98,13 @@ namespace FrenosCore.Data
                 password: "Mantenimiento123*",
                 rolId: rolMantenimientoId);
 
+            await AsegurarUsuarioAsync(
+                context,
+                email: "caja@frenos.local",
+                nombre: "Caja Frenos",
+                password: "Caja123*",
+                rolId: rolCajaId);
+
             var tecnicoAsignadoId = await context.Usuario
                 .Where(u => u.Email == "tecnico@frenos.local")
                 .Select(u => u.Id)
@@ -112,6 +124,15 @@ namespace FrenosCore.Data
                     },
                     new Servicio
                     {
+                        Nombre = "Cambio de bandas traseras",
+                        Descripcion = "Reemplazo de bandas traseras y calibración de freno",
+                        Precio = 1700m,
+                        DuracionMinutos = 80,
+                        Categoria = "Frenos",
+                        Activo = true
+                    },
+                    new Servicio
+                    {
                         Nombre = "Rectificado de discos",
                         Descripcion = "Rectificado de discos para mejorar frenado y reducir vibraciones",
                         Precio = 2500m,
@@ -121,11 +142,38 @@ namespace FrenosCore.Data
                     },
                     new Servicio
                     {
+                        Nombre = "Cambio de líquido de frenos",
+                        Descripcion = "Sustitución completa de líquido DOT 4 y purga de líneas",
+                        Precio = 1200m,
+                        DuracionMinutos = 45,
+                        Categoria = "Fluidos",
+                        Activo = true
+                    },
+                    new Servicio
+                    {
+                        Nombre = "Inspección de ABS",
+                        Descripcion = "Diagnóstico de sensores ABS y lectura de códigos",
+                        Precio = 2100m,
+                        DuracionMinutos = 70,
+                        Categoria = "Diagnóstico",
+                        Activo = true
+                    },
+                    new Servicio
+                    {
                         Nombre = "Mantenimiento general",
                         Descripcion = "Revisión general del sistema de frenos y componentes relacionados",
                         Precio = 1500m,
                         DuracionMinutos = 60,
                         Categoria = "Mantenimiento",
+                        Activo = true
+                    },
+                    new Servicio
+                    {
+                        Nombre = "Cambio de kit de frenos completo",
+                        Descripcion = "Reemplazo de discos, bandas, líquido y ajuste integral",
+                        Precio = 6200m,
+                        DuracionMinutos = 180,
+                        Categoria = "Frenos",
                         Activo = true
                     }
                 );
@@ -144,6 +192,18 @@ namespace FrenosCore.Data
                         Costo = 2300m,
                         Stock = 25,
                         StockMinimo = 8,
+                        Categoria = "Repuestos",
+                        Activo = true,
+                        CreadoEn = DateTime.Now
+                    },
+                    new Producto
+                    {
+                        Nombre = "Bandas semimetálicas traseras",
+                        Descripcion = "Juego de bandas semimetálicas de larga duración",
+                        Precio = 2850m,
+                        Costo = 1980m,
+                        Stock = 20,
+                        StockMinimo = 7,
                         Categoria = "Repuestos",
                         Activo = true,
                         CreadoEn = DateTime.Now
@@ -169,6 +229,54 @@ namespace FrenosCore.Data
                         Stock = 15,
                         StockMinimo = 5,
                         Categoria = "Repuestos",
+                        Activo = true,
+                        CreadoEn = DateTime.Now
+                    },
+                    new Producto
+                    {
+                        Nombre = "Sensor ABS delantero",
+                        Descripcion = "Sensor ABS universal para eje delantero",
+                        Precio = 1950m,
+                        Costo = 1320m,
+                        Stock = 18,
+                        StockMinimo = 6,
+                        Categoria = "Electrónica",
+                        Activo = true,
+                        CreadoEn = DateTime.Now
+                    },
+                    new Producto
+                    {
+                        Nombre = "Kit de reparación de cáliper",
+                        Descripcion = "Juego de sellos y guías para cáliper delantero",
+                        Precio = 1450m,
+                        Costo = 960m,
+                        Stock = 22,
+                        StockMinimo = 8,
+                        Categoria = "Repuestos",
+                        Activo = true,
+                        CreadoEn = DateTime.Now
+                    },
+                    new Producto
+                    {
+                        Nombre = "Manguera hidráulica de freno",
+                        Descripcion = "Manguera reforzada para sistema hidráulico",
+                        Precio = 980m,
+                        Costo = 640m,
+                        Stock = 30,
+                        StockMinimo = 10,
+                        Categoria = "Repuestos",
+                        Activo = true,
+                        CreadoEn = DateTime.Now
+                    },
+                    new Producto
+                    {
+                        Nombre = "Grasa para pinzas de freno",
+                        Descripcion = "Lubricante de alta temperatura para sistema de frenos",
+                        Precio = 390m,
+                        Costo = 240m,
+                        Stock = 60,
+                        StockMinimo = 15,
+                        Categoria = "Consumibles",
                         Activo = true,
                         CreadoEn = DateTime.Now
                     }
@@ -215,6 +323,88 @@ namespace FrenosCore.Data
                 };
 
                 context.Vehiculo.Add(vehiculoDemo);
+                await context.SaveChangesAsync();
+            }
+
+            var clienteEmpresa = await context.Cliente.FirstOrDefaultAsync(c => c.Cedula == "001-0000002-2");
+            if (clienteEmpresa is null)
+            {
+                clienteEmpresa = new Cliente
+                {
+                    Nombre = "Transporte del Caribe SRL",
+                    Cedula = "001-0000002-2",
+                    Telefono = "809-555-0202",
+                    Email = "flota@caribe.local",
+                    Direccion = "Santo Domingo Este",
+                    CreadoEn = DateTime.Now,
+                    PasswordHash = string.Empty
+                };
+
+                context.Cliente.Add(clienteEmpresa);
+                await context.SaveChangesAsync();
+            }
+
+            var clienteParticular = await context.Cliente.FirstOrDefaultAsync(c => c.Cedula == "001-0000003-3");
+            if (clienteParticular is null)
+            {
+                clienteParticular = new Cliente
+                {
+                    Nombre = "María Pérez",
+                    Cedula = "001-0000003-3",
+                    Telefono = "829-555-0303",
+                    Email = "maria.perez@correo.local",
+                    Direccion = "Santiago de los Caballeros",
+                    CreadoEn = DateTime.Now,
+                    PasswordHash = string.Empty
+                };
+
+                context.Cliente.Add(clienteParticular);
+                await context.SaveChangesAsync();
+            }
+
+            var vehiculoEmpresa = await context.Vehiculo.FirstOrDefaultAsync(v => v.Placa == "L456789");
+            if (vehiculoEmpresa is null)
+            {
+                vehiculoEmpresa = new Vehiculo
+                {
+                    ClienteId = clienteEmpresa.Id,
+                    Placa = "L456789",
+                    Marca = "Hyundai",
+                    Modelo = "H100",
+                    Anno = 2020,
+                    Color = "Blanco",
+                    VIN = "KMJWA37JDLU238471",
+                    TipoCombustible = "Diesel",
+                    KmActual = 126000,
+                    Nota = "Vehículo de flotilla",
+                    Activo = true,
+                    FechaCreacion = DateTime.Now
+                };
+
+                context.Vehiculo.Add(vehiculoEmpresa);
+                await context.SaveChangesAsync();
+            }
+
+            var vehiculoParticular = await context.Vehiculo.FirstOrDefaultAsync(v => v.Placa == "A908765");
+            if (vehiculoParticular is null)
+            {
+                vehiculoParticular = new Vehiculo
+                {
+                    ClienteId = clienteParticular.Id,
+                    Placa = "A908765",
+                    Marca = "Kia",
+                    Modelo = "Sportage",
+                    Anno = 2021,
+                    Color = "Azul",
+                    VIN = "KNDPB3AC8M7092145",
+                    TipoCombustible = "Gasolina",
+                    KmActual = 63500,
+                    Nota = "Uso familiar",
+                    Activo = true,
+                    FechaCreacion = DateTime.Now
+                };
+
+                context.Vehiculo.Add(vehiculoParticular);
                 await context.SaveChangesAsync();
             }
 
@@ -281,12 +471,51 @@ namespace FrenosCore.Data
                     Notas = "Servicio completado y vehículo entregado"
                 };
 
+                var ordenAprobadaParticular = new Orden
+                {
+                    ClienteId = clienteParticular.Id,
+                    VehiculoId = vehiculoParticular.Id,
+                    TecnicoId = tecnicoAsignadoId,
+                    Estado = "Aprobado",
+                    Prioridad = "Alta",
+                    FechaCreacion = DateTime.Now.AddHours(-4),
+                    FechaEntregaEstima = DateTime.Now.AddDays(2),
+                    Notas = "Cliente aprueba reparación completa del eje delantero"
+                };
+
+                var ordenListaFlota = new Orden
+                {
+                    ClienteId = clienteEmpresa.Id,
+                    VehiculoId = vehiculoEmpresa.Id,
+                    TecnicoId = tecnicoAsignadoId,
+                    Estado = "Lista",
+                    Prioridad = "Urgente",
+                    FechaCreacion = DateTime.Now.AddDays(-1),
+                    FechaEntregaEstima = DateTime.Now,
+                    Notas = "Unidad de flotilla lista para retiro"
+                };
+
+                var ordenCancelada = new Orden
+                {
+                    ClienteId = clienteEmpresa.Id,
+                    VehiculoId = vehiculoEmpresa.Id,
+                    TecnicoId = tecnicoAsignadoId,
+                    Estado = "Cancelada",
+                    Prioridad = "Normal",
+                    FechaCreacion = DateTime.Now.AddDays(-6),
+                    FechaEntregaEstima = DateTime.Now.AddDays(-5),
+                    Notas = "Orden cancelada por cliente por cambio de presupuesto"
+                };
+
                 context.Orden.AddRange(
                     ordenRecibida,
                     ordenEnDiagnostico,
                     ordenEnReparacion,
                     ordenCerradaCredito,
-                    ordenCerradaPagada);
+                    ordenCerradaPagada,
+                    ordenAprobadaParticular,
+                    ordenListaFlota,
+                    ordenCancelada);
 
                 await context.SaveChangesAsync();
 
@@ -388,6 +617,40 @@ namespace FrenosCore.Data
                                 EsUrgente = false
                             }
                         ]
+                    },
+                    new Diagnostico
+                    {
+                        OrdenId = ordenAprobadaParticular.Id,
+                        TecnicoId = tecnicoAsignadoId,
+                        KmIngreso = vehiculoParticular.KmActual,
+                        DescripcionGeneral = "Desgaste severo de bandas delanteras y sensor ABS intermitente.",
+                        Estado = "Completado",
+                        RequiereAtencionUrgente = true,
+                        AprobadoPorCliente = true,
+                        FechaAprobacion = DateTime.Now.AddHours(-2),
+                        ObservacionesTecnico = "A la espera de repuestos para iniciar reparación.",
+                        FechaDiagnostico = DateTime.Now.AddHours(-3),
+                        Items =
+                        [
+                            new DiagnosticoItem
+                            {
+                                SistemaVehiculo = "Frenos",
+                                Componente = "Bandas delanteras",
+                                Condicion = "Malo",
+                                AccionRecomendada = "Reemplazar",
+                                Descripcion = "Material de fricción agotado.",
+                                EsUrgente = true
+                            },
+                            new DiagnosticoItem
+                            {
+                                SistemaVehiculo = "Frenos",
+                                Componente = "Sensor ABS",
+                                Condicion = "Regular",
+                                AccionRecomendada = "Reparar",
+                                Descripcion = "Falla intermitente en lectura de rueda delantera derecha.",
+                                EsUrgente = false
+                            }
+                        ]
                     });
 
                 await context.SaveChangesAsync();
@@ -442,11 +705,55 @@ namespace FrenosCore.Data
                     ]
                 };
 
-                context.Cotizacion.AddRange(cotizacionCredito, cotizacionPagada);
+                var cotizacionAprobadaParticular = new Cotizacion
+                {
+                    ClienteId = clienteParticular.Id,
+                    VehiculoId = vehiculoParticular.Id,
+                    Fecha = DateTime.Now.AddHours(-3),
+                    Subtotal = 5600m,
+                    Itbis = 1008m,
+                    Total = 6608m,
+                    Estado = "Aprobada",
+                    Notas = "Incluye bandas delanteras, sensor ABS y cambio de líquido.",
+                    ValidaHasta = DateTime.Now.AddDays(7),
+                    Items =
+                    [
+                        new CotizacionItem
+                        {
+                            Tipo = "Producto",
+                            ItemId = 2,
+                            Descripcion = "Bandas semimetálicas traseras",
+                            Cantidad = 1,
+                            PrecioUnitario = 2850m,
+                            Subtotal = 2850m
+                        },
+                        new CotizacionItem
+                        {
+                            Tipo = "Producto",
+                            ItemId = 4,
+                            Descripcion = "Sensor ABS delantero",
+                            Cantidad = 1,
+                            PrecioUnitario = 1950m,
+                            Subtotal = 1950m
+                        },
+                        new CotizacionItem
+                        {
+                            Tipo = "Servicio",
+                            ItemId = 4,
+                            Descripcion = "Cambio de líquido de frenos",
+                            Cantidad = 1,
+                            PrecioUnitario = 800m,
+                            Subtotal = 800m
+                        }
+                    ]
+                };
+
+                context.Cotizacion.AddRange(cotizacionCredito, cotizacionPagada, cotizacionAprobadaParticular);
                 await context.SaveChangesAsync();
 
                 ordenCerradaCredito.CotizacionId = cotizacionCredito.Id;
                 ordenCerradaPagada.CotizacionId = cotizacionPagada.Id;
+                ordenAprobadaParticular.CotizacionId = cotizacionAprobadaParticular.Id;
                 await context.SaveChangesAsync();
 
                 var adminUsuarioId = await context.Usuario
@@ -509,10 +816,46 @@ namespace FrenosCore.Data
                     ]
                 };
 
-                context.Factura.AddRange(facturaCredito, facturaPagada);
+                var facturaFlotaCredito = new Factura
+                {
+                    OrdenId = ordenListaFlota.Id,
+                    TipoOrigen = "OrdenReparacion",
+                    ClienteId = clienteEmpresa.Id,
+                    Numero = $"FAC-{anno}-9003",
+                    Fecha = DateTime.Now.AddHours(-12),
+                    Subtotal = 5400m,
+                    Itbis = 972m,
+                    Total = 6372m,
+                    Estado = "Pendiente",
+                    MetodoPago = "Credito",
+                    EmitidaPor = adminUsuarioId,
+                    Items =
+                    [
+                        new FacturaItem
+                        {
+                            Tipo = "Servicio",
+                            ItemId = 2,
+                            Descripcion = "Rectificado de discos",
+                            Cantidad = 1,
+                            PrecioUnitario = 2500m,
+                            Subtotal = 2500m
+                        },
+                        new FacturaItem
+                        {
+                            Tipo = "Producto",
+                            ItemId = 3,
+                            Descripcion = "Disco de freno ventilado",
+                            Cantidad = 1,
+                            PrecioUnitario = 2900m,
+                            Subtotal = 2900m
+                        }
+                    ]
+                };
+
+                context.Factura.AddRange(facturaCredito, facturaPagada, facturaFlotaCredito);
                 await context.SaveChangesAsync();
 
-                context.CuentasPorCobrar.Add(new CuentasPorCobrar
+                var cxcDemo = new CuentasPorCobrar
                 {
                     ClienteId = clienteDemo.Id,
                     FacturaId = facturaCredito.Id,
@@ -521,7 +864,71 @@ namespace FrenosCore.Data
                     Vencimiento = DateTime.Now.AddDays(30),
                     Estado = "Pendiente",
                     CreadoEn = DateTime.Now
+                };
+
+                var cxcFlota = new CuentasPorCobrar
+                {
+                    ClienteId = clienteEmpresa.Id,
+                    FacturaId = facturaFlotaCredito.Id,
+                    Monto = facturaFlotaCredito.Total,
+                    Saldo = 3372m,
+                    Vencimiento = DateTime.Now.AddDays(15),
+                    Estado = "Pendiente",
+                    CreadoEn = DateTime.Now
+                };
+
+                context.CuentasPorCobrar.AddRange(cxcDemo, cxcFlota);
+                await context.SaveChangesAsync();
+
+                context.AbonoCxC.Add(new AbonoCxC
+                {
+                    CxCId = cxcFlota.Id,
+                    Monto = 3000m,
+                    Fecha = DateTime.Now.AddHours(-6),
+                    MetodoPago = "Transferencia",
+                    RegistradoPor = adminUsuarioId
                 });
+
+                context.HistorialReparacion.AddRange(
+                    new HistorialReparacion
+                    {
+                        VehiculoId = vehiculoDemo.Id,
+                        OrdenId = ordenCerradaCredito.Id,
+                        TecnicoId = tecnicoAsignadoId,
+                        KmAlServicio = 85250,
+                        TrabajosRealizados = "Rectificado de discos delanteros, purga de líneas y ajuste general del sistema de frenos.",
+                        ProximoServicioKm = 92000,
+                        ProximoServicioFecha = DateOnly.FromDateTime(DateTime.Now.AddMonths(6)),
+                        GarantiaDias = 45,
+                        GarantiaHasta = DateOnly.FromDateTime(DateTime.Now.AddDays(45)),
+                        Fecha = DateTime.Now.AddDays(-1)
+                    },
+                    new HistorialReparacion
+                    {
+                        VehiculoId = vehiculoDemo.Id,
+                        OrdenId = ordenCerradaPagada.Id,
+                        TecnicoId = tecnicoAsignadoId,
+                        KmAlServicio = 84800,
+                        TrabajosRealizados = "Cambio de líquido DOT 4, sustitución de bandas delanteras y prueba de ruta.",
+                        ProximoServicioKm = 90000,
+                        ProximoServicioFecha = DateOnly.FromDateTime(DateTime.Now.AddMonths(5)),
+                        GarantiaDias = 30,
+                        GarantiaHasta = DateOnly.FromDateTime(DateTime.Now.AddDays(30)),
+                        Fecha = DateTime.Now.AddDays(-2)
+                    },
+                    new HistorialReparacion
+                    {
+                        VehiculoId = vehiculoEmpresa.Id,
+                        OrdenId = ordenListaFlota.Id,
+                        TecnicoId = tecnicoAsignadoId,
+                        KmAlServicio = 126100,
+                        TrabajosRealizados = "Cambio de disco ventilado, reemplazo de manguera hidráulica y calibración de frenos traseros.",
+                        ProximoServicioKm = 132000,
+                        ProximoServicioFecha = DateOnly.FromDateTime(DateTime.Now.AddMonths(4)),
+                        GarantiaDias = 60,
+                        GarantiaHasta = DateOnly.FromDateTime(DateTime.Now.AddDays(60)),
+                        Fecha = DateTime.Now.AddHours(-12)
+                    });
 
                 await context.SaveChangesAsync();
             }

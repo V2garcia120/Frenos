@@ -19,8 +19,23 @@ namespace TallerCaja.Forms
         private void MostrarCatalogo(bool mostrar)
         {
             splitMain.Panel1Collapsed = !mostrar;
-            btnCatalogo.Text = mostrar ? "📦 Ocultar catálogo" : "📦 Mostrar catálogo";
+            btnCatalogo.Text = mostrar ? "Ocultar catálogo" : "Mostrar catálogo";
         }
+
+        private void ConfigurarEstiloCatalogo()
+        {
+            lvCatalogo.BackColor = Color.White;
+            lvCatalogo.ForeColor = Color.FromArgb(15, 23, 42);
+            lvCatalogo.GridLines = false;
+            lvCatalogo.ShowGroups = true;
+            lvCatalogo.HotTracking = true;
+            lvCatalogo.HoverSelection = true;
+        }
+
+        private static Color ObtenerColorFila(int indiceFila)
+            => indiceFila % 2 == 0
+                ? Color.FromArgb(248, 250, 252)
+                : Color.White;
 
         public frmCobro()
         {
@@ -58,6 +73,8 @@ namespace TallerCaja.Forms
             lblTurno.Text = $"Turno: #{SessionManager.TurnoId}";
             lblFecha.Text = DateTime.Now.ToString("dd/MM/yyyy HH:mm");
             lblPendientes.Text = $"Pendientes offline: {_queue.ContarPendientes()}";
+            panelBusquedaCliente.Visible = false;
+            ConfigurarEstiloCatalogo();
 
             // Cliente anónimo por defecto
             var anonimo = await _integracion.ObtenerClienteAnonimoAsync();
@@ -95,31 +112,49 @@ namespace TallerCaja.Forms
             lvCatalogo.Items.Clear();
             lvCatalogo.Groups.Clear();
 
-            if (productos.Any())
+            var productosOrdenados = productos
+                .OrderBy(p => p.Categoria)
+                .ThenBy(p => p.Nombre)
+                .ToList();
+
+            var serviciosOrdenados = servicios
+                .OrderBy(s => s.Categoria)
+                .ThenBy(s => s.Nombre)
+                .ToList();
+
+            var indiceFila = 0;
+
+            if (productosOrdenados.Any())
             {
-                var gprod = new ListViewGroup("📦 Productos", HorizontalAlignment.Left);
+                var gprod = new ListViewGroup($"Productos ({productosOrdenados.Count})", HorizontalAlignment.Left);
                 lvCatalogo.Groups.Add(gprod);
-                foreach (var p in productos)
+                foreach (var p in productosOrdenados)
                 {
                     var item = new ListViewItem(new[] { p.Nombre, MonedaHelper.Formatear(p.Precio), $"{p.Stock} uds", p.Categoria });
                     item.Group = gprod;
+                    item.BackColor = ObtenerColorFila(indiceFila++);
+                    if (p.Stock <= 5)
+                        item.ForeColor = Color.FromArgb(185, 28, 28);
                     item.Tag = new ItemCobroDto { Tipo = "Producto", ItemId = p.Id, PrecioSnapshot = p.Precio, NombreSnapshot = p.Nombre, Cantidad = 1 };
                     lvCatalogo.Items.Add(item);
                 }
             }
 
-            if (servicios.Any())
+            if (serviciosOrdenados.Any())
             {
-                var gserv = new ListViewGroup("🔧 Servicios", HorizontalAlignment.Left);
+                var gserv = new ListViewGroup($"Servicios ({serviciosOrdenados.Count})", HorizontalAlignment.Left);
                 lvCatalogo.Groups.Add(gserv);
-                foreach (var s in servicios)
+                foreach (var s in serviciosOrdenados)
                 {
                     var item = new ListViewItem(new[] { s.Nombre, MonedaHelper.Formatear(s.Precio), $"{s.DuracionMin} min", s.Categoria });
                     item.Group = gserv;
+                    item.BackColor = ObtenerColorFila(indiceFila++);
                     item.Tag = new ItemCobroDto { Tipo = "Servicio", ItemId = s.Id, PrecioSnapshot = s.Precio, NombreSnapshot = s.Nombre, Cantidad = 1 };
                     lvCatalogo.Items.Add(item);
                 }
             }
+
+            lblCatalogoTitle.Text = $"  CATÁLOGO DE PRODUCTOS Y SERVICIOS ({productosOrdenados.Count + serviciosOrdenados.Count} ítems)";
         }
 
         private async void txtBuscar_TextChanged(object sender, EventArgs e)
@@ -236,7 +271,17 @@ namespace TallerCaja.Forms
             btnCobrar.Enabled = _carrito.Any();
         }
 
-        private async void btnBuscarCliente_Click(object sender, EventArgs e)
+        private void btnBuscarCliente_Click(object sender, EventArgs e)
+        {
+            panelBusquedaCliente.Visible = !panelBusquedaCliente.Visible;
+            if (panelBusquedaCliente.Visible)
+            {
+                txtBuscarCliente.Focus();
+                txtBuscarCliente.SelectAll();
+            }
+        }
+
+        private async void btnBuscarCedula_Click(object sender, EventArgs e)
         {
             var q = txtBuscarCliente.Text.Trim();
             if (string.IsNullOrEmpty(q)) return;
@@ -256,19 +301,26 @@ namespace TallerCaja.Forms
                 {
                     _clienteSeleccionado = selector.ClienteSeleccionado;
                     ActualizarLabelCliente();
+                    panelBusquedaCliente.Visible = false;
                 }
             }
             catch
             {
-                MessageBox.Show("No se pudo conectar para buscar clientes. Usando cliente anónimo.",
+                MessageBox.Show("No se pudo conectar para buscar clientes.",
                     "Sin conexión", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
-        private void btnClienteAnonimo_Click(object sender, EventArgs e)
+        private void btnSeleccionarAnonimo_Click(object sender, EventArgs e)
         {
             _clienteSeleccionado = new ClienteDto { Id = 1, Nombre = "Cliente Anónimo", EsAnonimo = true };
             ActualizarLabelCliente();
+            panelBusquedaCliente.Visible = false;
+        }
+
+        private void btnCerrarPanelCliente_Click(object sender, EventArgs e)
+        {
+            panelBusquedaCliente.Visible = false;
         }
 
         private void ActualizarLabelCliente()
@@ -277,6 +329,11 @@ namespace TallerCaja.Forms
             lblClienteActual.ForeColor = _clienteSeleccionado?.EsAnonimo == true
                 ? Color.FromArgb(100, 116, 139)
                 : Color.FromArgb(22, 163, 74);
+
+            lblClienteFacturando.Text = $"Facturando a: {lblClienteActual.Text}";
+            lblClienteFacturando.ForeColor = _clienteSeleccionado?.EsAnonimo == true
+                ? Color.FromArgb(251, 146, 60)
+                : Color.FromArgb(74, 222, 128);
         }
 
         private void btnLimpiar_Click(object sender, EventArgs e)
@@ -303,6 +360,7 @@ namespace TallerCaja.Forms
                 ActualizarCarritoUI();
                 ActualizarTotales();
                 txtBuscarCliente.Clear();
+                panelBusquedaCliente.Visible = false;
                 _clienteSeleccionado = new ClienteDto { Id = 1, Nombre = "Cliente Anónimo", EsAnonimo = true };
                 ActualizarLabelCliente();
                 lblPendientes.Text = $"Pendientes offline: {_queue.ContarPendientes()}";

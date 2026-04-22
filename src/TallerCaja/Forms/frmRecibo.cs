@@ -1,4 +1,5 @@
 using TallerCaja.Models.DTOs;
+using System.Drawing.Printing;
 
 namespace TallerCaja.Forms
 {
@@ -10,7 +11,11 @@ namespace TallerCaja.Forms
         private Label lblEstadoBadge = null!;
         private TextBox txtRecibo = null!;
         private Button btnCopiar = null!;
+        private Button btnImprimir = null!;
         private Button btnCerrar = null!;
+        private PrintDocument printDocument = null!;
+        private int _lineaActualImpresion;
+        private string[] _lineasRecibo = Array.Empty<string>();
 
         public frmRecibo()
         {
@@ -31,7 +36,9 @@ namespace TallerCaja.Forms
             lblEstadoBadge = new Label();
             txtRecibo = new TextBox();
             btnCopiar = new Button();
+            btnImprimir = new Button();
             btnCerrar = new Button();
+            printDocument = new PrintDocument();
             SuspendLayout();
 
             lblEstadoBadge.BackColor = Color.FromArgb(22, 163, 74);
@@ -52,15 +59,23 @@ namespace TallerCaja.Forms
             btnCopiar.Text = "Copiar";
             btnCopiar.Click += btnCopiar_Click;
 
+            btnImprimir.Location = new Point(426, 526);
+            btnImprimir.Size = new Size(110, 36);
+            btnImprimir.Text = "Imprimir";
+            btnImprimir.Click += btnImprimir_Click;
+
             btnCerrar.Location = new Point(662, 526);
             btnCerrar.Size = new Size(110, 36);
             btnCerrar.Text = "Cerrar";
             btnCerrar.Click += btnCerrar_Click;
 
+            printDocument.PrintPage += printDocument_PrintPage;
+
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(784, 574);
             Controls.Add(btnCerrar);
+            Controls.Add(btnImprimir);
             Controls.Add(btnCopiar);
             Controls.Add(txtRecibo);
             Controls.Add(lblEstadoBadge);
@@ -83,6 +98,7 @@ namespace TallerCaja.Forms
             }
 
             txtRecibo.Text = _textoRecibo;
+            _lineasRecibo = _textoRecibo.Replace("\r", string.Empty).Split('\n');
             if (_cobro.Estado == "PendienteSync")
             {
                 lblEstadoBadge.Text = "⚠ PENDIENTE DE SINCRONIZACIÓN (offline)";
@@ -99,6 +115,43 @@ namespace TallerCaja.Forms
         {
             Clipboard.SetText(_textoRecibo);
             MessageBox.Show("Recibo copiado al portapapeles.", "Copiado", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void btnImprimir_Click(object? sender, EventArgs e)
+        {
+            _lineaActualImpresion = 0;
+
+            using var printDialog = new PrintDialog
+            {
+                Document = printDocument,
+                UseEXDialog = true
+            };
+
+            if (printDialog.ShowDialog(this) == DialogResult.OK)
+                printDocument.Print();
+        }
+
+        private void printDocument_PrintPage(object? sender, PrintPageEventArgs e)
+        {
+            using var font = new Font("Consolas", 10F);
+            var lineHeight = font.GetHeight(e.Graphics) + 2;
+            float y = e.MarginBounds.Top;
+
+            while (_lineaActualImpresion < _lineasRecibo.Length)
+            {
+                if (y + lineHeight > e.MarginBounds.Bottom)
+                {
+                    e.HasMorePages = true;
+                    return;
+                }
+
+                e.Graphics.DrawString(_lineasRecibo[_lineaActualImpresion], font, Brushes.Black, e.MarginBounds.Left, y);
+                y += lineHeight;
+                _lineaActualImpresion++;
+            }
+
+            _lineaActualImpresion = 0;
+            e.HasMorePages = false;
         }
 
         private void btnCerrar_Click(object sender, EventArgs e) => Close();

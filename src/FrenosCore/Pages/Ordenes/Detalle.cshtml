@@ -43,6 +43,12 @@ else
             <div class="col-md-4"><strong>Entrega estimada:</strong> @(Model.Orden.FechaEntregaEstimada?.ToString("dd/MM/yyyy HH:mm") ?? "-")</div>
             <div class="col-md-4"><strong>Entrega real:</strong> @(Model.Orden.FechaEntregaReal?.ToString("dd/MM/yyyy HH:mm") ?? "-")</div>
             <div class="col-12"><strong>Notas:</strong> @(string.IsNullOrWhiteSpace(Model.Orden.Notas) ? "-" : Model.Orden.Notas)</div>
+            <div class="col-12">
+                <a asp-page="/Vehiculos/Historial"
+                   asp-route-vehiculoId="@Model.Orden.VehiculoId"
+                   asp-route-ordenId="@Model.Orden.Id"
+                   class="btn btn-outline-primary btn-sm">Ver historial de reparaciones del vehículo</a>
+            </div>
         </div>
     </div>
 

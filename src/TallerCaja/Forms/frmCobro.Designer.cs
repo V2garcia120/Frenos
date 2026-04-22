@@ -17,6 +17,7 @@ namespace TallerCaja.Forms
             lblTurno = new Label();
             lblFecha = new Label();
             lblPendientes = new Label();
+            lblClienteFacturando = new Label();
             btnCatalogo = new Button();
             btnBuscarFactura = new Button();
             btnCierreDia = new Button();
@@ -44,9 +45,13 @@ namespace TallerCaja.Forms
             panelCliente = new Panel();
             lblClienteTitle = new Label();
             lblClienteActual = new Label();
+            panelBusquedaCliente = new Panel();
+            lblCedulaBuscar = new Label();
             txtBuscarCliente = new TextBox();
             btnBuscarCliente = new Button();
-            btnClienteAnonimo = new Button();
+            btnBuscarCedula = new Button();
+            btnSeleccionarAnonimo = new Button();
+            btnCerrarPanelCliente = new Button();
             lblCatalogoTitle = new Label();
             lvCarrito = new ListView();
             colCNombre = new ColumnHeader();
@@ -76,6 +81,8 @@ namespace TallerCaja.Forms
             panelTop.Controls.Add(lblTurno);
             panelTop.Controls.Add(lblFecha);
             panelTop.Controls.Add(lblPendientes);
+            panelTop.Controls.Add(lblClienteFacturando);
+            panelTop.Controls.Add(btnBuscarCliente);
             panelTop.Controls.Add(btnCatalogo);
             panelTop.Controls.Add(btnBuscarFactura);
             panelTop.Controls.Add(btnCierreDia);
@@ -138,12 +145,43 @@ namespace TallerCaja.Forms
             lblPendientes.AutoEllipsis = true;
             lblPendientes.Font = new Font("Segoe UI", 9F);
             lblPendientes.ForeColor = Color.FromArgb(251, 146, 60);
-            lblPendientes.Location = new Point(810, 30);
+            lblPendientes.Location = new Point(640, 30);
             lblPendientes.Margin = new Padding(4, 0, 4, 0);
             lblPendientes.Name = "lblPendientes";
-            lblPendientes.Size = new Size(270, 25);
+            lblPendientes.Size = new Size(210, 25);
             lblPendientes.TabIndex = 4;
             lblPendientes.TextAlign = ContentAlignment.MiddleRight;
+            // 
+            // lblClienteFacturando
+            // 
+            lblClienteFacturando.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            lblClienteFacturando.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblClienteFacturando.ForeColor = Color.FromArgb(74, 222, 128);
+            lblClienteFacturando.Location = new Point(840, 10);
+            lblClienteFacturando.Margin = new Padding(4, 0, 4, 0);
+            lblClienteFacturando.Name = "lblClienteFacturando";
+            lblClienteFacturando.Size = new Size(310, 25);
+            lblClienteFacturando.TabIndex = 5;
+            lblClienteFacturando.Text = "Facturando a: Cliente Anónimo";
+            lblClienteFacturando.TextAlign = ContentAlignment.MiddleRight;
+            // 
+            // btnBuscarCliente
+            // 
+            btnBuscarCliente.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnBuscarCliente.BackColor = Color.FromArgb(59, 130, 246);
+            btnBuscarCliente.Cursor = Cursors.Hand;
+            btnBuscarCliente.FlatAppearance.BorderSize = 0;
+            btnBuscarCliente.FlatStyle = FlatStyle.Flat;
+            btnBuscarCliente.Font = new Font("Segoe UI", 9F);
+            btnBuscarCliente.ForeColor = Color.White;
+            btnBuscarCliente.Location = new Point(875, 38);
+            btnBuscarCliente.Margin = new Padding(4, 5, 4, 5);
+            btnBuscarCliente.Name = "btnBuscarCliente";
+            btnBuscarCliente.Size = new Size(275, 35);
+            btnBuscarCliente.TabIndex = 6;
+            btnBuscarCliente.Text = "Buscar cliente por cédula";
+            btnBuscarCliente.UseVisualStyleBackColor = false;
+            btnBuscarCliente.Click += btnBuscarCliente_Click;
             // 
             // btnCatalogo
             // 
@@ -154,12 +192,12 @@ namespace TallerCaja.Forms
             btnCatalogo.FlatStyle = FlatStyle.Flat;
             btnCatalogo.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             btnCatalogo.ForeColor = Color.White;
-            btnCatalogo.Location = new Point(1100, 20);
+            btnCatalogo.Location = new Point(1160, 20);
             btnCatalogo.Margin = new Padding(4, 5, 4, 5);
             btnCatalogo.Name = "btnCatalogo";
-            btnCatalogo.Size = new Size(214, 53);
-            btnCatalogo.TabIndex = 5;
-            btnCatalogo.Text = "📦 Mostrar catálogo";
+            btnCatalogo.Size = new Size(170, 53);
+            btnCatalogo.TabIndex = 7;
+            btnCatalogo.Text = "Mostrar catálogo";
             btnCatalogo.UseVisualStyleBackColor = false;
             btnCatalogo.Click += btnCatalogo_Click;
             // 
@@ -172,12 +210,12 @@ namespace TallerCaja.Forms
             btnBuscarFactura.FlatStyle = FlatStyle.Flat;
             btnBuscarFactura.Font = new Font("Segoe UI", 9F);
             btnBuscarFactura.ForeColor = Color.White;
-            btnBuscarFactura.Location = new Point(1329, 20);
+            btnBuscarFactura.Location = new Point(1340, 20);
             btnBuscarFactura.Margin = new Padding(4, 5, 4, 5);
             btnBuscarFactura.Name = "btnBuscarFactura";
-            btnBuscarFactura.Size = new Size(207, 53);
-            btnBuscarFactura.TabIndex = 6;
-            btnBuscarFactura.Text = "🔍 Buscar Factura";
+            btnBuscarFactura.Size = new Size(145, 53);
+            btnBuscarFactura.TabIndex = 8;
+            btnBuscarFactura.Text = "Buscar factura";
             btnBuscarFactura.UseVisualStyleBackColor = false;
             btnBuscarFactura.Click += btnBuscarFactura_Click;
             // 
@@ -190,12 +228,12 @@ namespace TallerCaja.Forms
             btnCierreDia.FlatStyle = FlatStyle.Flat;
             btnCierreDia.Font = new Font("Segoe UI", 9F);
             btnCierreDia.ForeColor = Color.White;
-            btnCierreDia.Location = new Point(1550, 20);
+            btnCierreDia.Location = new Point(1495, 20);
             btnCierreDia.Margin = new Padding(4, 5, 4, 5);
             btnCierreDia.Name = "btnCierreDia";
-            btnCierreDia.Size = new Size(186, 53);
-            btnCierreDia.TabIndex = 7;
-            btnCierreDia.Text = "⏹ Cerrar Turno";
+            btnCierreDia.Size = new Size(134, 53);
+            btnCierreDia.TabIndex = 9;
+            btnCierreDia.Text = "Cerrar turno";
             btnCierreDia.UseVisualStyleBackColor = false;
             btnCierreDia.Click += btnCierreDia_Click;
             // 
@@ -300,7 +338,7 @@ namespace TallerCaja.Forms
             btnCobrar.Name = "btnCobrar";
             btnCobrar.Size = new Size(493, 67);
             btnCobrar.TabIndex = 6;
-            btnCobrar.Text = "💳  COBRAR";
+            btnCobrar.Text = "COBRAR";
             btnCobrar.UseVisualStyleBackColor = false;
             btnCobrar.Click += btnCobrar_Click;
             // 
@@ -324,7 +362,7 @@ namespace TallerCaja.Forms
             txtBuscar.Location = new Point(11, 10);
             txtBuscar.Margin = new Padding(4, 5, 4, 5);
             txtBuscar.Name = "txtBuscar";
-            txtBuscar.PlaceholderText = "🔍 Buscar producto o servicio...";
+            txtBuscar.PlaceholderText = "Buscar producto o servicio...";
             txtBuscar.Size = new Size(1018, 37);
             txtBuscar.TabIndex = 0;
             txtBuscar.TextChanged += txtBuscar_TextChanged;
@@ -355,7 +393,7 @@ namespace TallerCaja.Forms
             btnAgregar.Name = "btnAgregar";
             btnAgregar.Size = new Size(1018, 53);
             btnAgregar.TabIndex = 0;
-            btnAgregar.Text = "➕ Agregar al carrito (o doble clic)";
+            btnAgregar.Text = "Agregar al carrito (o doble clic)";
             btnAgregar.UseVisualStyleBackColor = false;
             btnAgregar.Click += btnAgregar_Click;
             // 
@@ -385,7 +423,7 @@ namespace TallerCaja.Forms
             btnQuitarItem.Name = "btnQuitarItem";
             btnQuitarItem.Size = new Size(229, 47);
             btnQuitarItem.TabIndex = 0;
-            btnQuitarItem.Text = "🗑 Quitar seleccionado";
+            btnQuitarItem.Text = "Quitar seleccionado";
             btnQuitarItem.UseVisualStyleBackColor = false;
             btnQuitarItem.Click += btnQuitarItem_Click;
             // 
@@ -402,7 +440,7 @@ namespace TallerCaja.Forms
             btnLimpiar.Name = "btnLimpiar";
             btnLimpiar.Size = new Size(129, 47);
             btnLimpiar.TabIndex = 1;
-            btnLimpiar.Text = "\U0001f9f9 Limpiar";
+            btnLimpiar.Text = "Limpiar";
             btnLimpiar.UseVisualStyleBackColor = false;
             btnLimpiar.Click += btnLimpiar_Click;
             // 
@@ -477,9 +515,6 @@ namespace TallerCaja.Forms
             panelCliente.BackColor = Color.FromArgb(241, 245, 249);
             panelCliente.Controls.Add(lblClienteTitle);
             panelCliente.Controls.Add(lblClienteActual);
-            panelCliente.Controls.Add(txtBuscarCliente);
-            panelCliente.Controls.Add(btnBuscarCliente);
-            panelCliente.Controls.Add(btnClienteAnonimo);
             panelCliente.Dock = DockStyle.Bottom;
             panelCliente.Location = new Point(0, 1034);
             panelCliente.Margin = new Padding(4, 5, 4, 5);
@@ -512,50 +547,89 @@ namespace TallerCaja.Forms
             lblClienteActual.TabIndex = 1;
             lblClienteActual.Text = "Cliente Anónimo";
             // 
+            // panelBusquedaCliente
+            // 
+            panelBusquedaCliente.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            panelBusquedaCliente.BackColor = Color.FromArgb(241, 245, 249);
+            panelBusquedaCliente.BorderStyle = BorderStyle.FixedSingle;
+            panelBusquedaCliente.Controls.Add(lblCedulaBuscar);
+            panelBusquedaCliente.Controls.Add(txtBuscarCliente);
+            panelBusquedaCliente.Controls.Add(btnBuscarCedula);
+            panelBusquedaCliente.Controls.Add(btnSeleccionarAnonimo);
+            panelBusquedaCliente.Controls.Add(btnCerrarPanelCliente);
+            panelBusquedaCliente.Location = new Point(1140, 95);
+            panelBusquedaCliente.Name = "panelBusquedaCliente";
+            panelBusquedaCliente.Size = new Size(640, 95);
+            panelBusquedaCliente.TabIndex = 2;
+            panelBusquedaCliente.Visible = false;
+            // 
+            // lblCedulaBuscar
+            // 
+            lblCedulaBuscar.AutoSize = true;
+            lblCedulaBuscar.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblCedulaBuscar.ForeColor = Color.FromArgb(71, 85, 105);
+            lblCedulaBuscar.Location = new Point(12, 12);
+            lblCedulaBuscar.Name = "lblCedulaBuscar";
+            lblCedulaBuscar.Size = new Size(150, 25);
+            lblCedulaBuscar.TabIndex = 0;
+            lblCedulaBuscar.Text = "Cédula cliente:";
+            // 
             // txtBuscarCliente
             // 
             txtBuscarCliente.BorderStyle = BorderStyle.FixedSingle;
             txtBuscarCliente.Font = new Font("Segoe UI", 9F);
-            txtBuscarCliente.Location = new Point(11, 47);
-            txtBuscarCliente.Margin = new Padding(4, 5, 4, 5);
+            txtBuscarCliente.Location = new Point(168, 10);
             txtBuscarCliente.Name = "txtBuscarCliente";
-            txtBuscarCliente.PlaceholderText = "Nombre o cédula...";
-            txtBuscarCliente.Size = new Size(342, 31);
-            txtBuscarCliente.TabIndex = 2;
+            txtBuscarCliente.PlaceholderText = "001-0000000-0";
+            txtBuscarCliente.Size = new Size(220, 31);
+            txtBuscarCliente.TabIndex = 1;
             // 
-            // btnBuscarCliente
+            // btnBuscarCedula
             // 
-            btnBuscarCliente.BackColor = Color.FromArgb(59, 130, 246);
-            btnBuscarCliente.Cursor = Cursors.Hand;
-            btnBuscarCliente.FlatAppearance.BorderSize = 0;
-            btnBuscarCliente.FlatStyle = FlatStyle.Flat;
-            btnBuscarCliente.Font = new Font("Segoe UI", 9F);
-            btnBuscarCliente.ForeColor = Color.White;
-            btnBuscarCliente.Location = new Point(364, 43);
-            btnBuscarCliente.Margin = new Padding(4, 5, 4, 5);
-            btnBuscarCliente.Name = "btnBuscarCliente";
-            btnBuscarCliente.Size = new Size(143, 43);
-            btnBuscarCliente.TabIndex = 3;
-            btnBuscarCliente.Text = "Buscar";
-            btnBuscarCliente.UseVisualStyleBackColor = false;
-            btnBuscarCliente.Click += btnBuscarCliente_Click;
+            btnBuscarCedula.BackColor = Color.FromArgb(59, 130, 246);
+            btnBuscarCedula.Cursor = Cursors.Hand;
+            btnBuscarCedula.FlatAppearance.BorderSize = 0;
+            btnBuscarCedula.FlatStyle = FlatStyle.Flat;
+            btnBuscarCedula.Font = new Font("Segoe UI", 9F);
+            btnBuscarCedula.ForeColor = Color.White;
+            btnBuscarCedula.Location = new Point(398, 8);
+            btnBuscarCedula.Name = "btnBuscarCedula";
+            btnBuscarCedula.Size = new Size(110, 35);
+            btnBuscarCedula.TabIndex = 2;
+            btnBuscarCedula.Text = "Buscar";
+            btnBuscarCedula.UseVisualStyleBackColor = false;
+            btnBuscarCedula.Click += btnBuscarCedula_Click;
             // 
-            // btnClienteAnonimo
+            // btnSeleccionarAnonimo
             // 
-            btnClienteAnonimo.BackColor = Color.FromArgb(100, 116, 139);
-            btnClienteAnonimo.Cursor = Cursors.Hand;
-            btnClienteAnonimo.FlatAppearance.BorderSize = 0;
-            btnClienteAnonimo.FlatStyle = FlatStyle.Flat;
-            btnClienteAnonimo.Font = new Font("Segoe UI", 9F);
-            btnClienteAnonimo.ForeColor = Color.White;
-            btnClienteAnonimo.Location = new Point(517, 43);
-            btnClienteAnonimo.Margin = new Padding(4, 5, 4, 5);
-            btnClienteAnonimo.Name = "btnClienteAnonimo";
-            btnClienteAnonimo.Size = new Size(171, 43);
-            btnClienteAnonimo.TabIndex = 4;
-            btnClienteAnonimo.Text = "Anónimo";
-            btnClienteAnonimo.UseVisualStyleBackColor = false;
-            btnClienteAnonimo.Click += btnClienteAnonimo_Click;
+            btnSeleccionarAnonimo.BackColor = Color.FromArgb(100, 116, 139);
+            btnSeleccionarAnonimo.Cursor = Cursors.Hand;
+            btnSeleccionarAnonimo.FlatAppearance.BorderSize = 0;
+            btnSeleccionarAnonimo.FlatStyle = FlatStyle.Flat;
+            btnSeleccionarAnonimo.Font = new Font("Segoe UI", 9F);
+            btnSeleccionarAnonimo.ForeColor = Color.White;
+            btnSeleccionarAnonimo.Location = new Point(168, 50);
+            btnSeleccionarAnonimo.Name = "btnSeleccionarAnonimo";
+            btnSeleccionarAnonimo.Size = new Size(170, 33);
+            btnSeleccionarAnonimo.TabIndex = 3;
+            btnSeleccionarAnonimo.Text = "Seleccionar anónimo";
+            btnSeleccionarAnonimo.UseVisualStyleBackColor = false;
+            btnSeleccionarAnonimo.Click += btnSeleccionarAnonimo_Click;
+            // 
+            // btnCerrarPanelCliente
+            // 
+            btnCerrarPanelCliente.BackColor = Color.White;
+            btnCerrarPanelCliente.Cursor = Cursors.Hand;
+            btnCerrarPanelCliente.FlatStyle = FlatStyle.Flat;
+            btnCerrarPanelCliente.Font = new Font("Segoe UI", 9F);
+            btnCerrarPanelCliente.ForeColor = Color.FromArgb(71, 85, 105);
+            btnCerrarPanelCliente.Location = new Point(518, 8);
+            btnCerrarPanelCliente.Name = "btnCerrarPanelCliente";
+            btnCerrarPanelCliente.Size = new Size(110, 35);
+            btnCerrarPanelCliente.TabIndex = 4;
+            btnCerrarPanelCliente.Text = "Cerrar";
+            btnCerrarPanelCliente.UseVisualStyleBackColor = false;
+            btnCerrarPanelCliente.Click += btnCerrarPanelCliente_Click;
             // 
             // lblCatalogoTitle
             // 
@@ -568,7 +642,7 @@ namespace TallerCaja.Forms
             lblCatalogoTitle.Name = "lblCatalogoTitle";
             lblCatalogoTitle.Size = new Size(1040, 60);
             lblCatalogoTitle.TabIndex = 4;
-            lblCatalogoTitle.Text = "  📦 CATÁLOGO DE PRODUCTOS Y SERVICIOS";
+            lblCatalogoTitle.Text = "  CATÁLOGO DE PRODUCTOS Y SERVICIOS";
             lblCatalogoTitle.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // lvCarrito
@@ -640,7 +714,7 @@ namespace TallerCaja.Forms
             lblCarritoTitle.Name = "lblCarritoTitle";
             lblCarritoTitle.Size = new Size(751, 60);
             lblCarritoTitle.TabIndex = 4;
-            lblCarritoTitle.Text = "  \U0001f6d2 DETALLE DE VENTA";
+            lblCarritoTitle.Text = "  DETALLE DE VENTA";
             lblCarritoTitle.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // frmCobro
@@ -648,6 +722,7 @@ namespace TallerCaja.Forms
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1800, 1200);
+            Controls.Add(panelBusquedaCliente);
             Controls.Add(splitMain);
             Controls.Add(panelTop);
             Margin = new Padding(4, 5, 4, 5);
@@ -676,7 +751,7 @@ namespace TallerCaja.Forms
         // Controls
         private Panel panelTop, panelTotales, panelCliente, panelBuscar, panelAgregar, panelCarritoBtns;
         private SplitContainer splitMain;
-        private Label lblAppTitle, lblCajero, lblTurno, lblFecha, lblPendientes;
+        private Label lblAppTitle, lblCajero, lblTurno, lblFecha, lblPendientes, lblClienteFacturando;
         private Button btnCatalogo, btnBuscarFactura, btnCierreDia;
         private Label lblCatalogoTitle;
         private TextBox txtBuscar;
@@ -685,7 +760,10 @@ namespace TallerCaja.Forms
         private Button btnAgregar;
         private Label lblClienteTitle, lblClienteActual;
         private TextBox txtBuscarCliente;
-        private Button btnBuscarCliente, btnClienteAnonimo;
+        private Button btnBuscarCliente;
+        private Panel panelBusquedaCliente;
+        private Label lblCedulaBuscar;
+        private Button btnBuscarCedula, btnSeleccionarAnonimo, btnCerrarPanelCliente;
         private Label lblCarritoTitle, lblItemsCount;
         private ListView lvCarrito;
         private ColumnHeader colCNombre, colCTipo, colCCant, colCPrecio, colCSubtotal;

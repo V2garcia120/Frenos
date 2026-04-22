@@ -253,6 +253,7 @@ namespace TallerCaja.Forms
                     return;
                 }
 
+                MostrarReciboPagoFactura(respuesta, request, metodoPago);
                 MessageBox.Show($"Factura {respuesta.Numero} pagada correctamente.", "Pago aplicado", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 DialogResult = DialogResult.OK;
                 Close();
@@ -274,6 +275,41 @@ namespace TallerCaja.Forms
         private void btnCerrar_Click(object? sender, EventArgs e)
         {
             Close();
+        }
+
+        private void MostrarReciboPagoFactura(PagoFacturaResponse respuesta, PagoFacturaRequest request, string metodoPago)
+        {
+            if (_facturaActual == null) return;
+
+            var cobro = new CobroResponse
+            {
+                FacturaId = respuesta.FacturaId,
+                NumeroFactura = respuesta.Numero,
+                Total = respuesta.Total,
+                Cambio = respuesta.Cambio,
+                Estado = respuesta.Estado,
+                IdLocal = Guid.NewGuid().ToString()
+            };
+
+            var cobroRequest = new CobroRequest
+            {
+                TurnoId = request.TurnoId,
+                ClienteId = 0,
+                MetodoPago = metodoPago,
+                MontoPagado = request.MontoPagado,
+                Items = _facturaActual.Items.Select(i => new ItemCobroDto
+                {
+                    Tipo = "Factura",
+                    ItemId = 0,
+                    Cantidad = i.Cantidad,
+                    PrecioSnapshot = i.Precio,
+                    NombreSnapshot = i.Nombre
+                }).ToList()
+            };
+
+            var texto = new ReciboService().GenerarTextoRecibo(cobro, cobroRequest, _facturaActual.ClienteNombre);
+            using var frmRecibo = new frmRecibo(texto, cobro);
+            frmRecibo.ShowDialog(this);
         }
     }
 }

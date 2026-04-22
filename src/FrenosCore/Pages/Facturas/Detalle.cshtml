@@ -34,7 +34,7 @@ else
             <div class="col-md-3"><strong>Origen:</strong> @Model.Factura.TipoOrigen</div>
             <div class="col-md-3"><strong>Estado:</strong> @Model.Factura.Estado</div>
             <div class="col-md-3"><strong>Método pago:</strong> @(Model.Factura.MetodoPago ?? "-")</div>
-            <div class="col-md-6"><strong>Cliente:</strong> @Model.Factura.ClienteNombre</div>
+            <div class="col-md-3"><strong>Cliente:</strong> @Model.Factura.ClienteNombre</div>
             <div class="col-md-6"><strong>Fecha:</strong> @Model.Factura.Fecha.ToString("dd/MM/yyyy HH:mm")</div>
             <div class="col-md-4"><strong>Subtotal:</strong> @Model.Factura.Subtotal.ToString("C")</div>
             <div class="col-md-4"><strong>ITBIS:</strong> @Model.Factura.Itbis.ToString("C")</div>
