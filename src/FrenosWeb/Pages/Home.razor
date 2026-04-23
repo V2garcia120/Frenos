@@ -6,6 +6,31 @@
 @inject VehiculoService vehiculoService
 @inject NavigationManager navManager
 
+<style>
+    :root {
+        --azul-frenos: #2b66a8;
+        --naranja-frenos: #f39237;
+    }
+
+    .btn-frenos-azul { background-color: var(--azul-frenos); color: white; border: none; }
+    .btn-frenos-azul:hover { background-color: #1e4b7a; color: white; }
+    
+    .btn-frenos-naranja { background-color: var(--naranja-frenos); color: white; border: none; }
+    .btn-frenos-naranja:hover { background-color: #d67d2b; color: white; }
+
+    .bg-azul { background-color: var(--azul-frenos) !important; }
+    .bg-naranja { background-color: var(--naranja-frenos) !important; }
+    
+    .hero-section {
+        background: linear-gradient(rgba(43, 102, 168, 0.85), rgba(43, 102, 168, 0.85)), url('https://images.unsplash.com/photo-1486006920555-c77dcf18193c?auto=format&fit=crop&q=80&w=1600');
+        background-size: cover;
+        background-position: center;
+        color: white;
+        padding: 80px 20px;
+        border-radius: 20px;
+    }
+</style>
+
 <div class="container mt-4 pb-5">
     <AuthorizeView>
         <Authorized>
@@ -14,66 +39,65 @@
                     <h2 class="fw-bold text-dark">
                         👋 ¡Bienvenido/a, @(context.User.Identity?.Name?.Split('@')[0])!
                     </h2>
-                    <p class="text-muted">Panel de control del cliente - Taller de Frenos</p>
+                    <p class="text-muted">Panel de control de **Frenos Maestro**</p>
                 </div>
 
                 <div class="col-md-6 col-lg-3 mb-4">
-                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white text-center">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white text-center border-top border-4" style="border-top-color: var(--azul-frenos) !important;">
                         <div class="card-body">
-                            <div class="bg-success text-white rounded-circle d-inline-flex p-3 mb-3">
+                            <div class="bg-azul text-white rounded-circle d-inline-flex p-3 mb-3 shadow">
                                 <i class="bi bi-car-front-fill fs-3"></i>
                             </div>
                             <h6 class="fw-bold">Mis Vehículos</h6>
                             <p class="small text-muted mb-3">@(misVehiculos?.Count ?? 0) registrados</p>
-                            <button class="btn btn-sm btn-outline-success rounded-pill w-100" @onclick='() => navManager.NavigateTo("/mis-vehiculos")'>Ver</button>
+                            <button class="btn btn-sm btn-frenos-azul rounded-pill w-100" @onclick='() => navManager.NavigateTo("/mis-vehiculos")'>Gestionar</button>
                         </div>
                     </div>
                 </div>
 
                 <div class="col-md-6 col-lg-3 mb-4">
-                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white text-center">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white text-center border-top border-4" style="border-top-color: var(--naranja-frenos) !important;">
                         <div class="card-body">
-                            <div class="bg-primary text-white rounded-circle d-inline-flex p-3 mb-3">
+                            <div class="bg-naranja text-white rounded-circle d-inline-flex p-3 mb-3 shadow">
                                 <i class="bi bi-tools fs-3"></i>
                             </div>
                             <h6 class="fw-bold">Estado Actual</h6>
                             @if (hayOrdenActiva)
                             {
-                                <span class="badge bg-primary rounded-pill mb-2">En Reparación</span>
+                                <span class="badge bg-naranja rounded-pill mb-2">En Reparación</span>
                                 <p class="x-small text-muted mb-0">Corolla - A987456</p>
                             }
                             else
                             {
                                 <p class="small text-muted mb-3">Sin servicios activos</p>
-                                <button class="btn btn-sm btn-primary rounded-pill w-100" @onclick='() => navManager.NavigateTo("/catalogo")'>Agendar</button>
+                                <button class="btn btn-sm btn-frenos-naranja rounded-pill w-100" @onclick='() => navManager.NavigateTo("/catalogo")'>Agendar</button>
                             }
                         </div>
                     </div>
                 </div>
 
                 <div class="col-md-6 col-lg-3 mb-4">
-                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white text-center">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white text-center border-top border-4" style="border-top-color: var(--azul-frenos) !important;">
                         <div class="card-body">
-                            <div class="bg-dark text-white rounded-circle d-inline-flex p-3 mb-3">
+                            <div class="bg-azul text-white rounded-circle d-inline-flex p-3 mb-3 shadow">
                                 <i class="bi bi-journal-text fs-3"></i>
                             </div>
                             <h6 class="fw-bold">Historial</h6>
                             <p class="small text-muted mb-3">Servicios realizados</p>
-                            <button class="btn btn-sm btn-outline-dark rounded-pill w-100" @onclick='() => navManager.NavigateTo("/mis-ordenes")'>Consultar</button>
+                            <button class="btn btn-sm btn-frenos-azul rounded-pill w-100" @onclick='() => navManager.NavigateTo("/mis-ordenes")'>Ver todo</button>
                         </div>
                     </div>
                 </div>
 
                 <div class="col-md-6 col-lg-3 mb-4">
-                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white text-center">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white text-center border-top border-4" style="border-top-color: var(--naranja-frenos) !important;">
                         <div class="card-body">
-                            <div class="bg-warning text-dark rounded-circle d-inline-flex p-3 mb-3">
+                            <div class="bg-naranja text-white rounded-circle d-inline-flex p-3 mb-3 shadow">
                                 <i class="bi bi-receipt fs-3"></i>
                             </div>
                             <h6 class="fw-bold">Facturas</h6>
                             <p class="small text-muted mb-3">Pagos y comprobantes</p>
-                            <button class="btn btn-sm btn-outline-warning rounded-pill w-100 text-dark"
-                                    @onclick='() => navManager.NavigateTo("/facturas")'>
+                            <button class="btn btn-sm btn-frenos-naranja rounded-pill w-100" @onclick='() => navManager.NavigateTo("/facturas")'>
                                 Ver Pagos
                             </button>
                         </div>
@@ -82,23 +106,53 @@
             </div>
         </Authorized>
 
-        <NotAuthorized>
-            <div class="text-center py-5 mb-5 bg-white rounded-4 shadow-sm border-0">
-                <div class="bg-success text-white d-inline-flex align-items-center justify-content-center rounded-circle mb-4 shadow"
-                     style="width: 120px; height: 120px;">
-                    <i class="bi bi-car-front-fill" style="font-size: 4.5rem;"></i>
+<NotAuthorized>
+            <div class="hero-section text-center shadow-lg mb-5">
+                
+                <div class="d-flex justify-content-center mb-4"> 
+                    <div class="bg-white shadow-lg d-flex align-items-center justify-content-center p-0"  
+                         style="width: 220px; height: 220px; border-radius: 50%; overflow: hidden; border: 5px solid white;">
+                        <img src="images/logo_frenos_maestro.png" 
+                             alt="Frenos Maestro Logo" 
+                             style="width: 130% !important; height: 130% !important; object-fit: contain;" /> 
+                    </div>
                 </div>
-                <h1 class="fw-bold display-5">Taller de Frenos</h1>
-                <p class="text-muted fs-5 mx-auto" style="max-width: 600px;">
+
+                <h1 class="fw-bold display-4 text-white">Frenos Maestro</h1>
+                <p class="fs-5 mx-auto text-white opacity-90" style="max-width: 700px;">
                     Seguridad y confianza en cada frenada. Regístrate para gestionar tus vehículos, ver estados de reparación y facturas.
                 </p>
-                <div class="mt-4 d-flex justify-content-center gap-3">
-                    <button class="btn btn-success btn-lg rounded-pill px-5 shadow" @onclick='() => navManager.NavigateTo("/login")'>
+
+                <div class="mt-4 d-flex flex-column flex-sm-row justify-content-center gap-3 align-items-center">
+                    <button class="btn btn-frenos-naranja btn-lg rounded-pill px-5 shadow fw-bold" 
+                            style="min-width: 200px;" @onclick='() => navManager.NavigateTo("/login")'>
                         Ingresar
                     </button>
-                    <button class="btn btn-outline-dark btn-lg rounded-pill px-5" @onclick='() => navManager.NavigateTo("/registro")'>
-                        Crear Cuenta
+                    <button class="btn btn-light btn-lg rounded-pill px-5 text-primary fw-bold shadow" 
+                            style="min-width: 200px;" @onclick='() => navManager.NavigateTo("/registro")'>
+                        Registrarse
                     </button>
+                </div>
+            </div>
+
+            <div class="row mb-5 align-items-center bg-white rounded-4 p-4 shadow-sm mx-0 border-start border-5" style="border-left-color: var(--azul-frenos) !important;">
+                <div class="col-md-6">
+                    <h3 class="fw-bold" style="color: var(--azul-frenos)">Sobre Nosotros</h3>
+                    <p class="text-muted">
+                        Frenos Maestro nace para eliminar los procesos manuales y los formularios en papel que generan retrasos. 
+                        No solo cambiamos piezas, garantizamos tu seguridad mediante diagnósticos digitales y componentes de alta calidad. 
+                    </p>
+                    <ul class="list-unstyled">
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i> Digitalizamos la recepción para evitar errores administrativos</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i> Técnicos Altamente Capacitados</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i> Garantía en todos nuestros servicios</li>
+                    </ul>
+                </div>
+                <div class="col-md-6 text-center">
+                    <div class="p-4 bg-light rounded-4">
+                        <i class="bi bi-shield-check display-1 text-primary"></i>
+                        <p class="fw-bold mt-2 mb-0">Tu seguridad es nuestra prioridad</p>
+                    </div>
                 </div>
             </div>
         </NotAuthorized>
@@ -106,28 +160,28 @@
 
     <div class="row g-4 mt-2">
         <div class="col-md-4">
-            <div class="d-flex align-items-center p-3 bg-light rounded-4 h-100">
-                <i class="bi bi-geo-alt-fill text-success fs-3 me-3"></i>
+            <div class="d-flex align-items-center p-3 bg-white shadow-sm rounded-4 h-100">
+                <i class="bi bi-geo-alt-fill fs-3 me-3" style="color: var(--naranja-frenos)"></i>
                 <div class="small">
-                    <h6 class="fw-bold mb-0">Ubicación</h6>
+                    <h6 class="fw-bold mb-0 text-dark">Ubicación</h6>
                     <span class="text-muted">Av. Abraham Lincoln #123, Santo Domingo, R.D.</span>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="d-flex align-items-center p-3 bg-light rounded-4 h-100">
-                <i class="bi bi-telephone-fill text-success fs-3 me-3"></i>
+            <div class="d-flex align-items-center p-3 bg-white shadow-sm rounded-4 h-100">
+                <i class="bi bi-telephone-fill fs-3 me-3" style="color: var(--naranja-frenos)"></i>
                 <div class="small">
-                    <h6 class="fw-bold mb-0">Contacto</h6>
-                    <span class="text-muted">T: (809) 555-0199<br />E: info@frenos.do</span>
+                    <h6 class="fw-bold mb-0 text-dark">Contacto</h6>
+                    <span class="text-muted">T: (809) 000-0000<br />E: info@frenosmaestro.do</span>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="d-flex align-items-center p-3 bg-light rounded-4 h-100">
-                <i class="bi bi-clock-fill text-success fs-3 me-3"></i>
+            <div class="d-flex align-items-center p-3 bg-white shadow-sm rounded-4 h-100">
+                <i class="bi bi-clock-fill fs-3 me-3" style="color: var(--naranja-frenos)"></i>
                 <div class="small">
-                    <h6 class="fw-bold mb-0">Horarios</h6>
+                    <h6 class="fw-bold mb-0 text-dark">Horarios</h6>
                     <span class="text-muted">Lunes - Viernes: 8:00 AM - 6:00 PM<br />Sábados: 8:00 AM - 12:00 PM</span>
                 </div>
             </div>
