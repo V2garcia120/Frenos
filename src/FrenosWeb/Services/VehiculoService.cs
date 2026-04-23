@@ -34,14 +34,22 @@ namespace FrenosWeb.Services
 
         public async Task<bool> RegistrarVehiculoAsync(VehiculoModel vehiculo)
         {
-            var response = await _http.PostAsJsonAsync("int/vehiculos", vehiculo);
-
-            if (response.IsSuccessStatusCode)
+            try
             {
-                var result = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
-                return result?.Success ?? false;
+                var response = await _http.PostAsJsonAsync("int/vehiculos", vehiculo);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+                    return result?.Success ?? false;
+                }
+                return false;
             }
-            return false;
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Cyber-Logs] Error al registrar vehículo: {ex.Message}");
+                return false;
+            }
         }
 
         private List<VehiculoModel> ObtenerVehiculosPrueba()

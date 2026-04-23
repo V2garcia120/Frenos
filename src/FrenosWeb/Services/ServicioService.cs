@@ -22,7 +22,7 @@ namespace FrenosWeb.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Cyber-Logs] Error en Catálogo: {ex.Message}");
+                Console.WriteLine($"[Cyber-Logs] Fallo en API Servicios: {ex.Message}");
                 return ObtenerServiciosPrueba();
             }
         }
@@ -39,9 +39,24 @@ namespace FrenosWeb.Services
                 }
                 return ObtenerProductosPrueba();
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Cyber-Logs] Fallo en API Productos: {ex.Message}");
+                return ObtenerProductosPrueba();
+            }
+        }
+
+        public async Task<CatalogoResponse> BuscarEnTodoElCatalogoAsync(string consulta)
+        {
+            try
+            {
+                var resp = await _http.GetFromJsonAsync<ApiResponse<CatalogoResponse>>($"int/catalogo/buscar?q={consulta}");
+
+                return resp?.Data ?? new CatalogoResponse();
+            }
             catch
             {
-                return ObtenerProductosPrueba();
+                return new CatalogoResponse();
             }
         }
 

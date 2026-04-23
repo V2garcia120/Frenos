@@ -1,5 +1,5 @@
 ﻿@page "/pago"
-@page "/pago/{MontoExterno:decimal}"
+@page "/pago/{MontoExterno:decimal}/{FacturaId:int}"
 @using FrenosWeb.Services
 @using FrenosWeb.Models
 @using Microsoft.AspNetCore.Authorization
@@ -83,6 +83,7 @@
     private string nombreTarjeta = "";
     private string? mensajeError;
     [Parameter] public decimal MontoExterno { get; set; }
+    [Parameter] public int FacturaId { get; set; }
     private decimal montoAFacturar;
 
     protected override void OnInitialized()
@@ -91,90 +92,53 @@
     }
 
     private async Task ProcesarPago()
+{
+    estaProcesando = true;
+    mensajeError = null;
+
+    try
     {
-        estaProcesando = true;
-        mensajeError = null;
+        bool exito = false;
 
-        // Simulación de error local 
-        if (nombreTarjeta == "ERROR")
+        if (FacturaId > 0)
         {
-            await Task.Delay(1500);
-            mensajeError = "❌ Transacción Declinada: Simulación de error.";
-            estaProcesando = false;
-            return;
-        }
-
-        // 2. Preparar el objeto para Integración 
-        CobroRequest request;
-
-        if (MontoExterno > 0)
-        {
-            // CASO A: Pago de factura existente (desde /facturas)
-            // Como no tenemos los items de una factura vieja en el carrito,
-            // mandamos un item genérico con el monto que traemos de la URL.
-            request = new CobroRequest
-            {
-                MetodoPago = "Tarjeta",
-                MontoPagado = MontoExterno,
-                Items = new List<CobroItemRequest>
-            {
-                new CobroItemRequest { ServicioId = 0, Cantidad = 1, PrecioSnapshot = MontoExterno }
-            }
-            };
+            // Caso A: Pago de factura vieja (Taller)
+            exito = await facturaService.ProcesarPagoFacturaAsync(FacturaId, montoAFacturar);
         }
         else
         {
-            // CASO B: Pago de orden nueva (desde el Carrito)
-            request = carritoService.PrepararCobro("Tarjeta");
-        }
-
-        try
-        {
-            // 3. Llamada Real a la Integración
-            var response = await http.PostAsJsonAsync("int/caja/cobro", request);
-
-            if (response.IsSuccessStatusCode)
+            // 🚩 Caso B: Cobro de carrito nuevo
+            var request = carritoService.PrepararCobro("Tarjeta");
+            
+            // Llamamos al servicio en lugar de usar HttpClient directamente
+            var resultado = await pagoService.ProcesarCobroAsync(request);
+            
+            exito = resultado.Success;
+            if (!exito)
             {
-                var result = await response.Content.ReadFromJsonAsync<ApiResponse<CobroResponse>>();
-
-                if (result != null && result.Success)
-                {
-                    // Manejo de Modo Offline de Diana
-                    if (result.Data?.Estado == "PendienteSync")
-                    {
-                        await JS.InvokeVoidAsync("alert", "🔐 Pago en cola: Se sincronizará cuando el Core esté online.");
-                    }
-
-                    // 4. Limpieza y Navegación Inteligente
-                    await carritoService.Limpiar();
-                
-                    if (MontoExterno > 0)
-                    {
-                        facturaService.MarcarComoPagadaLocal(MontoExterno); // Para simulación local
-                        navManager.NavigateTo("/facturas");
-                    }
-                    else
-                    {
-                        navManager.NavigateTo("/mis-ordenes");
-                    }
-                }
-                else
-                {
-                    mensajeError = $"❌ Error: {result.Error?.Mensaje ?? "Transacción fallida"}";
-                }
-            }
-            else
-            {
-                mensajeError = "❌ Error de comunicación con el servidor de pagos.";
+                mensajeError = $"❌ {resultado.Error?.Mensaje ?? "Error en la transacción"}";
             }
         }
-        catch (Exception ex)
-        {
-            mensajeError = $"❌ Fallo crítico: {ex.Message}";
-        }
 
+        if (exito)
+        {
+            await carritoService.Limpiar();
+            navManager.NavigateTo(FacturaId > 0 ? "/facturas" : "/mis-ordenes");
+        }
+        else if (string.IsNullOrEmpty(mensajeError)) 
+        {
+            mensajeError = "❌ El pago no pudo ser procesado.";
+        }
+    }
+    catch (Exception ex)
+    {
+        mensajeError = $"❌ Fallo crítico: {ex.Message}";
+    }
+    finally
+    {
         estaProcesando = false;
     }
+}
 
     private void ValidarExpiracion(KeyboardEventArgs e)
     {

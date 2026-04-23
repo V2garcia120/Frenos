@@ -114,10 +114,12 @@ namespace FrenosWeb.Services
 
         private void NotifyStateChanged() => OnChange?.Invoke();
 
-        public CobroRequest PrepararCobro(string metodoPago)
+        public CobroRequest PrepararCobro(string metodoPago, int? vehiculoId = null)
         {
             return new CobroRequest
             {
+                VehiculoId = vehiculoId, 
+
                 Items = Items.Select(i => new CobroItemRequest
                 {
                     ServicioId = i.Servicio.Id,

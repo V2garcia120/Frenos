@@ -52,6 +52,20 @@ namespace FrenosWeb.Services
             }
         }
 
+        public async Task<OrdenWebModel?> GetEstadoOrdenAsync(int id)
+        {
+            try
+            {
+                var response = await _http.GetFromJsonAsync<ApiResponse<OrdenWebModel>>($"int/caja/ordenes/{id}/estado");
+                return response?.Data;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Cyber-Logs] No se pudo obtener el estado real: {ex.Message}");
+                return null; 
+            }
+        }
+
         private List<OrdenWebModel> ObtenerDatosPrueba()
         {
             return new List<OrdenWebModel>

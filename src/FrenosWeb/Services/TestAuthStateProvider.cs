@@ -46,13 +46,34 @@ namespace FrenosWeb.Services
 
         private IEnumerable<Claim> ParseClaimsFromJwt(string jwt)
         {
+            var claims = new List<Claim>();
             var payload = jwt.Split('.')[1];
             var jsonBytes = ParseBase64WithoutPadding(payload);
             var keyValuePairs = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonBytes);
 
-            if (keyValuePairs == null) return new List<Claim>();
-
-            return keyValuePairs.Select(kvp => new Claim(kvp.Key, kvp.Value.ToString() ?? ""));
+            if (keyValuePairs != null)
+            {
+                foreach (var kvp in keyValuePairs)
+                {
+                    switch (kvp.Key)
+                    {
+                        case "role":
+                            claims.Add(new Claim(ClaimTypes.Role, kvp.Value.ToString() ?? ""));
+                            break;
+                        case "unique_name":
+                        case "email":
+                            claims.Add(new Claim(ClaimTypes.Name, kvp.Value.ToString() ?? ""));
+                            break;
+                        case "nameid": 
+                            claims.Add(new Claim(ClaimTypes.NameIdentifier, kvp.Value.ToString() ?? ""));
+                            break;
+                        default:
+                            claims.Add(new Claim(kvp.Key, kvp.Value.ToString() ?? ""));
+                            break;
+                    }
+                }
+            }
+            return claims;
         }
 
         private byte[] ParseBase64WithoutPadding(string base64)

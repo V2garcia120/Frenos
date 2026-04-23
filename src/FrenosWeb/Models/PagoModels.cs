@@ -6,6 +6,7 @@
         public List<CobroItemRequest> Items { get; set; } = new();
         public string MetodoPago { get; set; } = "Tarjeta";
         public decimal MontoPagado { get; set; }
+        public int? VehiculoId { get; set; }
     }
 
     // Esta es la estructura de cada producto/servicio dentro de la lista

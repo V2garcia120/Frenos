@@ -12,11 +12,11 @@ namespace FrenosWeb.Services
             _http = http;
         }
 
-        public async Task<List<FacturaModel>> GetFacturasUsuarioAsync()
+        public async Task<List<FacturaModel>> GetFacturasUsuarioAsync(int clienteId)
         {
             try
             {
-                var response = await _http.GetFromJsonAsync<ApiResponse<List<FacturaModel>>>("int/facturas");
+                var response = await _http.GetFromJsonAsync<ApiResponse<List<FacturaModel>>>($"int/caja/facturas/{clienteId}");
 
                 if (response != null && response.Success && response.Data != null)
                 {
@@ -32,10 +32,11 @@ namespace FrenosWeb.Services
             }
         }
 
-        public async Task<bool> ProcesarPagoFacturaAsync(int facturaId, decimal monto, int turnoId)
+        public async Task<bool> ProcesarPagoFacturaAsync(int facturaId, decimal monto, int turnoId = 0)
         {
             try
             {
+                int turnoFinal = turnoId > 0 ? turnoId : 0;
                 var request = new { TurnoId = turnoId, MetodoPago = "Tarjeta", Monto = monto };
 
                 var response = await _http.PostAsJsonAsync($"int/caja/facturas/{facturaId}/pago", request);
