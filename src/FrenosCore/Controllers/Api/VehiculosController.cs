@@ -30,6 +30,13 @@ namespace FrenosCore.Controllers.Api
             return Ok(ApiResponse<object>.Ok(vehiculos));
         }
 
+        [HttpGet("{vehiculoId:int}/historial-reparaciones")]
+        public async Task<IActionResult> ListarHistorialReparaciones(int vehiculoId)
+        {
+            var historial = await _vehiculoService.ListarHistorialReparacionesAsync(vehiculoId);
+            return Ok(ApiResponse<object>.Ok(historial));
+        }
+
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Actualizar(int id, [FromBody] ActualizarVehiculoRequest request)
         {

@@ -90,7 +90,7 @@ namespace TallerCaja.Forms
                 DialogResult = DialogResult.OK;
                 Close();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Si falla Integración, guardar solo en local
                 var turnoLocal = new TurnoLocal

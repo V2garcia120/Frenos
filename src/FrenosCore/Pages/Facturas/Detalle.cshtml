@@ -22,9 +22,12 @@
 }
 else
 {
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-3 no-print">
         <h1 class="h3 mb-0">Factura @Model.Factura.Numero</h1>
-        <a asp-page="/Facturas/Index" class="btn btn-outline-secondary">Volver al listado</a>
+        <div class="d-flex gap-2">
+            <a asp-page="/Facturas/Imprimir" asp-route-id="@Model.Factura.Id" class="btn btn-outline-primary" target="_blank" rel="noopener">Imprimir factura</a>
+            <a asp-page="/Facturas/Index" class="btn btn-outline-secondary">Volver al listado</a>
+        </div>
     </div>
 
     <div class="card mb-4">
@@ -34,7 +37,7 @@ else
             <div class="col-md-3"><strong>Origen:</strong> @Model.Factura.TipoOrigen</div>
             <div class="col-md-3"><strong>Estado:</strong> @Model.Factura.Estado</div>
             <div class="col-md-3"><strong>Método pago:</strong> @(Model.Factura.MetodoPago ?? "-")</div>
-            <div class="col-md-6"><strong>Cliente:</strong> @Model.Factura.ClienteNombre</div>
+            <div class="col-md-3"><strong>Cliente:</strong> @Model.Factura.ClienteNombre</div>
             <div class="col-md-6"><strong>Fecha:</strong> @Model.Factura.Fecha.ToString("dd/MM/yyyy HH:mm")</div>
             <div class="col-md-4"><strong>Subtotal:</strong> @Model.Factura.Subtotal.ToString("C")</div>
             <div class="col-md-4"><strong>ITBIS:</strong> @Model.Factura.Itbis.ToString("C")</div>

@@ -1,4 +1,5 @@
-﻿using FrenosIntegracion.Models.DTOs;
+﻿using FrenosIntegracion.DTOs;
+using FrenosIntegracion.Models.DTOs;
 
 namespace FrenosIntegracion.Services.Core
 {
@@ -29,5 +30,6 @@ namespace FrenosIntegracion.Services.Core
         Task<IEnumerable<object>> ObtenerVehiculosClienteAsync();
         Task<object> RegistrarVehiculoAsync(object vehiculo);
         Task<IEnumerable<object>> ObtenerHistorialOrdenesAsync();
+        Task<bool> RegistrarClienteAsync(ClienteRegistroDto cliente);
     }
 }

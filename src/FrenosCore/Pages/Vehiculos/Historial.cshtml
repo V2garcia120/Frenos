@@ -1,0 +1,68 @@
+@page "{vehiculoId:int}"
+@model FrenosCore.Pages.Vehiculos.HistorialModel
+@{
+    ViewData["Title"] = "Historial de reparaciones";
+}
+
+<div class="module-header mb-4">
+    <div>
+        <h1 class="h3 mb-1">Historial de reparaciones</h1>
+        <p class="text-secondary mb-0">Vehículo #@Model.VehiculoId</p>
+    </div>
+    @if (Model.OrdenIdRegreso.HasValue)
+    {
+        <a asp-page="/Ordenes/Detalle" asp-route-id="@Model.OrdenIdRegreso.Value" class="btn btn-outline-secondary">Volver a la orden</a>
+    }
+    else
+    {
+        <a asp-page="/Ordenes/Index" class="btn btn-outline-secondary">Volver a órdenes</a>
+    }
+</div>
+
+<div class="card">
+    <div class="card-header">Registros (@Model.Historial.Count)</div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Orden</th>
+                        <th>Técnico</th>
+                        <th class="text-end">KM servicio</th>
+                        <th>Trabajos realizados</th>
+                        <th class="text-end">Próximo KM</th>
+                        <th class="text-end">Próxima fecha</th>
+                        <th class="text-end">Garantía hasta</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Historial.Any())
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center py-4">No hay reparaciones registradas para este vehículo.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model.Historial)
+                        {
+                            <tr>
+                                <td>@item.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>
+                                    <a asp-page="/Ordenes/Detalle" asp-route-id="@item.OrdenId" class="text-decoration-none">#@item.OrdenId</a>
+                                </td>
+                                <td>@item.TecnicoNombre</td>
+                                <td class="text-end">@(item.KmAlServicio?.ToString("N0") ?? "-")</td>
+                                <td>@item.TrabajosRealizados</td>
+                                <td class="text-end">@(item.ProximoServicioKm?.ToString("N0") ?? "-")</td>
+                                <td class="text-end">@(item.ProximoServicioFecha?.ToString("dd/MM/yyyy") ?? "-")</td>
+                                <td class="text-end">@item.GarantiaHasta.ToString("dd/MM/yyyy")</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

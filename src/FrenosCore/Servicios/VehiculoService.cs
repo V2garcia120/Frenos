@@ -79,6 +79,34 @@ namespace FrenosCore.Servicios
                 .ToListAsync();
         }
 
+        public async Task<IReadOnlyList<HistorialReparacionResponse>> ListarHistorialReparacionesAsync(int vehiculoId)
+        {
+            var vehiculoExiste = await _context.Vehiculo.AnyAsync(v => v.Id == vehiculoId);
+            if (!vehiculoExiste)
+                throw new KeyNotFoundException($"Vehículo con ID {vehiculoId} no encontrado.");
+
+            return await _context.HistorialReparacion
+                .AsNoTracking()
+                .Where(h => h.VehiculoId == vehiculoId)
+                .Include(h => h.Tecnico)
+                .Include(h => h.Orden)
+                .OrderByDescending(h => h.Fecha)
+                .Select(h => new HistorialReparacionResponse(
+                    h.Id,
+                    h.VehiculoId,
+                    h.OrdenId,
+                    h.TecnicoId,
+                    h.Tecnico.Nombre,
+                    h.KmAlServicio,
+                    h.TrabajosRealizados,
+                    h.ProximoServicioKm,
+                    h.ProximoServicioFecha,
+                    h.GarantiaDias,
+                    h.GarantiaHasta,
+                    h.Fecha))
+                .ToListAsync();
+        }
+
         public async Task<VehiculoResponse> ActualizarAsync(int id, ActualizarVehiculoRequest request)
         {
             var vehiculo = await _context.Vehiculo
