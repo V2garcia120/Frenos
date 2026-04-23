@@ -1,4 +1,6 @@
-﻿using FrenosIntegracion.Models.DTOs;
+﻿using FrenosIntegracion.DTOs;
+using FrenosIntegracion.Models.DTOs;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -164,6 +166,13 @@ namespace FrenosIntegracion.Services.Core
         {
             var response = await _http.GetAsync("/api/ordenes/historial");
             return await Deserializar<IEnumerable<object>>(response) ?? Enumerable.Empty<object>();
+        }
+
+        public async Task<bool> RegistrarClienteAsync(ClienteRegistroDto cliente)
+        {
+            // Cambiamos _httpClient por _http para que coincida con tu variable privada
+            var response = await _http.PostAsJsonAsync("api/clientes/CrearCliente", cliente);
+            return response.IsSuccessStatusCode;
         }
     }
 
