@@ -1,0 +1,246 @@
+@page "{id:int}"
+@model FrenosCore.Pages.Facturas.ImprimirModel
+@{
+    Layout = null;
+    var factura = Model.Factura;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Factura @factura?.Numero</title>
+    <style>
+        :root {
+            --border: #d1d5db;
+            --text: #111827;
+            --muted: #6b7280;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            color: var(--text);
+            margin: 0;
+            background: #f3f4f6;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            padding: 16px;
+        }
+
+        .toolbar button,
+        .toolbar a {
+            border: 1px solid #9ca3af;
+            background: white;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #111827;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .sheet {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto 20px;
+            background: white;
+            padding: 16mm;
+            border: 1px solid var(--border);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            gap: 24px;
+        }
+
+        .title {
+            margin: 0;
+            font-size: 28px;
+            letter-spacing: 1px;
+        }
+
+        .muted {
+            color: var(--muted);
+            font-size: 13px;
+            margin: 2px 0;
+        }
+
+        .box {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 6px;
+            margin-bottom: 14px;
+        }
+
+        .table th,
+        .table td {
+            border: 1px solid var(--border);
+            padding: 8px;
+            font-size: 13px;
+        }
+
+        .table th {
+            background: #f9fafb;
+            text-align: left;
+        }
+
+        .text-end {
+            text-align: right;
+        }
+
+        .totales {
+            width: 320px;
+            margin-left: auto;
+            border-collapse: collapse;
+        }
+
+        .totales td {
+            border: 1px solid var(--border);
+            padding: 8px;
+            font-size: 13px;
+        }
+
+        .totales tr:last-child td {
+            font-weight: 700;
+            background: #f9fafb;
+        }
+
+        .footer {
+            margin-top: 26px;
+            font-size: 12px;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        @@media print {
+            body {
+                background: white;
+            }
+
+            .toolbar {
+                display: none;
+            }
+
+            .sheet {
+                margin: 0;
+                border: none;
+                width: auto;
+                min-height: auto;
+                padding: 0;
+            }
+
+            @@page {
+                size: A4;
+                margin: 12mm;
+            }
+        }
+    </style>
+</head>
+<body>
+    @if (factura is null)
+    {
+        <div style="padding:20px;">No se encontró la factura.</div>
+    }
+    else
+    {
+        <div class="toolbar">
+            <button type="button" onclick="window.print()">Imprimir</button>
+            <a asp-page="/Facturas/Detalle" asp-route-id="@factura.Id">Volver</a>
+        </div>
+
+        <section class="sheet">
+            <header class="header">
+                <div>
+                    <h1 class="title">FACTURA</h1>
+                    <p class="muted">Taller de Frenos</p>
+                    <p class="muted">Documento fiscal de venta</p>
+                </div>
+                <div class="box">
+                    <p class="muted"><strong>Número:</strong> @factura.Numero</p>
+                    <p class="muted"><strong>Fecha:</strong> @factura.Fecha.ToString("dd/MM/yyyy HH:mm")</p>
+                    <p class="muted"><strong>Estado:</strong> @factura.Estado</p>
+                    <p class="muted"><strong>Método pago:</strong> @(factura.MetodoPago ?? "-")</p>
+                </div>
+            </header>
+
+            <div class="grid">
+                <div class="box">
+                    <p class="muted"><strong>Cliente:</strong> @factura.ClienteNombre</p>
+                    <p class="muted"><strong>Vehículo:</strong> @factura.VehiculoInfo</p>
+                </div>
+                <div class="box">
+                    <p class="muted"><strong>Origen:</strong> @factura.TipoOrigen</p>
+                    <p class="muted"><strong>Emitida por:</strong> @factura.EmitidaPorNombre</p>
+                    <p class="muted"><strong>Referencia:</strong> #@factura.Id</p>
+                </div>
+            </div>
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Descripción</th>
+                        <th class="text-end">Cantidad</th>
+                        <th class="text-end">Precio unitario</th>
+                        <th class="text-end">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in factura.Items)
+                    {
+                        <tr>
+                            <td>@item.Tipo</td>
+                            <td>@item.Descripcion</td>
+                            <td class="text-end">@item.Cantidad</td>
+                            <td class="text-end">@item.PrecioUnitario.ToString("C")</td>
+                            <td class="text-end">@item.Subtotal.ToString("C")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <table class="totales">
+                <tr>
+                    <td>Subtotal</td>
+                    <td class="text-end">@factura.Subtotal.ToString("C")</td>
+                </tr>
+                <tr>
+                    <td>ITBIS</td>
+                    <td class="text-end">@factura.Itbis.ToString("C")</td>
+                </tr>
+                <tr>
+                    <td>Total</td>
+                    <td class="text-end">@factura.Total.ToString("C")</td>
+                </tr>
+            </table>
+
+            <footer class="footer">
+                Factura generada por el sistema FrenosCore
+            </footer>
+        </section>
+    }
+</body>
+</html>

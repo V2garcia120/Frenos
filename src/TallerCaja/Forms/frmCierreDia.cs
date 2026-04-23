@@ -1,5 +1,6 @@
 using TallerCaja.Helpers;
 using TallerCaja.Services;
+using System.Text;
 
 namespace TallerCaja.Forms
 {
@@ -83,6 +84,13 @@ namespace TallerCaja.Forms
                 "Confirmar cierre", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                 return;
 
+            var ventas = _local.ObtenerVentasDelTurno(_localTurnoId);
+            var turno = _local.ObtenerTurnoActivo(SessionManager.CajeroId);
+            var montoInicial = turno?.MontoInicial ?? 0m;
+            var efectivoVentas = ventas.Where(v => v.MetodoPago == "Efectivo").Sum(v => v.MontoPagado - v.Cambio);
+            var efectivoEsperado = montoInicial + efectivoVentas;
+            var diferencia = contado - efectivoEsperado;
+
             btnCerrar.Enabled = false;
             btnCerrar.Text = "Cerrando...";
 
@@ -97,7 +105,6 @@ namespace TallerCaja.Forms
 
                 var resp = await _integracion.CerrarTurnoAsync(request);
 
-                var turno = _local.ObtenerTurnoActivo(SessionManager.CajeroId);
                 if (turno != null)
                 {
                     turno.Estado = "Cerrado";
@@ -108,12 +115,12 @@ namespace TallerCaja.Forms
                 }
 
                 MessageBox.Show("Turno cerrado correctamente.", "Turno cerrado", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MostrarCuadreCierre(ventas, montoInicial, efectivoEsperado, contado, diferencia);
                 DialogResult = DialogResult.OK;
                 Close();
             }
             catch
             {
-                var turno = _local.ObtenerTurnoActivo(SessionManager.CajeroId);
                 if (turno != null)
                 {
                     turno.Estado = "Cerrado"; turno.EfectivoContado = contado;
@@ -122,9 +129,57 @@ namespace TallerCaja.Forms
                 }
                 MessageBox.Show("Turno cerrado localmente. Se sincronizará cuando haya conexión.",
                     "Modo Offline", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MostrarCuadreCierre(ventas, montoInicial, efectivoEsperado, contado, diferencia);
                 DialogResult = DialogResult.OK;
                 Close();
             }
+        }
+
+        private void MostrarCuadreCierre(List<Models.Entities.VentaLocal> ventas, decimal montoInicial, decimal efectivoEsperado, decimal contado, decimal diferencia)
+        {
+            var texto = GenerarTextoCuadreCierre(ventas, montoInicial, efectivoEsperado, contado, diferencia);
+            var badge = $"CUADRE DE CIERRE - TURNO #{SessionManager.TurnoId}";
+
+            using var frm = new frmRecibo(texto, badge, Color.FromArgb(15, 23, 42), "Cuadre de Cierre");
+            frm.ShowDialog(this);
+        }
+
+        private string GenerarTextoCuadreCierre(List<Models.Entities.VentaLocal> ventas, decimal montoInicial, decimal efectivoEsperado, decimal contado, decimal diferencia)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("═══════════════════════════════════════");
+            sb.AppendLine($"       {AppConfig.NombreTaller}");
+            sb.AppendLine("═══════════════════════════════════════");
+            sb.AppendLine($" Cuadre de cierre - Turno #{SessionManager.TurnoId}");
+            sb.AppendLine($" Fecha:   {DateTime.Now:dd/MM/yyyy HH:mm}");
+            sb.AppendLine($" Cajero:  {SessionManager.CajeroNombre}");
+            sb.AppendLine("───────────────────────────────────────");
+            sb.AppendLine($" {"Transacción",-12} {"Método",-10} {"Monto",10}");
+            sb.AppendLine("───────────────────────────────────────");
+
+            foreach (var venta in ventas.OrderBy(v => v.FechaVenta))
+            {
+                var referencia = !string.IsNullOrWhiteSpace(venta.NumeroFactura)
+                    ? venta.NumeroFactura
+                    : (venta.IdLocal.Length >= 8 ? venta.IdLocal[..8].ToUpper() : venta.IdLocal.ToUpper());
+
+                var refCorta = referencia.Length > 12 ? referencia[..12] : referencia;
+                var metodo = venta.MetodoPago.Length > 10 ? venta.MetodoPago[..10] : venta.MetodoPago;
+                sb.AppendLine($" {refCorta,-12} {metodo,-10} {venta.Total,10:N2}");
+            }
+
+            var totalVentas = ventas.Sum(v => v.Total);
+            var totalEfectivo = ventas.Where(v => v.MetodoPago == "Efectivo").Sum(v => v.MontoPagado - v.Cambio);
+            sb.AppendLine("───────────────────────────────────────");
+            sb.AppendLine($" {"Transacciones:",-22}      {ventas.Count,10}");
+            sb.AppendLine($" {"Total ventas:",-22}      {totalVentas,10:N2}");
+            sb.AppendLine($" {"Total efectivo:",-22}      {totalEfectivo,10:N2}");
+            sb.AppendLine($" {"Monto inicial:",-22}      {montoInicial,10:N2}");
+            sb.AppendLine($" {"Efectivo esperado:",-22}      {efectivoEsperado,10:N2}");
+            sb.AppendLine($" {"Efectivo contado:",-22}      {contado,10:N2}");
+            sb.AppendLine($" {"Diferencia:",-22}      {diferencia,10:N2}");
+            sb.AppendLine("═══════════════════════════════════════");
+            return sb.ToString();
         }
 
         private void btnCancelar_Click(object s, EventArgs e) { DialogResult = DialogResult.Cancel; Close(); }

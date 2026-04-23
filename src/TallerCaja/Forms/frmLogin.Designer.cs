@@ -23,129 +23,171 @@ namespace TallerCaja.Forms
             btnLogin = new Button();
             lblEstado = new Label();
             lblVersion = new Label();
-            picLogo = new PictureBox();
             panelFondo.SuspendLayout();
             panelCard.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)picLogo).BeginInit();
             SuspendLayout();
-
+            // 
             // panelFondo
+            // 
             panelFondo.BackColor = Color.FromArgb(15, 23, 42);
-            panelFondo.Dock = DockStyle.Fill;
             panelFondo.Controls.Add(panelCard);
-
+            panelFondo.Dock = DockStyle.Fill;
+            panelFondo.Location = new Point(0, 0);
+            panelFondo.Margin = new Padding(4, 5, 4, 5);
+            panelFondo.Name = "panelFondo";
+            panelFondo.Size = new Size(1143, 1067);
+            panelFondo.TabIndex = 0;
+            // 
             // panelCard
+            // 
             panelCard.BackColor = Color.FromArgb(30, 41, 59);
-            panelCard.BorderStyle = BorderStyle.None;
-            panelCard.Size = new Size(420, 520);
-            panelCard.Location = new Point(190, 60);
-            panelCard.Controls.AddRange(new Control[] {
-                lblTitulo, lblSubtitulo, lblEmailLabel, txtEmail,
-                lblPassLabel, txtPassword, btnLogin, lblEstado, lblVersion, picLogo
-            });
-
-            // picLogo (ícono visual)
-            picLogo.Size = new Size(64, 64);
-            picLogo.Location = new Point(178, 30);
-            picLogo.BackColor = Color.FromArgb(59, 130, 246);
-            picLogo.SizeMode = PictureBoxSizeMode.CenterImage;
-
+            panelCard.Controls.Add(lblTitulo);
+            panelCard.Controls.Add(lblSubtitulo);
+            panelCard.Controls.Add(lblEmailLabel);
+            panelCard.Controls.Add(txtEmail);
+            panelCard.Controls.Add(lblPassLabel);
+            panelCard.Controls.Add(txtPassword);
+            panelCard.Controls.Add(btnLogin);
+            panelCard.Controls.Add(lblEstado);
+            panelCard.Controls.Add(lblVersion);
+            panelCard.Location = new Point(271, 100);
+            panelCard.Margin = new Padding(4, 5, 4, 5);
+            panelCard.Name = "panelCard";
+            panelCard.Size = new Size(600, 867);
+            panelCard.TabIndex = 0;
+            // 
             // lblTitulo
-            lblTitulo.AutoSize = false;
-            lblTitulo.Size = new Size(380, 36);
-            lblTitulo.Location = new Point(20, 110);
-            lblTitulo.Text = "TALLER DE FRENOS";
+            // 
             lblTitulo.Font = new Font("Segoe UI", 20F, FontStyle.Bold);
             lblTitulo.ForeColor = Color.White;
+            lblTitulo.Location = new Point(29, 148);
+            lblTitulo.Margin = new Padding(4, 0, 4, 0);
+            lblTitulo.Name = "lblTitulo";
+            lblTitulo.Size = new Size(543, 60);
+            lblTitulo.TabIndex = 0;
+            lblTitulo.Text = "TALLER DE FRENOS";
             lblTitulo.TextAlign = ContentAlignment.MiddleCenter;
-
+            // 
             // lblSubtitulo
-            lblSubtitulo.AutoSize = false;
-            lblSubtitulo.Size = new Size(380, 24);
-            lblSubtitulo.Location = new Point(20, 148);
-            lblSubtitulo.Text = "Sistema de Caja";
+            // 
             lblSubtitulo.Font = new Font("Segoe UI", 11F);
             lblSubtitulo.ForeColor = Color.FromArgb(148, 163, 184);
+            lblSubtitulo.Location = new Point(29, 212);
+            lblSubtitulo.Margin = new Padding(4, 0, 4, 0);
+            lblSubtitulo.Name = "lblSubtitulo";
+            lblSubtitulo.Size = new Size(543, 40);
+            lblSubtitulo.TabIndex = 1;
+            lblSubtitulo.Text = "Sistema de Caja";
             lblSubtitulo.TextAlign = ContentAlignment.MiddleCenter;
-
+            // 
             // lblEmailLabel
+            // 
             lblEmailLabel.AutoSize = true;
-            lblEmailLabel.Location = new Point(30, 200);
-            lblEmailLabel.Text = "Correo electrónico";
             lblEmailLabel.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             lblEmailLabel.ForeColor = Color.FromArgb(148, 163, 184);
-
+            lblEmailLabel.Location = new Point(43, 333);
+            lblEmailLabel.Margin = new Padding(4, 0, 4, 0);
+            lblEmailLabel.Name = "lblEmailLabel";
+            lblEmailLabel.Size = new Size(169, 25);
+            lblEmailLabel.TabIndex = 2;
+            lblEmailLabel.Text = "Correo electrónico";
+            // 
             // txtEmail
-            txtEmail.Location = new Point(30, 220);
-            txtEmail.Size = new Size(360, 36);
-            txtEmail.Font = new Font("Segoe UI", 11F);
+            // 
             txtEmail.BackColor = Color.FromArgb(51, 65, 85);
-            txtEmail.ForeColor = Color.White;
             txtEmail.BorderStyle = BorderStyle.FixedSingle;
+            txtEmail.Font = new Font("Segoe UI", 11F);
+            txtEmail.ForeColor = Color.White;
+            txtEmail.Location = new Point(43, 367);
+            txtEmail.Margin = new Padding(4, 5, 4, 5);
+            txtEmail.Name = "txtEmail";
+            txtEmail.Size = new Size(513, 37);
+            txtEmail.TabIndex = 3;
             txtEmail.Text = "cajero@taller.com";
-
+            // 
             // lblPassLabel
+            // 
             lblPassLabel.AutoSize = true;
-            lblPassLabel.Location = new Point(30, 275);
-            lblPassLabel.Text = "Contraseña";
             lblPassLabel.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             lblPassLabel.ForeColor = Color.FromArgb(148, 163, 184);
-
+            lblPassLabel.Location = new Point(43, 458);
+            lblPassLabel.Margin = new Padding(4, 0, 4, 0);
+            lblPassLabel.Name = "lblPassLabel";
+            lblPassLabel.Size = new Size(108, 25);
+            lblPassLabel.TabIndex = 4;
+            lblPassLabel.Text = "Contraseña";
+            // 
             // txtPassword
-            txtPassword.Location = new Point(30, 295);
-            txtPassword.Size = new Size(360, 36);
-            txtPassword.Font = new Font("Segoe UI", 11F);
-            txtPassword.PasswordChar = '●';
+            // 
             txtPassword.BackColor = Color.FromArgb(51, 65, 85);
-            txtPassword.ForeColor = Color.White;
             txtPassword.BorderStyle = BorderStyle.FixedSingle;
-            txtPassword.KeyDown += txtPassword_KeyDown;
+            txtPassword.Font = new Font("Segoe UI", 11F);
+            txtPassword.ForeColor = Color.White;
+            txtPassword.Location = new Point(43, 492);
+            txtPassword.Margin = new Padding(4, 5, 4, 5);
+            txtPassword.Name = "txtPassword";
+            txtPassword.PasswordChar = '●';
+            txtPassword.Size = new Size(513, 37);
+            txtPassword.TabIndex = 5;
             txtPassword.Text = "demo123";
-
+            txtPassword.KeyDown += txtPassword_KeyDown;
+            // 
             // btnLogin
-            btnLogin.Location = new Point(30, 360);
-            btnLogin.Size = new Size(360, 48);
-            btnLogin.Text = "Ingresar";
-            btnLogin.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            // 
             btnLogin.BackColor = Color.FromArgb(37, 99, 235);
-            btnLogin.ForeColor = Color.White;
-            btnLogin.FlatStyle = FlatStyle.Flat;
-            btnLogin.FlatAppearance.BorderSize = 0;
             btnLogin.Cursor = Cursors.Hand;
+            btnLogin.FlatAppearance.BorderSize = 0;
+            btnLogin.FlatStyle = FlatStyle.Flat;
+            btnLogin.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            btnLogin.ForeColor = Color.White;
+            btnLogin.Location = new Point(43, 600);
+            btnLogin.Margin = new Padding(4, 5, 4, 5);
+            btnLogin.Name = "btnLogin";
+            btnLogin.Size = new Size(514, 80);
+            btnLogin.TabIndex = 6;
+            btnLogin.Text = "Ingresar";
+            btnLogin.UseVisualStyleBackColor = false;
             btnLogin.Click += btnLogin_Click;
-
+            // 
             // lblEstado
-            lblEstado.AutoSize = false;
-            lblEstado.Size = new Size(380, 24);
-            lblEstado.Location = new Point(20, 425);
-            lblEstado.Text = "● Verificando conexión...";
+            // 
             lblEstado.Font = new Font("Segoe UI", 9F);
             lblEstado.ForeColor = Color.DarkOrange;
+            lblEstado.Location = new Point(29, 708);
+            lblEstado.Margin = new Padding(4, 0, 4, 0);
+            lblEstado.Name = "lblEstado";
+            lblEstado.Size = new Size(543, 40);
+            lblEstado.TabIndex = 7;
+            lblEstado.Text = "● Verificando conexión...";
             lblEstado.TextAlign = ContentAlignment.MiddleCenter;
-
+            // 
             // lblVersion
-            lblVersion.AutoSize = false;
-            lblVersion.Size = new Size(380, 20);
-            lblVersion.Location = new Point(20, 460);
+            // 
             lblVersion.Font = new Font("Segoe UI", 8F);
             lblVersion.ForeColor = Color.FromArgb(100, 116, 139);
+            lblVersion.Location = new Point(29, 767);
+            lblVersion.Margin = new Padding(4, 0, 4, 0);
+            lblVersion.Name = "lblVersion";
+            lblVersion.Size = new Size(543, 33);
+            lblVersion.TabIndex = 8;
             lblVersion.TextAlign = ContentAlignment.MiddleCenter;
-
+            // 
             // frmLogin
-            AutoScaleDimensions = new SizeF(7F, 15F);
+            // 
+            AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 640);
+            ClientSize = new Size(1143, 1067);
             Controls.Add(panelFondo);
             FormBorderStyle = FormBorderStyle.FixedSingle;
+            Margin = new Padding(4, 5, 4, 5);
             MaximizeBox = false;
             Name = "frmLogin";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Taller de Frenos - Caja";
             Load += frmLogin_Load;
-
             panelFondo.ResumeLayout(false);
             panelCard.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)picLogo).EndInit();
+            panelCard.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -160,6 +202,5 @@ namespace TallerCaja.Forms
         private Button btnLogin;
         private Label lblEstado;
         private Label lblVersion;
-        private PictureBox picLogo;
     }
 }
