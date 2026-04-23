@@ -1,7 +1,9 @@
-﻿using FrenosIntegracion.Models.DTOs;
+﻿using FrenosIntegracion.DTOs;
+using FrenosIntegracion.Helpers;
+using FrenosIntegracion.Models.DTOs;
 using FrenosIntegracion.Services.Cache;
 using FrenosIntegracion.Services.Core;
-using FrenosIntegracion.Helpers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FrenosIntegracion.Controllers
@@ -68,6 +70,18 @@ namespace FrenosIntegracion.Controllers
                     "CORE_UNAVAILABLE",
                     "No se puede validar el acceso al cajero."));
             }
+        }
+
+        [HttpPost("registrar-cliente")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Registrar([FromBody] ClienteRegistroDto modelo)
+        {
+            var exito = await _core.RegistrarClienteAsync(modelo);
+
+            if (exito)
+                return Ok(new { mensaje = "Cliente registrado con éxito" });
+
+            return BadRequest(new { mensaje = "No se pudo registrar el cliente" });
         }
     }
 }
