@@ -9,6 +9,7 @@ namespace FrenosIntegracion.Services.Core
         Task<object> AutenticarClienteAsync(LoginRequest request);
         Task<object> AutenticarEmpleadoAsync(LoginRequest request);
         Task<object> AutenticarCajeroAsync(LoginRequest request);
+
         // Catálogo
         Task<IEnumerable<ProductoDto>> ObtenerProductosAsync();
         Task<IEnumerable<ServicioDto>> ObtenerServiciosAsync();
@@ -16,6 +17,7 @@ namespace FrenosIntegracion.Services.Core
         // Órdenes
         Task<OrdenWebResponse> CrearOrdenAsync(CrearOrdenWebRequest request, string token);
         Task<EstadoOrdenResponse> ObtenerEstadoOrdenAsync(int ordenId, string token);
+        Task<IEnumerable<object>> ObtenerHistorialOrdenesAsync();
 
         // Caja
         Task<object> AbrirTurnoAsync(int cajeroId, decimal montoInicial);
@@ -24,12 +26,20 @@ namespace FrenosIntegracion.Services.Core
         Task<object> PagarFacturaAsync(int facturaId, int turnoId, string metodo, decimal monto);
         Task<object> RegistrarAbonoAsync(int cxcId, int turnoId, decimal monto, string metodo);
         Task<CobroResponse> ProcesarCobroAsync(CobroRequest request, string token);
+
+        // Sistema
         Task<bool> EstaDisponibleAsync();
+
+        // Facturas
         Task<IEnumerable<object>> ObtenerFacturasPorClienteAsync(int clienteId);
 
-        Task<IEnumerable<object>> ObtenerVehiculosClienteAsync();
+        // Vehículos — ahora reciben clienteId
+        Task<IEnumerable<object>> ObtenerVehiculosClienteAsync(int clienteId);
         Task<object> RegistrarVehiculoAsync(object vehiculo);
-        Task<IEnumerable<object>> ObtenerHistorialOrdenesAsync();
+        Task<object> ActualizarVehiculoAsync(int id, object vehiculo);
+        Task EliminarVehiculoAsync(int id);
+
+        // Clientes
         Task<bool> RegistrarClienteAsync(ClienteRegistroDto cliente);
     }
 }

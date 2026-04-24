@@ -36,7 +36,7 @@ namespace FrenosIntegracion.Services.Core
         // --- Autenticación ---
         public async Task<object> AutenticarClienteAsync(LoginRequest request)
         {
-            // ✅ HttpRequestMessage evita condiciones de carrera en el header compartido
+            // HttpRequestMessage evita condiciones de carrera en el header compartido
             var req = new HttpRequestMessage(HttpMethod.Post, "/api/auth/login-cliente");
             req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", GenerarTokenInterno());
             req.Content = Serializar(request);
@@ -183,7 +183,7 @@ namespace FrenosIntegracion.Services.Core
                 Direccion = ""
             };
 
-            // ✅ HttpRequestMessage: el token va en esta petición únicamente
+            // HttpRequestMessage: el token va en esta petición únicamente
             var req = new HttpRequestMessage(HttpMethod.Post, "api/clientes");
             req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", GenerarTokenInterno());
             req.Content = Serializar(payload);
@@ -216,13 +216,29 @@ namespace FrenosIntegracion.Services.Core
         }
 
         // --- Vehículos ---
-        public async Task<IEnumerable<object>> ObtenerVehiculosClienteAsync()
+        public async Task<IEnumerable<object>> ObtenerVehiculosClienteAsync(int clienteId)
         {
-            var req = new HttpRequestMessage(HttpMethod.Get, "/api/vehiculos");
+            var req = new HttpRequestMessage(HttpMethod.Get, $"/api/vehiculos/cliente/{clienteId}");
             req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", GenerarTokenInterno());
-
             var response = await _http.SendAsync(req);
             return await Deserializar<IEnumerable<object>>(response) ?? Enumerable.Empty<object>();
+        }
+
+        public async Task<object> ActualizarVehiculoAsync(int id, object vehiculo)
+        {
+            var req = new HttpRequestMessage(HttpMethod.Put, $"/api/vehiculos/{id}");
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", GenerarTokenInterno());
+            req.Content = Serializar(vehiculo);
+            var response = await _http.SendAsync(req);
+            response.EnsureSuccessStatusCode();
+            return await Deserializar<object>(response) ?? new { };
+        }
+
+        public async Task EliminarVehiculoAsync(int id)
+        {
+            var req = new HttpRequestMessage(HttpMethod.Delete, $"/api/vehiculos/{id}");
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", GenerarTokenInterno());
+            await _http.SendAsync(req);
         }
 
         public async Task<object> RegistrarVehiculoAsync(object vehiculo)
