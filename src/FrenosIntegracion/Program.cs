@@ -90,7 +90,7 @@ if (app.Environment.IsDevelopment())
 // El Middleware de Log debe ir ANTES de Auth para captar intentos fallidos
 app.UseMiddleware<RequestLogMiddleware>();
 
-//app.UseHttpsRedirection();
+app.UseHttpsRedirection();
 
 app.UseCors("AllowBlazor");
 
