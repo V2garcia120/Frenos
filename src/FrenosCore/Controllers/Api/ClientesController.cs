@@ -1,9 +1,10 @@
-﻿using FrenosCore.Servicios;
+﻿using FrenosCore.Helpers;
+using FrenosCore.Modelos.Dtos.Cliente;
+using FrenosCore.Servicios;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using FrenosCore.Helpers;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using FrenosCore.Modelos.Dtos.Cliente;
 
 namespace FrenosCore.Controllers.Api
 {
@@ -49,6 +50,7 @@ namespace FrenosCore.Controllers.Api
             return Ok(ApiResponse<object>.Ok(cliente));
         }
         [HttpPost]
+        [AllowAnonymous]
         public async Task<IActionResult> Crear([FromBody] CrearClienteRequest request)
         {
             var cliente = await _clienteService.CrearAsync(request);

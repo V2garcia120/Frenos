@@ -10,8 +10,17 @@ namespace FrenosWeb.Services
         private readonly IJSRuntime _js;
         private AuthenticationState _anonymous = new(new ClaimsPrincipal(new ClaimsIdentity()));
 
-        public TestAuthStateProvider(IJSRuntime js) => _js = js;
+        // ✅ Guardamos el estado actual en memoria para evitar la condición de carrera
+        private AuthenticationState _currentState;
 
+        public TestAuthStateProvider(IJSRuntime js)
+        {
+            _js = js;
+            _currentState = _anonymous;
+        }
+
+        // ✅ Este método es llamado por [Authorize] y AuthorizeView
+        // Ahora lee el token del localStorage Y actualiza el estado en memoria
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
             try
@@ -19,71 +28,81 @@ namespace FrenosWeb.Services
                 var token = await _js.InvokeAsync<string>("localStorage.getItem", "authToken");
 
                 if (string.IsNullOrWhiteSpace(token))
+                {
+                    _currentState = _anonymous;
                     return _anonymous;
+                }
 
                 var identity = new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt");
                 var user = new ClaimsPrincipal(identity);
-
-                return new AuthenticationState(user);
+                _currentState = new AuthenticationState(user);
+                return _currentState;
             }
             catch
             {
+                _currentState = _anonymous;
                 return _anonymous;
             }
         }
 
         public void NotifyUserAuthentication(string email)
         {
-            var identity = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, email) }, "jwt");
+            var identity = new ClaimsIdentity(new[]
+            {
+                new Claim(ClaimTypes.Name, email),
+                new Claim(ClaimTypes.Email, email)
+            }, "jwt");
             var user = new ClaimsPrincipal(identity);
-            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(user)));
+            _currentState = new AuthenticationState(user);
+            NotifyAuthenticationStateChanged(Task.FromResult(_currentState));
         }
 
         public void NotifyUserLogout()
         {
+            _currentState = _anonymous;
             NotifyAuthenticationStateChanged(Task.FromResult(_anonymous));
         }
 
         private IEnumerable<Claim> ParseClaimsFromJwt(string jwt)
         {
             var claims = new List<Claim>();
-            var payload = jwt.Split('.')[1];
-            var jsonBytes = ParseBase64WithoutPadding(payload);
-            var keyValuePairs = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonBytes);
-
-            if (keyValuePairs != null)
+            try
             {
-                foreach (var kvp in keyValuePairs)
+                var payload = jwt.Split('.')[1];
+                switch (payload.Length % 4)
                 {
-                    switch (kvp.Key)
+                    case 2: payload += "=="; break;
+                    case 3: payload += "="; break;
+                }
+                var jsonBytes = Convert.FromBase64String(payload);
+                var keyValuePairs = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonBytes);
+
+                if (keyValuePairs != null)
+                {
+                    foreach (var kvp in keyValuePairs)
                     {
-                        case "role":
-                            claims.Add(new Claim(ClaimTypes.Role, kvp.Value.ToString() ?? ""));
-                            break;
-                        case "unique_name":
-                        case "email":
-                            claims.Add(new Claim(ClaimTypes.Name, kvp.Value.ToString() ?? ""));
-                            break;
-                        case "nameid": 
-                            claims.Add(new Claim(ClaimTypes.NameIdentifier, kvp.Value.ToString() ?? ""));
-                            break;
-                        default:
-                            claims.Add(new Claim(kvp.Key, kvp.Value.ToString() ?? ""));
-                            break;
+                        switch (kvp.Key)
+                        {
+                            case "role":
+                                claims.Add(new Claim(ClaimTypes.Role, kvp.Value.ToString() ?? ""));
+                                break;
+                            case "unique_name":
+                            case "email":
+                                claims.Add(new Claim(ClaimTypes.Name, kvp.Value.ToString() ?? ""));
+                                claims.Add(new Claim(ClaimTypes.Email, kvp.Value.ToString() ?? ""));
+                                break;
+                            case "nameid":
+                                claims.Add(new Claim(ClaimTypes.NameIdentifier, kvp.Value.ToString() ?? ""));
+                                break;
+                            default:
+                                claims.Add(new Claim(kvp.Key, kvp.Value.ToString() ?? ""));
+                                break;
+                        }
                     }
                 }
             }
+            catch { }
             return claims;
-        }
-
-        private byte[] ParseBase64WithoutPadding(string base64)
-        {
-            switch (base64.Length % 4)
-            {
-                case 2: base64 += "=="; break;
-                case 3: base64 += "="; break;
-            }
-            return Convert.FromBase64String(base64);
         }
     }
 }
