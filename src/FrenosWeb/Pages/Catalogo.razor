@@ -7,77 +7,130 @@
 @inject NavigationManager navManager
 @inject CarritoStateService carritoService
 
-<h2 class="fw-bold mb-4" style="color: #1a1a1a;">Catálogo de Productos</h2>
-@if (productos == null)
-{
-    <p>Cargando productos...</p>
-}
-else
-{
-    <div class="row">
-        @foreach (var item in productos)
+<div class="container py-4">
+    <div class="row justify-content-center mb-5">
+        <div class="col-md-6">
+            <div class="input-group shadow-lg rounded-pill bg-white p-2 border border-2" style="border-color: var(--azul-frenos) !important;">
+                <span class="input-group-text border-0 bg-white ms-3">
+                    <i class="bi bi-search text-azul fs-5" style="color: var(--azul-frenos) !important;"></i>
+                </span>
+                <input type="text" class="form-control border-0 rounded-pill px-3 fw-bold"
+                       placeholder="¿Qué buscas para tu vehículo?"
+                       @bind="textoBusqueda" @bind:event="oninput" />
+            </div>
+        </div>
+    </div>
+
+    <h2 class="fw-bold mb-4" style="color: var(--azul-frenos);"><span class="badge bg-azul me-2">P</span> Catálogo de Productos</h2>
+    <div class="row g-4">
+        @foreach (var item in productos.Where(p => p.Nombre.Contains(textoBusqueda, StringComparison.OrdinalIgnoreCase)))
         {
             <div class="col-md-4">
-                <ProductoCard Id="@item.Id"
-                              Nombre="@item.Nombre"
-                              Precio="@item.Precio"
-                              OnAgregar="@(async () => await HandleAgregarAlCarrito(item))" />
+                <ProductoCard Id="@item.Id" Nombre="@item.Nombre" Precio="@item.Precio" EsServicio="false"
+                              OnVerDetalle="@((id) => AbrirModal(id, false))" />
             </div>
         }
     </div>
-}
 
-<h2 class="fw-bold mt-5 mb-4" style="color: #1a1a1a;">Nuestros Servicios</h2>
-@if (servicios == null)
-{
-    <p>Cargando servicios...</p>
-}
-else
-{
-    <div class="row">
-        @foreach (var s in servicios)
+    <h2 class="fw-bold mt-5 mb-4" style="color: var(--naranja-frenos);"><span class="badge bg-naranja me-2">S</span> Nuestros Servicios</h2>
+    <div class="row g-4">
+        @foreach (var s in servicios.Where(s => s.Nombre.Contains(textoBusqueda, StringComparison.OrdinalIgnoreCase)))
         {
             <div class="col-md-4">
-                <ProductoCard Id="@s.Id"
-                              Nombre="@s.Nombre"
-                              Precio="@s.Precio"
-                              OnAgregar="@(async () => await HandleAgregarAlCarrito(s))" />
+                <ProductoCard Id="@s.Id" Nombre="@s.Nombre" Precio="@s.Precio" EsServicio="true"
+                              OnVerDetalle="@((id) => AbrirModal(id, true))" />
             </div>
         }
+    </div>
+</div>
+
+@if (mostrarDetalle && itemSeleccionado != null)
+{
+    <div class="modal fade show d-block animate__animated animate__fadeIn" style="background-color: rgba(0,0,0,0.7);" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow-lg" style="border-top: 8px solid var(--azul-frenos) !important;">
+                <div class="modal-header border-0 @(itemSeleccionado.RequiereVehiculo ? "bg-naranja" : "bg-azul") text-white rounded-top-4">
+                    <h5 class="modal-title fw-bold">Detalle del Artículo</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CerrarModal"></button>
+                </div>
+                
+                <div class="modal-body p-4 text-center">
+                    <i class="bi @(itemSeleccionado.RequiereVehiculo ? "bi-wrench-adjustable text-naranja" : "bi-gear-wide-connected text-azul") display-1 mb-3"
+                       style="color: @(itemSeleccionado.RequiereVehiculo ? "var(--naranja-frenos)" : "var(--azul-frenos)") !important;"></i>
+                    
+                    <h3 class="fw-bold">@itemSeleccionado.Nombre</h3>
+                    
+                    <p class="text-muted px-2">@(itemSeleccionado.Descripcion ?? "Descripción técnica de alta calidad para el sistema de frenado.")</p>
+                    
+                    <div class="d-flex justify-content-around bg-white border p-3 rounded-4 mt-4 shadow-sm">
+                        <div class="text-center">
+                            <p class="small text-muted mb-0 uppercase fw-bold">Precio Unitario</p>
+                            <h3 class="fw-bold" style="color: var(--azul-frenos);">RD$ @itemSeleccionado.Precio.ToString("N0")</h3>
+                        </div>
+                        @if (!itemSeleccionado.RequiereVehiculo)
+                        {
+                            <div class="text-center border-start ps-3">
+                                <p class="small text-muted mb-0 uppercase fw-bold">Stock</p>
+                                <h3 class="fw-bold text-success">@itemSeleccionado.Stock</h3>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="mt-4 px-5">
+                        <label class="form-label small fw-bold">Cantidad a añadir:</label>
+                        <div class="input-group input-group-lg rounded-pill border-2 overflow-hidden" style="border: 2px solid var(--azul-frenos) !important;">
+                            <button class="btn btn-light border-0 fw-bold" @onclick="() => { if (cantidad > 1) cantidad--; }" style="color: var(--azul-frenos); width: 60px;">-</button>
+                            <input type="number" class="form-control border-0 text-center fw-bold fs-4" @bind="cantidad" readonly style="background: white;" />
+                            <button class="btn btn-light border-0 fw-bold" @onclick="() => cantidad++" style="color: var(--azul-frenos); width: 60px;">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-0 p-4">
+                    <button type="button" class="btn btn-light rounded-pill px-4" @onclick="CerrarModal">Cancelar</button>
+                    <button type="button" class="btn btn-frenos-naranja rounded-pill py-3 px-4 fs-5 shadow-lg fw-bold" @onclick="HandleConfirmarAgregar">
+                        <i class="bi bi-cart-check-fill me-2"></i>Añadir @cantidad al Carrito
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 }
 
 @code {
     private List<Servicio> productos = new();
     private List<Servicio> servicios = new();
+    private bool mostrarDetalle = false;
+    private Servicio? itemSeleccionado;
+    private string textoBusqueda = "";
+    private int cantidad = 1;
 
     protected override async Task OnInitializedAsync()
     {
-        var listaProductos = await servicioService.GetProductosDelInventarioAsync();
-        if(listaProductos != null)
-        {
-            foreach (var p in listaProductos) p.RequiereVehiculo = false;
-            productos = listaProductos;
-        }
+        productos = await servicioService.GetProductosDelInventarioAsync() ?? new();
+        foreach (var p in productos) p.RequiereVehiculo = false;
 
-        var listaServicios = await servicioService.GetServiciosAsync();
-        if (listaServicios != null)
-        {
-            foreach (var s in listaServicios) s.RequiereVehiculo = true;
-            servicios = listaServicios;
-        }
+        servicios = await servicioService.GetServiciosAsync() ?? new();
+        foreach (var s in servicios) s.RequiereVehiculo = true;
     }
 
-    private async Task HandleAgregarAlCarrito(Servicio itemSeleccionado)
+    private void AbrirModal(int id, bool esServicio)
     {
-        if (!authService.IsLoggedIn)
-        {
-            navManager.NavigateTo("login");
-        }
-        else
-        {
-            // Pasamos el objeto completo al carrito
-            await carritoService.Agregar(itemSeleccionado);
-        }
+        cantidad = 1;
+        itemSeleccionado = esServicio ? servicios.Find(s => s.Id == id) : productos.Find(p => p.Id == id);
+        mostrarDetalle = true;
     }
+
+    private async Task HandleConfirmarAgregar()
+    {
+        if (!authService.IsLoggedIn) { navManager.NavigateTo("login"); return; }
+        
+        for (int i = 0; i < cantidad; i++)
+        {
+            await carritoService.Agregar(itemSeleccionado!);
+        }
+        CerrarModal();
+    }
+
+    private void CerrarModal() => mostrarDetalle = false;
 }

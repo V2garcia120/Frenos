@@ -22,8 +22,15 @@ namespace FrenosIntegracion.Services.Cache
                 return await db.ServiciosCache
                     .AsNoTracking()
                     .Where(s => s.Activo)
-                    .Select(s => new ServicioDto(
-                        s.Id, s.Nombre, s.Precio, s.DuracionMin, s.Categoria, s.Activo))
+                    .Select(s => new ServicioDto
+                    {
+                        Id = s.Id,
+                        Nombre = s.Nombre,
+                        Precio = s.Precio,
+                        DuracionMin = s.DuracionMin,
+                        Categoria = s.Categoria,
+                        Activo = s.Activo
+                    })
                     .ToListAsync();
             }
         }
@@ -31,13 +38,13 @@ namespace FrenosIntegracion.Services.Cache
         // 2. Lógica para guardar productos en la BD local
         private async Task ActualizarProductosCacheAsync(IEnumerable<ProductoDto> productos)
         {
-            // Limpiamos lo viejo para no tener datos duplicados o desactualizados
             var viejos = await db.ProductosCache.ToListAsync();
             db.ProductosCache.RemoveRange(viejos);
+            await db.SaveChangesAsync();
 
             var nuevos = productos.Select(p => new Models.Entities.ProductoCache
             {
-                
+                Id = p.Id,
                 Nombre = p.Nombre,
                 Precio = p.Precio,
                 Stock = p.Stock,
@@ -55,10 +62,11 @@ namespace FrenosIntegracion.Services.Cache
         {
             var viejos = await db.ServiciosCache.ToListAsync();
             db.ServiciosCache.RemoveRange(viejos);
+            await db.SaveChangesAsync(); 
 
             var nuevos = servicios.Select(s => new Models.Entities.ServicioCache
             {
-                
+                Id = s.Id,
                 Nombre = s.Nombre,
                 Precio = s.Precio,
                 DuracionMin = s.DuracionMin,
@@ -87,8 +95,15 @@ namespace FrenosIntegracion.Services.Cache
                 return await db.ProductosCache
                     .AsNoTracking()
                     .Where(p => p.Activo)
-                    .Select(p => new ProductoDto(
-                        p.Id, p.Nombre, p.Precio, p.Stock, p.Categoria, p.Activo))
+                    .Select(p => new ProductoDto
+                    {
+                        Id = p.Id,
+                        Nombre = p.Nombre,
+                        Precio = p.Precio,
+                        Stock = p.Stock,
+                        Categoria = p.Categoria,
+                        Activo = p.Activo
+                    })
                     .ToListAsync();
             }
         }
@@ -103,7 +118,10 @@ namespace FrenosIntegracion.Services.Cache
                 await ActualizarServiciosCacheAsync(servicios);
                 UltimaActualizacion = DateTime.UtcNow;
             }
-            catch { /* El caché anterior sigue siendo válido */ }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CacheService] Error al refrescar: {ex.Message}");
+            }
         }
     }
 }
