@@ -1,27 +1,28 @@
 ﻿@page "/orden/{vehiculoId:int}"
 @using FrenosWeb.Services
+@using FrenosWeb.Models
 @inject CarritoStateService carritoService
 @inject NavigationManager navManager
 @inject OrdenWebService ordenService
 @inject VehiculoService vehiculoService
+@inject PagoService pagoService
 
 <div class="container mt-5">
-    <div class="card border-primary shadow-lg">
-        <div class="card-header bg-primary text-white">
+    <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+        <div class="card-header bg-primary text-white py-3">
             <h3 class="mb-0">📋 Resumen de Confirmación</h3>
         </div>
-        
-        <div class="card-body">
+
+        <div class="card-body p-4">
             @if (!carritoService.Items.Any())
             {
-                <div class="alert alert-warning">
+                <div class="alert alert-warning rounded-4">
                     No hay productos/servicios en la orden. <a href="catalogo">Vuelve al catálogo aquí.</a>
                 </div>
             }
             else
             {
-                <h5>Detalle de la Orden:</h5>
-
+                @* Vehículo seleccionado *@
                 @if (vehiculoSeleccionado != null)
                 {
                     <div class="alert alert-info border-0 shadow-sm rounded-4 mb-4 d-flex align-items-center">
@@ -38,10 +39,11 @@
                     </div>
                 }
 
+                @* Lista de items *@
                 <ul class="list-group list-group-flush mb-4">
                     @foreach (var item in carritoService.Items)
                     {
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                             <div>
                                 <strong>@item.Servicio.Nombre</strong>
                                 <span class="text-muted ms-2">(x @item.Cantidad)</span>
@@ -51,7 +53,8 @@
                     }
                 </ul>
 
-                <div class="bg-light p-3 border rounded">
+                @* Totales *@
+                <div class="bg-light p-3 border rounded-4 mb-4">
                     <div class="d-flex justify-content-between mb-1">
                         <span class="text-muted">Subtotal:</span>
                         <span>RD$ @carritoService.Subtotal.ToString("N2")</span>
@@ -63,21 +66,115 @@
                     <hr />
                     <div class="d-flex justify-content-between align-items-center">
                         <h4 class="mb-0">Total:</h4>
-                        <h4 class="mb-0 text-success font-weight-bold">RD$ @carritoService.TotalFinal.ToString("N2")</h4>
+                        <h4 class="mb-0 text-success fw-bold">RD$ @carritoService.TotalFinal.ToString("N2")</h4>
                     </div>
                 </div>
+
+                @* Selección de método de pago *@
+                <div class="mb-4">
+                    <label class="form-label fw-bold fs-5">
+                        <i class="bi bi-credit-card me-2 text-primary"></i>Método de Pago
+                    </label>
+
+                    <div class="d-flex flex-column gap-3">
+
+                        @* Efectivo *@
+                        <div class="card border-0 shadow-sm rounded-4 @(metodoPago == "Efectivo" ? "border-success border-2" : "")"
+                             style="cursor:pointer; @(metodoPago == "Efectivo" ? "outline: 2px solid #198754;" : "")"
+                             @onclick='() => metodoPago = "Efectivo"'>
+                            <div class="card-body d-flex align-items-center gap-3 py-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center"
+                                     style="width:48px;height:48px;background:#d4edda;">
+                                    <i class="bi bi-cash-coin fs-4 text-success"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold">Efectivo en la entrega</div>
+                                    <small class="text-muted">Pagas cuando recoges tu vehículo en el taller</small>
+                                </div>
+                                @if (metodoPago == "Efectivo")
+                                {
+                                    <i class="bi bi-check-circle-fill text-success ms-auto fs-5"></i>
+                                }
+                            </div>
+                        </div>
+
+                        @* Transferencia *@
+                        <div class="card border-0 shadow-sm rounded-4 @(metodoPago == "Transferencia" ? "border-primary border-2" : "")"
+                             style="cursor:pointer; @(metodoPago == "Transferencia" ? "outline: 2px solid #0d6efd;" : "")"
+                             @onclick='() => metodoPago = "Transferencia"'>
+                            <div class="card-body d-flex align-items-center gap-3 py-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center"
+                                     style="width:48px;height:48px;background:#cfe2ff;">
+                                    <i class="bi bi-bank fs-4 text-primary"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold">Transferencia Bancaria</div>
+                                    <small class="text-muted">Transfiere al Banco Popular · Cta. 123-456789-0</small>
+                                </div>
+                                @if (metodoPago == "Transferencia")
+                                {
+                                    <i class="bi bi-check-circle-fill text-primary ms-auto fs-5"></i>
+                                }
+                            </div>
+                        </div>
+
+                        @* Tarjeta *@
+                        <div class="card border-0 shadow-sm rounded-4 @(metodoPago == "Tarjeta" ? "border-warning border-2" : "")"
+                             style="cursor:pointer; @(metodoPago == "Tarjeta" ? "outline: 2px solid #ffc107;" : "")"
+                             @onclick='() => metodoPago = "Tarjeta"'>
+                            <div class="card-body d-flex align-items-center gap-3 py-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center"
+                                     style="width:48px;height:48px;background:#fff3cd;">
+                                    <i class="bi bi-credit-card fs-4 text-warning"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold">Tarjeta de Crédito / Débito</div>
+                                    <small class="text-muted">Visa, Mastercard, American Express</small>
+                                </div>
+                                @if (metodoPago == "Tarjeta")
+                                {
+                                    <i class="bi bi-check-circle-fill text-warning ms-auto fs-5"></i>
+                                }
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                @* Mensaje de error *@
+                @if (!string.IsNullOrEmpty(mensajeError))
+                {
+                    <div class="alert alert-danger border-0 rounded-4 py-2 text-center small shadow-sm">
+                        @mensajeError
+                    </div>
+                }
             }
         </div>
 
-        <div class="card-footer bg-white d-flex justify-content-between">
-            <button class="btn btn-outline-secondary" @onclick='() => navManager.NavigateTo("/carrito")'>
+        <div class="card-footer bg-white d-flex justify-content-between py-3">
+            <button class="btn btn-outline-secondary rounded-pill px-4"
+                    @onclick='() => navManager.NavigateTo("/carrito")'>
                 ⬅ Editar Carrito
             </button>
-            
+
             @if (carritoService.Items.Any())
             {
-                <button class="btn btn-primary btn-lg" @onclick="ConfirmarOrden">
-                    Confirmar y Proceder al Pago 💳
+                <button class="btn btn-primary btn-lg rounded-pill px-5 shadow"
+                        @onclick="ConfirmarOrden"
+                        disabled="@estaProcesando">
+                    @if (estaProcesando)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                        <span>Procesando...</span>
+                    }
+                    else if (metodoPago == "Tarjeta")
+                    {
+                        <span>Continuar con el pago 💳</span>
+                    }
+                    else
+                    {
+                        <span>Confirmar Orden ✅</span>
+                    }
                 </button>
             }
         </div>
@@ -86,22 +183,60 @@
 
 @code {
     [Parameter] public int vehiculoId { get; set; }
+
     private VehiculoModel? vehiculoSeleccionado;
+    private string metodoPago = "Efectivo"; // default
+    private string mensajeError = "";
+    private bool estaProcesando = false;
 
     protected override async Task OnInitializedAsync()
     {
         if (vehiculoId > 0)
         {
-            var misVehiculos = await vehiculoService.GetVehiculosUsuarioAsync(); 
+            var misVehiculos = await vehiculoService.GetVehiculosUsuarioAsync();
             vehiculoSeleccionado = misVehiculos.FirstOrDefault(v => v.Id == vehiculoId);
         }
     }
 
     private async Task ConfirmarOrden()
     {
-        // En lugar de llamar al servicio, simplemente navegamos al pago.
-        // La orden real se enviará a Integración desde la página de Pago.razor
-        await Task.Delay(500); // Pequeña demora para efecto visual
-        navManager.NavigateTo("/pago");
+        mensajeError = "";
+        estaProcesando = true;
+
+        try
+        {
+            if (metodoPago == "Tarjeta")
+            {
+                // Tarjeta: navegar a la página de pago con tarjeta
+                navManager.NavigateTo("/pago");
+                return;
+            }
+
+            // Efectivo o Transferencia: confirmar orden directo
+            var request = carritoService.PrepararCobro(
+                metodoPago,
+                vehiculoId > 0 ? vehiculoId : null
+            );
+
+            var resultado = await pagoService.ProcesarCobroAsync(request);
+
+            if (resultado.Success)
+            {
+                await carritoService.Limpiar();
+                navManager.NavigateTo("/mis-ordenes");
+            }
+            else
+            {
+                mensajeError = $"❌ {resultado.Error?.Mensaje ?? "No se pudo procesar la orden."}";
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"❌ Error: {ex.Message}";
+        }
+        finally
+        {
+            estaProcesando = false;
+        }
     }
 }

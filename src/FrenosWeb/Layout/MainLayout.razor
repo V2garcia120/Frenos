@@ -14,7 +14,7 @@
                 <NavLink href="/" class="nav-link text-white-50 px-3 hover-link d-flex align-items-center" Match="NavLinkMatch.All">
                     <i class="bi bi-house-door me-2"></i> Inicio
                 </NavLink>
-    
+
                 <NavLink href="catalogo" class="nav-link text-white-50 px-3 hover-link d-flex align-items-center">
                     <i class="bi bi-shop me-2"></i> Catálogo
                 </NavLink>
@@ -52,7 +52,10 @@
             <div class="ms-auto d-flex align-items-center">
                 <AuthorizeView>
                     <Authorized>
-                        <span class="text-white-50 me-3 small">Hola, @(context.User.Identity?.Name?.Split('@')[0])</span>
+                        <span class="text-white-50 me-3 small">
+                            Hola, @(System.Globalization.CultureInfo.CurrentCulture.TextInfo
+                                    .ToTitleCase(context.User.Identity?.Name?.Split('@')[0] ?? ""))
+                        </span>
                         <button class="btn btn-sm btn-danger rounded-pill px-3" @onclick="HandleLogout">Cerrar Sesión</button>
                     </Authorized>
                     <NotAuthorized>
@@ -72,29 +75,22 @@
 @code {
     [Inject] IJSRuntime JS { get; set; }
     [Inject] HttpClient http { get; set; }
-    [Inject] AuthenticationStateProvider AuthProvider { get; set; }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
+            // Solo re-inyectar el token en HttpClient para las llamadas a la API
+            // El AuthStateProvider ya maneja la sesión leyendo el localStorage
             var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
             if (!string.IsNullOrEmpty(token))
             {
-                // Re-inyectamos el token en el cliente HTTP
                 http.DefaultRequestHeaders.Authorization =
                     new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-            
-                // Si tu AuthStateProvider tiene un método para recargar, úsalo aquí
-                if (AuthProvider is TestAuthStateProvider testProvider)
-                {
-                    // Esto fuerza a Blazor a re-validar que el usuario sigue ahí
-                    await testProvider.GetAuthenticationStateAsync();
-                    StateHasChanged();
-                }
             }
         }
     }
+
     protected override void OnInitialized()
     {
         carritoService.OnChange += StateHasChanged;
