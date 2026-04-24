@@ -1,34 +1,26 @@
-﻿using FrenosWeb.Models;
+using FrenosWeb.Models;
 using System.Net.Http.Json;
 
 namespace FrenosWeb.Services
 {
-    public class FacturaService
+    public class FacturaService(HttpClient http)
     {
-        private readonly HttpClient _http;
-
-        public FacturaService(HttpClient http)
-        {
-            _http = http;
-        }
-
-        public async Task<List<FacturaModel>> GetFacturasUsuarioAsync(int clienteId)
+        public async Task<List<FacturaModel>> GetFacturasAsync()
         {
             try
             {
-                var response = await _http.GetFromJsonAsync<ApiResponse<List<FacturaModel>>>($"int/caja/facturas/{clienteId}");
+                var response = await http.GetFromJsonAsync<ApiResponse<List<FacturaModel>>>(
+                    "int/facturas/mis-facturas",
+                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-                if (response != null && response.Success && response.Data != null)
-                {
-                    return response.Data;
-                }
-
-                return ObtenerDatosPrueba();
+                return response?.Success == true && response.Data != null
+                    ? response.Data
+                    : [];
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Cyber-Logs] Error: {ex.Message}");
-                return ObtenerDatosPrueba();
+                Console.WriteLine($"[Cyber-Logs] Error al cargar facturas: {ex.Message}");
+                return [];
             }
         }
 
@@ -36,10 +28,8 @@ namespace FrenosWeb.Services
         {
             try
             {
-                int turnoFinal = turnoId > 0 ? turnoId : 0;
                 var request = new { TurnoId = turnoId, MetodoPago = "Tarjeta", Monto = monto };
-
-                var response = await _http.PostAsJsonAsync($"int/caja/facturas/{facturaId}/pago", request);
+                var response = await http.PostAsJsonAsync($"int/caja/facturas/{facturaId}/pago", request);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -50,24 +40,9 @@ namespace FrenosWeb.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Cyber-Logs] Error al procesar pago real: {ex.Message}");
-                MarcarComoPagadaLocal(monto);
-                return true;
+                Console.WriteLine($"[Cyber-Logs] Error al procesar pago: {ex.Message}");
+                return false;
             }
-        }
-
-        public void MarcarComoPagadaLocal(decimal monto)
-        {
-            Console.WriteLine($"[Cyber-Logs] Factura de RD$ {monto} marcada como pagada (Simulación).");
-        }
-
-        private List<FacturaModel> ObtenerDatosPrueba()
-        {
-            return new List<FacturaModel>
-            {
-                new FacturaModel { Id = 1, NumeroFactura = "FAC-2026-001", ServicioRealizado = "Cambio Pastillas", Total = 4500.00m, EstadoPago = "Pagado", Fecha = DateTime.Now.AddDays(-10) },
-                new FacturaModel { Id = 2, NumeroFactura = "FAC-2026-002", ServicioRealizado = "Rectificación", Total = 3200.00m, EstadoPago = "Pendiente", Fecha = DateTime.Now }
-            };
         }
     }
 }

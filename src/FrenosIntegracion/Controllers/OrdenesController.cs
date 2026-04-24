@@ -16,21 +16,22 @@ namespace FrenosIntegracion.Controllers
         {
             try
             {
-                // Llamamos al método que ya definiste en ICoreService
-                var historial = await core.ObtenerHistorialOrdenesAsync();
+                var token = ObtenerToken();
+                var historial = await core.ObtenerHistorialOrdenesAsync(token);
 
-                if (historial == null)
-                {
-                    return Ok(FrenosIntegracion.Helpers.ApiResponse<object>.Ok(new List<object>()));
-                }
-
-                return Ok(FrenosIntegracion.Helpers.ApiResponse<object>.Ok(historial));
+                return Ok(FrenosIntegracion.Helpers.ApiResponse<object>.Ok(historial ?? []));
             }
             catch (Exception ex)
             {
                 return StatusCode(503, FrenosIntegracion.Helpers.ApiResponse<object>.Fail(
                     "CORE_UNAVAILABLE", "No se pudo obtener el historial. " + ex.Message));
             }
+        }
+
+        private string ObtenerToken()
+        {
+            var auth = Request.Headers.Authorization.ToString();
+            return auth.StartsWith("Bearer ") ? auth[7..] : string.Empty;
         }
     }
 }

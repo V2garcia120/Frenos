@@ -3,8 +3,7 @@
 @using FrenosWeb.Services
 @using Microsoft.AspNetCore.Authorization
 @inject NavigationManager navManager
-@inject OrdenWebService ordenService 
-@inject IJSRuntime JS
+@inject OrdenWebService ordenService
 @attribute [Authorize]
 
 <div class="container mt-4">
@@ -82,8 +81,8 @@
                                     RD$ @orden.Total.ToString("N2")
                                 </td>
                                 <td>
-                                    <button class="btn btn-sm btn-light border shadow-sm" @onclick='() => DescargarComprobante(orden.NumeroOrden)'>
-                                        <span class="bi bi-file-earmark-pdf"></span> Ver Comprobante
+                                    <button class="btn btn-sm btn-outline-primary border shadow-sm" @onclick='() => DescargarComprobante(orden.NumeroOrden)'>
+                                        <span class="bi bi-file-earmark-text"></span> Ver Comprobante
                                     </button>
                                 </td>
                             </tr>
@@ -117,8 +116,6 @@
         _ => "bg-secondary"                     // Color por defecto
     };
 
-    private async Task DescargarComprobante(string nro)
-    {
-        await JS.InvokeVoidAsync("alert", $"Abriendo comprobante de la orden {nro}...");
-    }
+    private void DescargarComprobante(string nro) =>
+        navManager.NavigateTo($"/facturas?buscar={Uri.EscapeDataString(nro)}");
 }

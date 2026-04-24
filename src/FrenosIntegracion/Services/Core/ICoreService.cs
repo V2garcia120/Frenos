@@ -18,7 +18,8 @@ namespace FrenosIntegracion.Services.Core
         // Órdenes
         Task<OrdenWebResponse> CrearOrdenAsync(CrearOrdenWebRequest request, string token);
         Task<EstadoOrdenResponse> ObtenerEstadoOrdenAsync(int ordenId, string token);
-        Task<IEnumerable<object>> ObtenerHistorialOrdenesAsync();
+        Task<IEnumerable<object>> ObtenerHistorialOrdenesAsync(string token);
+        Task<IEnumerable<object>> ObtenerMisFacturasAsync(string token);
 
         // Caja
         Task<object> AbrirTurnoAsync(AbrirTurnoRequest request);
@@ -43,5 +44,6 @@ namespace FrenosIntegracion.Services.Core
 
         // Clientes
         Task<bool> RegistrarClienteAsync(ClienteRegistroDto cliente);
+        Task<IEnumerable<ClienteDto>> BuscarClientesAsync(string q, string token);
     }
 }

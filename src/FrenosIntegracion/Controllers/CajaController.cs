@@ -55,8 +55,7 @@ namespace FrenosIntegracion.Controllers
             }
             catch
             {
-                var idLocal = Guid.NewGuid().ToString();
-                await cola.EncolarOperacionAsync("Caja", "cobro", request);
+                var idLocal = await cola.EncolarOperacionAsync("Caja", "cobro", request);
 
                 var total = request.Items.Sum(i => i.Cantidad * i.PrecioSnapshot);
                 var response = new
@@ -79,8 +78,21 @@ namespace FrenosIntegracion.Controllers
             // Forzamos el id de ruta para evitar discrepancias entre URL y body.
             var requestCore = request with { FacturaId = id };
 
-            var resultado = await core.PagarFacturaAsync(requestCore, ObtenerToken());
-            return Ok(FrenosIntegracion.Helpers.ApiResponse<object>.Ok(resultado));
+            try
+            {
+                var resultado = await core.PagarFacturaAsync(requestCore, ObtenerToken());
+                return Ok(FrenosIntegracion.Helpers.ApiResponse<object>.Ok(resultado));
+            }
+            catch
+            {
+                var idLocal = await cola.EncolarOperacionAsync("Caja", "pago_factura", requestCore);
+                return Ok(FrenosIntegracion.Helpers.ApiResponse<object>.Ok(new
+                {
+                    facturaId = id,
+                    estado = "PendienteSync",
+                    idLocal = idLocal
+                }));
+            }
         }
 
         // 6. Registrar abono a CxC

@@ -17,7 +17,6 @@ namespace FrenosIntegracion.Models.DTOs
         public int Id { get; set; }
         public string Nombre { get; set; } = "";
         public decimal Precio { get; set; }
-        [JsonPropertyName("duracionMinutos")]
         public int? DuracionMin { get; set; }
         public string? Categoria { get; set; }
         public bool Activo { get; set; }
@@ -28,4 +27,12 @@ namespace FrenosIntegracion.Models.DTOs
         IEnumerable<ServicioDto> Servicios
     );
 
+    public class ClienteDto
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public string Cedula { get; set; } = string.Empty;
+        public string Telefono { get; set; } = string.Empty;
+        public bool EsAnonimo { get; set; }
+    }
 }

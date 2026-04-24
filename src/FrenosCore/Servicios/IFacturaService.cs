@@ -15,10 +15,14 @@ namespace FrenosCore.Servicios
 
         Task<FacturaResponse> GenerarDesdeOrdenAsync(int ordenId, int emisorId, string? metodoPago);
 
+        Task<CobroDirectoResponse> CobrarDirectoAsync(CobroDirectoRequest request);
 
         Task<FacturaResponse> RegistrarPagoAsync(int id, RegistrarPagoRequest request);
 
 
         Task AnularAsync(int id);
+
+        Task<IEnumerable<object>> ObtenerHistorialClienteAsync(int clienteId);
+        Task<IEnumerable<FacturaResponse>> ObtenerMisFacturasAsync(int clienteId);
     }
 }

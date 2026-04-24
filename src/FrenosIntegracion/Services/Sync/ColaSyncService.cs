@@ -8,7 +8,7 @@ namespace FrenosIntegracion.Services.Sync
 {
     public class ColaSyncService(IntegracionDbContext db, ICoreService core) : IColaSyncService
     {
-        public async Task<bool> EstaDisponibleAsync() => true;
+        public async Task<bool> EstaDisponibleAsync() => await core.EstaDisponibleAsync();
 
         public async Task<object> AutenticarEmpleadoAsync(LoginRequest request)
         {
@@ -57,7 +57,8 @@ namespace FrenosIntegracion.Services.Sync
                     await EncolarOperacionAsync(
                         canal: "Caja",
                         tipo: transaccion.tipo,
-                        payload: transaccion.payload // El payload ya viene como string JSON
+                        payload: transaccion.payload, // El payload ya viene como string JSON
+                        idLocal: transaccion.idLocal
                     );
 
                     procesadas++;
@@ -81,9 +82,9 @@ namespace FrenosIntegracion.Services.Sync
 
         // 2. Guarda una operación individual (Pág. 11)
         // Cambiamos la firma a Task (sin string) para que coincida con la interfaz que definimos
-        public async Task EncolarOperacionAsync(string canal, string tipo, object payload)
+        public async Task<string> EncolarOperacionAsync(string canal, string tipo, object payload, string? idLocal = null)
         {
-            var idLocal = Guid.NewGuid().ToString();
+            var id = string.IsNullOrWhiteSpace(idLocal) ? Guid.NewGuid().ToString() : idLocal;
 
             // Si el payload ya es un string (viene de SyncRequest), lo usamos directo.
             // Si es un objeto (viene de un Controller), lo serializamos.
@@ -91,7 +92,7 @@ namespace FrenosIntegracion.Services.Sync
 
             var nuevaTarea = new Models.Entities.ColaPendiente
             {
-                IdLocal = idLocal,
+                IdLocal = id,
                 Canal = canal,
                 TipoOperacion = tipo,
                 PayloadJson = json,
@@ -103,6 +104,7 @@ namespace FrenosIntegracion.Services.Sync
 
             db.ColaPendiente.Add(nuevaTarea);
             await db.SaveChangesAsync();
+            return id;
         }
 
         public async Task ProcesarPendientesAsync()
@@ -144,10 +146,65 @@ namespace FrenosIntegracion.Services.Sync
 
         private async Task<string> ReenviarAlCoreAsync(Models.Entities.ColaPendiente item)
         {
-            // Aquí llamarás a los métodos del core según el tipo (cobro, abono_cxc, etc)
-            // indicados en la pág. 13 del manual.
-            return "Respuesta simulada del Core";
+            switch (item.TipoOperacion)
+            {
+                case "cobro":
+                {
+                    var request = JsonSerializer.Deserialize<CobroRequest>(item.PayloadJson, _json)
+                        ?? throw new InvalidOperationException("Payload de cobro inválido.");
+                    var token = ObtenerToken();
+                    var resp = await core.ProcesarCobroAsync(request, token);
+                    return JsonSerializer.Serialize(resp);
+                }
+
+                case "pago_factura":
+                {
+                    var request = JsonSerializer.Deserialize<PagoFacturaRequest>(item.PayloadJson, _json)
+                        ?? JsonSerializer.Deserialize<PagoFacturaWrapper>(item.PayloadJson, _json)?.Request
+                        ?? throw new InvalidOperationException("Payload de pago_factura inválido.");
+                    var token = ObtenerToken();
+                    var resp = await core.PagarFacturaAsync(request, token);
+                    return JsonSerializer.Serialize(resp);
+                }
+
+                default:
+                    throw new NotSupportedException($"Tipo de operación '{item.TipoOperacion}' no soportado.");
+            }
         }
+
+        private string ObtenerToken()
+        {
+            var key = new System.Security.Cryptography.HMACSHA256(
+                System.Text.Encoding.ASCII.GetBytes("TallerFrenosClaveSecreta2026!MuyLargaParaHMAC256"));
+            return GenerarJwtInterno();
+        }
+
+        private string GenerarJwtInterno()
+        {
+            var keyBytes = System.Text.Encoding.ASCII.GetBytes("TallerFrenosClaveSecreta2026!MuyLargaParaHMAC256");
+            var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            var tokenDescriptor = new Microsoft.IdentityModel.Tokens.SecurityTokenDescriptor
+            {
+                Subject = new System.Security.Claims.ClaimsIdentity(new[]
+                {
+                    new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, "0"),
+                    new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Email, "sync@sistema.interno"),
+                    new System.Security.Claims.Claim("Rol", "Administrador")
+                }),
+                Expires = DateTime.UtcNow.AddHours(1),
+                Issuer = "TallerCore",
+                Audience = "TallerIntegracion",
+                SigningCredentials = new Microsoft.IdentityModel.Tokens.SigningCredentials(
+                    new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(keyBytes),
+                    Microsoft.IdentityModel.Tokens.SecurityAlgorithms.HmacSha256Signature)
+            };
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(token);
+        }
+
+        private static readonly JsonSerializerOptions _json = new() { PropertyNameCaseInsensitive = true };
+
+        private record PagoFacturaWrapper(int FacturaId, PagoFacturaRequest Request);
 
     }
 }

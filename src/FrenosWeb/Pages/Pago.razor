@@ -7,8 +7,6 @@
 @inject NavigationManager navManager
 @inject PagoService pagoService
 @inject FacturaService facturaService
-@inject IJSRuntime JS
-@inject HttpClient http
 @attribute [Authorize]
 
 <div class="container mt-5">
@@ -84,6 +82,8 @@
     private string? mensajeError;
     [Parameter] public decimal MontoExterno { get; set; }
     [Parameter] public int FacturaId { get; set; }
+    [SupplyParameterFromQuery(Name = "vehiculoId")] public int? VehiculoId { get; set; }
+    [SupplyParameterFromQuery(Name = "clienteId")] public int? ClienteId { get; set; }
     private decimal montoAFacturar;
 
     protected override void OnInitialized()
@@ -92,53 +92,59 @@
     }
 
     private async Task ProcesarPago()
-{
-    estaProcesando = true;
-    mensajeError = null;
-
-    try
     {
-        bool exito = false;
+        estaProcesando = true;
+        mensajeError = null;
 
-        if (FacturaId > 0)
+        try
         {
-            // Caso A: Pago de factura vieja (Taller)
-            exito = await facturaService.ProcesarPagoFacturaAsync(FacturaId, montoAFacturar);
-        }
-        else
-        {
-            // 🚩 Caso B: Cobro de carrito nuevo
-            var request = carritoService.PrepararCobro("Tarjeta");
-            
-            // Llamamos al servicio en lugar de usar HttpClient directamente
-            var resultado = await pagoService.ProcesarCobroAsync(request);
-            
-            exito = resultado.Success;
-            if (!exito)
+            bool exito = false;
+
+            if (FacturaId > 0)
             {
-                mensajeError = $"❌ {resultado.Error?.Mensaje ?? "Error en la transacción"}";
+                exito = await facturaService.ProcesarPagoFacturaAsync(FacturaId, montoAFacturar);
+            }
+            else
+            {
+                if (!ClienteId.HasValue || ClienteId.Value <= 0)
+                {
+                    mensajeError = "No se pudo determinar el cliente para procesar el pago del carrito.";
+                    return;
+                }
+
+                var request = carritoService.PrepararCobro(
+                    metodoPago: "Tarjeta",
+                    vehiculoId: VehiculoId.HasValue && VehiculoId.Value > 0 ? VehiculoId : null,
+                    clienteId: ClienteId.Value);
+
+                var resultado = await pagoService.ProcesarCobroAsync(request);
+
+                exito = resultado.Success;
+                if (!exito)
+                {
+                    mensajeError = resultado.Error?.Mensaje ?? "Error en la transacción.";
+                }
+            }
+
+            if (exito)
+            {
+                await carritoService.Limpiar();
+                navManager.NavigateTo(FacturaId > 0 ? "/facturas" : "/mis-ordenes");
+            }
+            else if (string.IsNullOrEmpty(mensajeError))
+            {
+                mensajeError = "El pago no pudo ser procesado.";
             }
         }
-
-        if (exito)
+        catch (Exception ex)
         {
-            await carritoService.Limpiar();
-            navManager.NavigateTo(FacturaId > 0 ? "/facturas" : "/mis-ordenes");
+            mensajeError = $"Fallo crítico al procesar el pago: {ex.Message}";
         }
-        else if (string.IsNullOrEmpty(mensajeError)) 
+        finally
         {
-            mensajeError = "❌ El pago no pudo ser procesado.";
+            estaProcesando = false;
         }
     }
-    catch (Exception ex)
-    {
-        mensajeError = $"❌ Fallo crítico: {ex.Message}";
-    }
-    finally
-    {
-        estaProcesando = false;
-    }
-}
 
     private void ValidarExpiracion(KeyboardEventArgs e)
     {

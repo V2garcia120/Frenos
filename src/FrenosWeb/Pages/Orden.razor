@@ -6,6 +6,8 @@
 @inject OrdenWebService ordenService
 @inject VehiculoService vehiculoService
 @inject PagoService pagoService
+@inject AuthenticationStateProvider authStateProvider
+@using System.Security.Claims
 
 <div class="container mt-5">
     <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
@@ -207,15 +209,29 @@
         {
             if (metodoPago == "Tarjeta")
             {
-                // Tarjeta: navegar a la página de pago con tarjeta
-                navManager.NavigateTo("/pago");
+                var clienteIdTarjeta = await ObtenerClienteIdAsync();
+                if (!clienteIdTarjeta.HasValue)
+                {
+                    mensajeError = "No se pudo identificar el cliente autenticado para continuar el pago.";
+                    return;
+                }
+
+                var vehiculoPago = vehiculoId > 0 ? vehiculoId : 0;
+                navManager.NavigateTo($"/pago?vehiculoId={vehiculoPago}&clienteId={clienteIdTarjeta.Value}");
                 return;
             }
 
-            // Efectivo o Transferencia: confirmar orden directo
+            var clienteId = await ObtenerClienteIdAsync();
+            if (!clienteId.HasValue)
+            {
+                mensajeError = "No se pudo identificar el cliente autenticado para confirmar la orden.";
+                return;
+            }
+
             var request = carritoService.PrepararCobro(
                 metodoPago,
-                vehiculoId > 0 ? vehiculoId : null
+                vehiculoId > 0 ? vehiculoId : null,
+                clienteId: clienteId.Value
             );
 
             var resultado = await pagoService.ProcesarCobroAsync(request);
@@ -238,5 +254,20 @@
         {
             estaProcesando = false;
         }
+    }
+
+    private async Task<int?> ObtenerClienteIdAsync()
+    {
+        var authState = await authStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        var rawId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                ?? user.FindFirst("nameid")?.Value
+                ?? user.FindFirst("sub")?.Value;
+
+        if (int.TryParse(rawId, out var id) && id > 0)
+            return id;
+
+        return null;
     }
 }

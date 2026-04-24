@@ -4,6 +4,7 @@ using FrenosCore.Servicios;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace FrenosCore.Controllers.Api
 {
@@ -11,6 +12,14 @@ namespace FrenosCore.Controllers.Api
     [ApiController]
     public class FacturaController(IFacturaService facturas) : ControllerBase
     {
+        [HttpPost]
+        [Authorize(Policy = "Cajero")]
+        public async Task<IActionResult> CobrarDirecto([FromBody] CobroDirectoRequest request)
+        {
+            var resultado = await facturas.CobrarDirectoAsync(request);
+            return Ok(ApiResponse<object>.Ok(resultado));
+        }
+
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> Listar(
@@ -56,6 +65,30 @@ namespace FrenosCore.Controllers.Api
         {
             var factura = await facturas.ObtenerFacturaPendientesAsync(placa, numeroFactura);
             return Ok(ApiResponse<object>.Ok(factura));
+        }
+
+        [HttpGet("mis-ordenes")]
+        [Authorize]
+        public async Task<IActionResult> MisOrdenes()
+        {
+            var sub = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(sub, out var clienteId) || clienteId == 0)
+                return Unauthorized(ApiResponse<object>.Fail("AUTH_ERROR", "Cliente no identificado."));
+
+            var historial = await facturas.ObtenerHistorialClienteAsync(clienteId);
+            return Ok(ApiResponse<object>.Ok(historial));
+        }
+
+        [HttpGet("mis-facturas")]
+        [Authorize]
+        public async Task<IActionResult> MisFacturas()
+        {
+            var sub = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(sub, out var clienteId) || clienteId == 0)
+                return Unauthorized(ApiResponse<object>.Fail("AUTH_ERROR", "Cliente no identificado."));
+
+            var lista = await facturas.ObtenerMisFacturasAsync(clienteId);
+            return Ok(ApiResponse<object>.Ok(lista));
         }
     }
 }

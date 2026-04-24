@@ -90,9 +90,7 @@ namespace TallerCaja.Forms
             try
             {
                 _productosCache = await _integracion.ObtenerProductosAsync();
-                MessageBox.Show($"Productos cargados: {_productosCache.Count}");
                 _serviciosCache = await _integracion.ObtenerServiciosAsync();
-                MessageBox.Show($"Servicios cargados: {_serviciosCache.Count}");
                 _local.SincronizarProductos(_productosCache);
                 _local.SincronizarServicios(_serviciosCache);
             }

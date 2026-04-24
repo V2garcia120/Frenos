@@ -226,7 +226,7 @@ namespace TallerCaja.Forms
                     // Guardar venta local
                     _local.GuardarVentaLocal(new VentaLocal
                     {
-                        IdLocal = resp.IdLocal,
+                        IdLocal = string.IsNullOrEmpty(resp.IdLocal) ? Guid.NewGuid().ToString() : resp.IdLocal,
                         FacturaIdCore = resp.FacturaId,
                         NumeroFactura = resp.NumeroFactura,
                         TurnoId = _localTurnoId,

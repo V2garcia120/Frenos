@@ -217,6 +217,96 @@ public class FacturaService(
     }
 
   
+    public async Task<CobroDirectoResponse> CobrarDirectoAsync(CobroDirectoRequest request)
+    {
+        string[] metodosValidos = ["Efectivo", "Tarjeta", "Transferencia", "Credito"];
+        if (!metodosValidos.Contains(request.MetodoPago))
+            throw new ArgumentException($"Método de pago '{request.MetodoPago}' no válido.");
+
+        var turno = await db.TurnoCaja.FindAsync(request.TurnoId)
+            ?? throw new ArgumentException($"Turno {request.TurnoId} no encontrado.");
+
+        if (!await db.Cliente.AnyAsync(c => c.Id == request.ClienteId))
+            throw new ArgumentException($"Cliente {request.ClienteId} no encontrado.");
+
+        var items = new List<FacturaItem>();
+        foreach (var i in request.Items)
+        {
+            var descripcion = i.Tipo == "Producto"
+                ? await db.Producto.Where(p => p.Id == i.ItemId).Select(p => p.Nombre).FirstOrDefaultAsync()
+                : await db.Servicio.Where(s => s.Id == i.ItemId).Select(s => s.Nombre).FirstOrDefaultAsync();
+
+            items.Add(new FacturaItem
+            {
+                Tipo = i.Tipo,
+                ItemId = i.ItemId,
+                Descripcion = descripcion ?? $"{i.Tipo} #{i.ItemId}",
+                Cantidad = i.Cantidad,
+                PrecioUnitario = i.PrecioSnapshot,
+                Subtotal = i.PrecioSnapshot * i.Cantidad
+            });
+        }
+
+        var subtotal = items.Sum(i => i.Subtotal);
+        var itbis = Math.Round(subtotal * TasaItbis, 2);
+        var total = subtotal + itbis;
+
+        if (request.MetodoPago == "Efectivo" && request.MontoPagado < total)
+            throw new InvalidOperationException(
+                $"Monto pagado ({request.MontoPagado:N2}) insuficiente. Total: {total:N2}.");
+
+        var numero = await GenerarNumeroFacturaAsync();
+
+        var factura = new Factura
+        {
+            TipoOrigen = "VentaDirecta",
+            ClienteId = request.ClienteId,
+            TurnoId = request.TurnoId,
+            EmitidaPor = turno.CajeroId,
+            Numero = numero,
+            Fecha = DateTime.UtcNow,
+            Subtotal = subtotal,
+            Itbis = itbis,
+            Total = total,
+            Estado = request.MetodoPago == "Credito" ? "Pendiente" : "Pagada",
+            MetodoPago = request.MetodoPago,
+            Items = items
+        };
+
+        db.Factura.Add(factura);
+        await DescontarStockAsync(items);
+        await db.SaveChangesAsync();
+
+        if (request.MetodoPago == "Credito")
+        {
+            db.CuentasPorCobrar.Add(new CuentasPorCobrar
+            {
+                ClienteId = factura.ClienteId,
+                FacturaId = factura.Id,
+                Monto = total,
+                Saldo = total,
+                Vencimiento = DateTime.UtcNow.AddDays(30),
+                Estado = "Pendiente",
+                CreadoEn = DateTime.UtcNow
+            });
+            await db.SaveChangesAsync();
+        }
+
+        await RegistrarAuditoriaAsync(
+            factura.Id, "CobrarDirecto", "Factura", string.Empty,
+            JsonSerializer.Serialize(new { factura.Id, factura.Numero, factura.Total, factura.MetodoPago }));
+
+        var cambio = request.MetodoPago == "Efectivo" ? request.MontoPagado - total : 0m;
+
+        return new CobroDirectoResponse(
+            FacturaId: factura.Id,
+            NumeroFactura: factura.Numero,
+            Total: total,
+            Cambio: cambio,
+            Estado: factura.Estado
+        );
+    }
+
     public async Task<FacturaResponse> RegistrarPagoAsync(
         int id, RegistrarPagoRequest req)
     {
@@ -355,6 +445,77 @@ public class FacturaService(
             }));
 
         logger.LogInformation("Factura anulada {FacturaId}", factura.Id);
+    }
+
+    public async Task<IEnumerable<FacturaResponse>> ObtenerMisFacturasAsync(int clienteId)
+    {
+        var lista = await db.Factura
+            .AsNoTracking()
+            .Include(f => f.Cliente)
+            .Include(f => f.Orden).ThenInclude(o => o!.Vehiculo)
+            .Include(f => f.EmitidaPorUsuario)
+            .Include(f => f.Items)
+            .Where(f => f.ClienteId == clienteId)
+            .OrderByDescending(f => f.Fecha)
+            .ToListAsync();
+
+        return lista.Select(ToResponse);
+    }
+
+    public async Task<IEnumerable<object>> ObtenerHistorialClienteAsync(int clienteId)
+    {
+        var lista = await db.Factura
+            .AsNoTracking()
+            .Include(f => f.Orden)
+                .ThenInclude(o => o!.Vehiculo)
+            .Include(f => f.Items)
+            .Where(f => f.ClienteId == clienteId)
+            .OrderByDescending(f => f.Fecha)
+            .ToListAsync();
+
+        return lista.Select(f => (object)new
+        {
+            NumeroOrden  = f.Numero,
+            Fecha        = f.Fecha,
+            TipoServicio = ResolverTipoServicio(f),
+            Vehiculo     = f.Orden?.Vehiculo is { } v
+                             ? $"{v.Marca} {v.Modelo} {v.Anno}"
+                             : "N/A",
+            Placa        = f.Orden?.Vehiculo?.Placa ?? "N/A",
+            Total        = f.Total,
+            EstadoServicio = ResolverEstadoServicio(f),
+            EstadoPago   = f.Estado,
+            EsServicio   = f.TipoOrigen == "OrdenReparacion"
+        });
+    }
+
+    private static string ResolverTipoServicio(Factura f)
+    {
+        if (f.TipoOrigen == "OrdenReparacion")
+        {
+            var svc = f.Items
+                .Where(i => i.Tipo == "Servicio")
+                .Select(i => i.Descripcion)
+                .FirstOrDefault();
+            return svc ?? "Servicio de Reparación";
+        }
+        var descripciones = f.Items.Take(2).Select(i => i.Descripcion);
+        return "Venta: " + string.Join(", ", descripciones);
+    }
+
+    private static string ResolverEstadoServicio(Factura f)
+    {
+        if (f.TipoOrigen != "OrdenReparacion") return "Entregado";
+        return f.Orden?.Estado switch
+        {
+            "Recibido"      => "Pendiente",
+            "EnDiagnostico" => "En diagnóstico",
+            "Aprobado"      => "En diagnóstico",
+            "EnReparacion"  => "En reparación",
+            "Lista"         => "Listo",
+            "Entregada"     => "Entregado",
+            _               => "Pendiente"
+        };
     }
 
     private async Task RegistrarAuditoriaAsync(int registroId, string accion, string tabla, string valorAntes, string valorDespues)

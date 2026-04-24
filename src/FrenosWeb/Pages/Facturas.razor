@@ -1,4 +1,4 @@
-﻿@page "/facturas"
+@page "/facturas"
 @using FrenosWeb.Models
 @using FrenosWeb.Services
 @inject FacturaService facturaService
@@ -8,8 +8,15 @@
 
 <div class="container mt-4 pb-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold text-dark"><i class="bi bi-receipt-cutoff text-success"></i> Mis Facturas</h2>
-        <span class="badge bg-light text-dark border p-2">Cliente: @usuarioActual</span>
+        <h2 class="fw-bold text-dark">
+            <i class="bi bi-receipt-cutoff text-success"></i> Mis Facturas
+        </h2>
+        @if (authService.CurrentUser != null)
+        {
+            <span class="badge bg-light text-dark border p-2">
+                <i class="bi bi-person-circle me-1"></i>@authService.CurrentUser.Email.Split('@')[0]
+            </span>
+        }
     </div>
 
     @if (misFacturas == null)
@@ -24,6 +31,7 @@
         <div class="alert alert-light border-0 shadow-sm text-center py-5 rounded-4">
             <i class="bi bi-folder-x display-1 text-muted"></i>
             <p class="fs-5 mt-3">No tienes facturas registradas todavía.</p>
+            <a href="/catalogo" class="btn btn-success rounded-pill px-4 mt-2">Ver Catálogo</a>
         </div>
     }
     else
@@ -35,9 +43,9 @@
                         <tr>
                             <th># Factura</th>
                             <th>Fecha</th>
-                            <th>Servicio Realizado</th>
+                            <th class="text-start ps-4">Descripción</th>
                             <th>Total</th>
-                            <th>Estado de Pago</th>
+                            <th>Estado</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -45,24 +53,23 @@
                         @foreach (var fac in misFacturas)
                         {
                             <tr>
-                                <td class="fw-bold text-primary">@fac.NumeroFactura</td>
-                                <td class="text-muted">@fac.Fecha.ToShortDateString()</td>
-                                <td class="text-start px-4">@fac.ServicioRealizado</td>
+                                <td class="fw-bold text-primary">@fac.Numero</td>
+                                <td class="text-muted">@fac.Fecha.ToString("dd/MM/yyyy")</td>
+                                <td class="text-start ps-4">@fac.ServicioResumen</td>
                                 <td class="fw-bold">RD$ @fac.Total.ToString("N2")</td>
                                 <td>
-                                    <span class="badge rounded-pill @(fac.EstadoPago == "Pagado" ? "bg-success" : "bg-warning text-dark")">
-                                        <i class="bi @(fac.EstadoPago == "Pagado" ? "bi-check-circle-fill" : "bi-exclamation-circle-fill") me-1"></i>
-                                        @fac.EstadoPago
+                                    <span class="badge rounded-pill @(fac.EsPagada ? "bg-success" : "bg-warning text-dark")">
+                                        <i class="bi @(fac.EsPagada ? "bi-check-circle-fill" : "bi-exclamation-circle-fill") me-1"></i>
+                                        @(fac.EsPagada ? "Pagada" : fac.Estado)
                                     </span>
                                 </td>
                                 <td>
                                     <div class="d-flex gap-2 justify-content-center">
-                                        <button class="btn btn-sm btn-outline-danger rounded-pill px-3 shadow-sm"
-                                                @onclick="() => GenerarPDF(fac.NumeroFactura)">
-                                            <i class="bi bi-file-earmark-pdf-fill"></i> PDF
+                                        <button class="btn btn-sm btn-outline-primary rounded-pill px-3 shadow-sm"
+                                                @onclick="() => VerComprobante(fac)">
+                                            <i class="bi bi-file-earmark-text-fill"></i> Comprobante
                                         </button>
-
-                                        @if (fac.EstadoPago == "Pendiente")
+                                        @if (!fac.EsPagada && fac.Estado == "Pendiente")
                                         {
                                             <button class="btn btn-sm btn-success rounded-pill px-3 shadow-sm"
                                                     @onclick="() => IniciarPago(fac)">
@@ -80,32 +87,167 @@
     }
 </div>
 
+@* ── Modal Comprobante ───────────────────────────────────────────────── *@
+@if (facturaSeleccionada != null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.55);" @onclick="CerrarModal">
+        <div class="modal-dialog modal-dialog-centered modal-lg" @onclick:stopPropagation>
+            <div class="modal-content shadow-lg rounded-4">
+
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-receipt text-success me-2"></i>Comprobante de Pago
+                    </h5>
+                    <button type="button" class="btn-close" @onclick="CerrarModal"></button>
+                </div>
+
+                <div class="modal-body px-4 py-3" id="comprobante-print">
+
+                    @* Encabezado *@
+                    <div class="text-center border-bottom pb-3 mb-3">
+                        <h4 class="fw-bold text-success mb-0">TALLER DE FRENOS</h4>
+                        <small class="text-muted">Servicio Automotriz Especializado</small>
+                        <div class="mt-2">
+                            <span class="badge bg-dark fs-6 px-3">@facturaSeleccionada.Numero</span>
+                        </div>
+                    </div>
+
+                    @* Datos generales *@
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <div class="bg-light rounded-3 p-3 h-100">
+                                <small class="text-muted d-block mb-1">Cliente</small>
+                                <span class="fw-semibold">@facturaSeleccionada.ClienteNombre</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="bg-light rounded-3 p-3 h-100">
+                                <small class="text-muted d-block mb-1">Fecha</small>
+                                <span class="fw-semibold">@facturaSeleccionada.Fecha.ToString("dd/MM/yyyy")</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="bg-light rounded-3 p-3 h-100">
+                                <small class="text-muted d-block mb-1">Método de Pago</small>
+                                <span class="fw-semibold">@(facturaSeleccionada.MetodoPago ?? "N/A")</span>
+                            </div>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(facturaSeleccionada.VehiculoInfo))
+                        {
+                            <div class="col-12">
+                                <div class="bg-light rounded-3 p-3">
+                                    <small class="text-muted d-block mb-1">Vehículo</small>
+                                    <span class="fw-semibold">
+                                        <i class="bi bi-car-front-fill me-1 text-secondary"></i>@facturaSeleccionada.VehiculoInfo
+                                    </span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    @* Líneas de detalle *@
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered align-middle mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th class="text-start">Descripción</th>
+                                    <th class="text-center" style="width:60px">Cant.</th>
+                                    <th class="text-end" style="width:120px">Precio Unit.</th>
+                                    <th class="text-end" style="width:120px">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in facturaSeleccionada.Items)
+                                {
+                                    <tr>
+                                        <td class="text-start">
+                                            <span class="badge bg-secondary me-1" style="font-size:.7rem">@item.Tipo</span>
+                                            @item.Descripcion
+                                        </td>
+                                        <td class="text-center">@item.Cantidad</td>
+                                        <td class="text-end">RD$ @item.PrecioUnitario.ToString("N2")</td>
+                                        <td class="text-end fw-semibold">RD$ @item.Subtotal.ToString("N2")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    @* Totales *@
+                    <div class="row justify-content-end mt-3">
+                        <div class="col-md-5">
+                            <table class="table table-sm mb-0">
+                                <tr>
+                                    <td class="text-muted border-0">Subtotal</td>
+                                    <td class="text-end border-0">RD$ @facturaSeleccionada.Subtotal.ToString("N2")</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted border-0">ITBIS (18%)</td>
+                                    <td class="text-end border-0">RD$ @facturaSeleccionada.Itbis.ToString("N2")</td>
+                                </tr>
+                                <tr class="table-success fw-bold border-top">
+                                    <td class="fs-6">TOTAL</td>
+                                    <td class="text-end fs-5">RD$ @facturaSeleccionada.Total.ToString("N2")</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    @* Estado *@
+                    <div class="text-center mt-3 pt-2 border-top">
+                        <span class="badge fs-6 px-3 py-2 rounded-pill @(facturaSeleccionada.EsPagada ? "bg-success" : "bg-warning text-dark")">
+                            <i class="bi @(facturaSeleccionada.EsPagada ? "bi-check-circle-fill" : "bi-clock-fill") me-1"></i>
+                            @(facturaSeleccionada.EsPagada ? "PAGADA" : facturaSeleccionada.Estado.ToUpper())
+                        </span>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer border-0 pt-0 gap-2">
+                    <button class="btn btn-outline-secondary rounded-pill px-4" @onclick="CerrarModal">
+                        <i class="bi bi-x-lg me-1"></i>Cerrar
+                    </button>
+                    <button class="btn btn-success rounded-pill px-4" @onclick="Imprimir">
+                        <i class="bi bi-printer-fill me-1"></i>Imprimir
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+
 @code {
-    private string usuarioActual = "...";
     private List<FacturaModel>? misFacturas;
+    private FacturaModel? facturaSeleccionada;
 
     protected override async Task OnInitializedAsync()
     {
-        if (authService.CurrentUser != null)
+        misFacturas = await facturaService.GetFacturasAsync();
+
+        // Si venimos desde MisOrdenes con ?buscar=FAC-XXXX, abrir ese comprobante
+        var uri = new Uri(navManager.Uri);
+        if (!string.IsNullOrEmpty(uri.Query) && misFacturas != null)
         {
-            usuarioActual = authService.CurrentUser.Email.Split('@')[0];
-            int id = authService.CurrentUser.ClienteId;
-            
-            misFacturas = await facturaService.GetFacturasUsuarioAsync(id);
-        }
-        else
-        {
-            misFacturas = new List<FacturaModel>();
+            foreach (var part in uri.Query.TrimStart('?').Split('&'))
+            {
+                var kv = part.Split('=', 2);
+                if (kv.Length == 2 && kv[0] == "buscar")
+                {
+                    var numero = Uri.UnescapeDataString(kv[1]);
+                    facturaSeleccionada = misFacturas.FirstOrDefault(f => f.Numero == numero);
+                    break;
+                }
+            }
         }
     }
 
-    private async Task GenerarPDF(string id)
-    {
-        await JS.InvokeVoidAsync("alert", $"🔐 Descargando la factura {id}...");
-    }
+    private void VerComprobante(FacturaModel factura) => facturaSeleccionada = factura;
 
-    private async Task IniciarPago(FacturaModel factura)
-    {
+    private void CerrarModal() => facturaSeleccionada = null;
+
+    private async Task Imprimir() => await JS.InvokeVoidAsync("window.print");
+
+    private void IniciarPago(FacturaModel factura) =>
         navManager.NavigateTo($"/pago/{factura.Total}/{factura.Id}");
-    }
 }

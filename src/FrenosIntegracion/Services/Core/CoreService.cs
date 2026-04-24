@@ -156,7 +156,7 @@ namespace FrenosIntegracion.Services.Core
 
         public async Task<CobroResponse> ProcesarCobroAsync(CobroRequest request, string token)
         {
-            var req = new HttpRequestMessage(HttpMethod.Post, "/api/facturas");
+            var req = new HttpRequestMessage(HttpMethod.Post, "/api/factura");
             req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
             req.Content = Serializar(request);
 
@@ -259,11 +259,19 @@ namespace FrenosIntegracion.Services.Core
             return await Deserializar<object>(response) ?? new { };
         }
 
-        // --- Órdenes ---
-        public async Task<IEnumerable<object>> ObtenerHistorialOrdenesAsync()
+        // --- Órdenes y Facturas del cliente ---
+        public async Task<IEnumerable<object>> ObtenerMisFacturasAsync(string token)
         {
-            var req = new HttpRequestMessage(HttpMethod.Get, "/api/ordenes/historial");
-            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", GenerarTokenInterno());
+            var req = new HttpRequestMessage(HttpMethod.Get, "/api/factura/mis-facturas");
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var response = await _http.SendAsync(req);
+            return await Deserializar<IEnumerable<object>>(response) ?? Enumerable.Empty<object>();
+        }
+
+        public async Task<IEnumerable<object>> ObtenerHistorialOrdenesAsync(string token)
+        {
+            var req = new HttpRequestMessage(HttpMethod.Get, "/api/factura/mis-ordenes");
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             var response = await _http.SendAsync(req);
             return await Deserializar<IEnumerable<object>>(response) ?? Enumerable.Empty<object>();
@@ -314,6 +322,17 @@ namespace FrenosIntegracion.Services.Core
             return data ?? Enumerable.Empty<ServicioDto>();
         }
 
+        public async Task<IEnumerable<ClienteDto>> BuscarClientesAsync(string q, string token)
+        {
+            var req = new HttpRequestMessage(HttpMethod.Get,
+                $"/api/clientes/buscar?termino={Uri.EscapeDataString(q)}");
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await _http.SendAsync(req);
+            var data = await Deserializar<IEnumerable<ClienteDto>>(response);
+            return data ?? Enumerable.Empty<ClienteDto>();
+        }
+
         // --- Helpers ---
         private static StringContent Serializar<T>(T obj) =>
             new(JsonSerializer.Serialize(obj), Encoding.UTF8, "application/json");
@@ -340,7 +359,7 @@ namespace FrenosIntegracion.Services.Core
                 {
                     new Claim(JwtRegisteredClaimNames.Sub, "0"),
                     new Claim(JwtRegisteredClaimNames.Email, "integracion@sistema.interno"),
-                    new Claim("Rol", "Admin")
+                    new Claim("Rol", "Administrador")
                 },
                 expires: DateTime.UtcNow.AddHours(8),
                 signingCredentials: creds

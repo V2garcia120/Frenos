@@ -19,7 +19,7 @@ namespace FrenosIntegracion.Services.Sync
         Task<object> RegistrarAbonoAsync(int cxcId, int turnoId, decimal monto, string metodo);
 
         Task<object> ProcesarLoteOfflineAsync(SyncRequest request);
-        Task EncolarOperacionAsync(string canal, string tipo, object payload);
+        Task<string> EncolarOperacionAsync(string canal, string tipo, object payload, string? idLocal = null);
         Task ProcesarPendientesAsync();
     }
 }
