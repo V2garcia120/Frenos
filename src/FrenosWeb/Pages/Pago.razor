@@ -1,9 +1,14 @@
 ﻿@page "/pago"
+@page "/pago/{MontoExterno:decimal}/{FacturaId:int}"
 @using FrenosWeb.Services
+@using FrenosWeb.Models
 @using Microsoft.AspNetCore.Authorization
 @inject CarritoStateService carritoService
 @inject NavigationManager navManager
 @inject PagoService pagoService
+@inject FacturaService facturaService
+@inject IJSRuntime JS
+@inject HttpClient http
 @attribute [Authorize]
 
 <div class="container mt-5">
@@ -16,7 +21,7 @@
                 <div class="card-body p-4">
                     <div class="text-center mb-4">
                         <small class="text-muted">Total a pagar (con ITBIS)</small>
-                        <h2 class="text-success font-weight-bold">RD$ @carritoService.TotalFinal.ToString("N2")</h2>
+                        <h2 class="text-success font-weight-bold">RD$ @montoAFacturar.ToString("N2")</h2>
                     </div>
 
                     <form @onsubmit="ProcesarPago">
@@ -77,45 +82,94 @@
     private string expiracion = "";
     private string nombreTarjeta = "";
     private string? mensajeError;
+    [Parameter] public decimal MontoExterno { get; set; }
+    [Parameter] public int FacturaId { get; set; }
+    private decimal montoAFacturar;
+
+    protected override void OnInitialized()
+    {
+        montoAFacturar = MontoExterno > 0 ? MontoExterno : carritoService.TotalFinal;
+    }
 
     private async Task ProcesarPago()
-    {
-        estaProcesando = true;
-        mensajeError = null;
+{
+    estaProcesando = true;
+    mensajeError = null;
 
-        bool resultado;
-        if (nombreTarjeta == "ERROR")
+    try
+    {
+        bool exito = false;
+
+        if (FacturaId > 0)
         {
-            await Task.Delay(2000); 
-            resultado = false;
+            // Caso A: Pago de factura vieja (Taller)
+            exito = await facturaService.ProcesarPagoFacturaAsync(FacturaId, montoAFacturar);
         }
         else
         {
-            resultado = await pagoService.ProcesarPagoSimuladoAsync(carritoService.TotalFinal);
+            // 🚩 Caso B: Cobro de carrito nuevo
+            var request = carritoService.PrepararCobro("Tarjeta");
+            
+            // Llamamos al servicio en lugar de usar HttpClient directamente
+            var resultado = await pagoService.ProcesarCobroAsync(request);
+            
+            exito = resultado.Success;
+            if (!exito)
+            {
+                mensajeError = $"❌ {resultado.Error?.Mensaje ?? "Error en la transacción"}";
+            }
         }
 
-        if (resultado)
+        if (exito)
         {
             await carritoService.Limpiar();
-            estaProcesando = false;
-            navManager.NavigateTo("/mis-ordenes");
+            navManager.NavigateTo(FacturaId > 0 ? "/facturas" : "/mis-ordenes");
         }
-        else
+        else if (string.IsNullOrEmpty(mensajeError)) 
         {
-            estaProcesando = false;
-            mensajeError = "❌ Transacción Declinada: Verifique los datos o contacte a su banco.";
+            mensajeError = "❌ El pago no pudo ser procesado.";
         }
     }
+    catch (Exception ex)
+    {
+        mensajeError = $"❌ Fallo crítico: {ex.Message}";
+    }
+    finally
+    {
+        estaProcesando = false;
+    }
+}
 
     private void ValidarExpiracion(KeyboardEventArgs e)
     {
         var soloNumeros = new string(expiracion.Where(char.IsDigit).ToArray());
+
+        if (soloNumeros.Length > 4)
+            soloNumeros = soloNumeros.Substring(0, 4);
+
         if (soloNumeros.Length >= 2)
         {
             int mes = int.Parse(soloNumeros.Substring(0, 2));
-            if (mes > 12) soloNumeros = "12" + soloNumeros.Substring(2);
-            if (mes == 0) soloNumeros = "01" + soloNumeros.Substring(2);
+            if (mes > 12) soloNumeros = "12" + (soloNumeros.Length > 2 ? soloNumeros.Substring(2) : "");
+            if (mes == 0 && soloNumeros.Length >= 2) soloNumeros = "01" + (soloNumeros.Length > 2 ? soloNumeros.Substring(2) : "");
         }
+
+        if (soloNumeros.Length == 4)
+        {
+            int anioIngresado = int.Parse(soloNumeros.Substring(2, 2));
+            int anioActual = DateTime.Now.Year % 100; 
+
+            if (anioIngresado < anioActual)
+            {
+                soloNumeros = soloNumeros.Substring(0, 2) + anioActual.ToString();
+                mensajeError = "⚠️ La tarjeta no puede estar expirada.";
+            }
+            else if (anioIngresado > anioActual + 20) 
+            {
+                soloNumeros = soloNumeros.Substring(0, 2) + (anioActual + 10).ToString();
+            }
+        }
+
         if (soloNumeros.Length > 2)
         {
             expiracion = soloNumeros.Insert(2, "/");

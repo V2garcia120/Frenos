@@ -100,54 +100,10 @@
 
     protected override async Task OnInitializedAsync()
     {
-        try
+        historial = await ordenService.GetHistorialAsync();
+        if (historial.Count > 0)
         {
-            // Intentamos traer los datos reales de la API
-            // Nota: Aquí llamaríamos a un método en tu OrdenWebService como 'GetHistorialAsync'
-            // historial = await ordenService.GetHistorialAsync();
-            
-            // Forzamos el error por ahora para probar los datos simulados
-            throw new Exception("API no conectada aún");
-        }
-        catch (Exception ex)
-        {
-            // Si la API falla, cargamos los datos "falsos" para que el profe vea que funciona
-            Console.WriteLine($"[Cyber-Logs] Usando datos locales: {ex.Message}");
-            await Task.Delay(700); 
-
-            historial = new List<OrdenWebModel>
-            {
-                new OrdenWebModel {
-                    NumeroOrden = "ORD-2026-001",
-                    Fecha = DateTime.Now.AddDays(-2),
-                    TipoServicio = "Mantenimiento General",
-                    EsServicio = true,
-                    Vehiculo = "Toyota Corolla 2022",
-                    Placa = "A987456",
-                    Total = 12390.00m,
-                    EstadoServicio = "Listo"
-                },
-                new OrdenWebModel {
-                    NumeroOrden = "ORD-2026-002",
-                    Fecha = DateTime.Now,
-                    TipoServicio = "Rectificación de Discos",
-                    EsServicio = true,
-                    Vehiculo = "Honda Civic 2018",
-                    Placa = "G123456",
-                    Total = 4500.00m,
-                    EstadoServicio = "En diagnóstico"
-                },
-                new OrdenWebModel {
-                    NumeroOrden = "ORD-2026-003",
-                    Fecha = DateTime.Now.AddDays(-1),
-                    TipoServicio = "Compra: Líquido de Frenos DOT4",
-                    EsServicio = false,
-                    Vehiculo = "-",
-                    Placa = "-",
-                    Total = 850.00m,
-                    EstadoServicio = "Entregado"
-                }
-            };
+            await Task.Delay(500); 
         }
     }
 

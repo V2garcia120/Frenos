@@ -1,7 +1,9 @@
 ﻿@page "/registro"
 @using FrenosWeb.Models
+@using FrenosWeb.Services
 @using System.ComponentModel.DataAnnotations
 @inject NavigationManager navManager
+@inject AuthService authService
 
 <div class="row justify-content-center align-items-center" style="min-height: 75vh;">
     <div class="col-md-4">
@@ -14,18 +16,43 @@
 
                 <EditForm Model="regModel" OnValidSubmit="HandleRegistro">
                     <DataAnnotationsValidator />
+                    @if (!string.IsNullOrEmpty(mensajeError))
+                    {
+                        <div class="alert alert-danger border-0 shadow-sm rounded-4 mb-4 animate_animated animate__shakeX">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i> @mensajeError
+                            </div>
+                    }
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Nombre Completo</label>
+                        <label class="form-label fw-bold">Nombre</label>
                         <input class="form-control bg-light border-0 rounded-pill px-3"
-                               @bind-value="regModel.Nombre" placeholder="Juan Pérez" />
+                               @bind="regModel.Nombre" placeholder="María" />
                         <ValidationMessage For="@(() => regModel.Nombre)" class="text-danger small" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Apellido</label>
+                        <input class="form-control bg-light border-0 rounded-pill px-3"
+                               @bind="regModel.Apellido" placeholder="Gómez" />
+                        <ValidationMessage For="@(() => regModel.Apellido)" class="text-danger small" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Cédula</label>
+                        <input type="text"
+                               inputmode="numeric"
+                               maxlength="11"
+                               oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                               class="form-control bg-light border-0 rounded-pill px-3"
+                               @bind="regModel.Cedula"
+                               placeholder="40212345678" />
+                        <ValidationMessage For="@(() => regModel.Cedula)" class="text-danger small" />
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label fw-bold">Correo Electrónico</label>
                         <input type="email" class="form-control bg-light border-0 rounded-pill px-3"
-                               @bind-value="regModel.Email" placeholder="correo@ejemplo.com" />
+                               @bind="regModel.Email" placeholder="correo@ejemplo.com" />
                         <ValidationMessage For="@(() => regModel.Email)" class="text-danger small" />
                     </div>
 
@@ -36,7 +63,7 @@
                                maxlength="10" 
                                oninput="this.value = this.value.replace(/[^0-9]/g, '');" 
                                class="form-control bg-light border-0 rounded-pill px-3"
-                               @bind-value="regModel.Telefono"
+                               @bind="regModel.Telefono"
                                placeholder="8091234567" />
                         <ValidationMessage For="@(() => regModel.Telefono)" class="text-danger small" />
                     </div>
@@ -44,14 +71,14 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold">Contraseña</label>
                         <input type="password" class="form-control bg-light border-0 rounded-pill px-3"
-                               @bind-value="regModel.Password" placeholder="******" />
+                               @bind="regModel.Password" placeholder="******" />
                         <ValidationMessage For="@(() => regModel.Password)" class="text-danger small" />
                     </div>
 
                     <div class="mb-4">
                         <label class="form-label fw-bold">Confirmar Contraseña</label>
                         <input type="password" class="form-control bg-light border-0 rounded-pill px-3"
-                               @bind-value="regModel.ConfirmPassword" placeholder="******" />
+                               @bind="regModel.ConfirmPassword" placeholder="******" />
                         <ValidationMessage For="@(() => regModel.ConfirmPassword)" class="text-danger small" />
                     </div>
 
@@ -63,7 +90,6 @@
                         }
                         else
                         {
-
                             <span>Registrarme</span>
                         }
                     </button>
@@ -83,19 +109,45 @@
 @code {
     private RegistroRequest regModel = new();
     private bool isProcessing;
+    private string? mensajeError;
 
     private async Task HandleRegistro()
     {
         isProcessing = true;
-        await Task.Delay(1500); // Simulación API
-        navManager.NavigateTo("/login");
-        isProcessing = false;
+        mensajeError = null;
+
+        var (exito, error) = await authService.Registrar(new ClienteModel
+        {
+            Nombre = regModel.Nombre,
+            Apellido = regModel.Apellido,
+            Cedula = regModel.Cedula,
+            Correo = regModel.Email,
+            Telefono = regModel.Telefono,
+            Password = regModel.Password
+        });
+
+        if (exito)
+        {
+            navManager.NavigateTo("/login");
+        }
+        else
+        {
+            mensajeError = error ?? "❌ No se pudo crear la cuenta.";
+            isProcessing = false;
+        }
     }
 
     public class RegistroRequest
     {
         [Required(ErrorMessage = "El nombre es obligatorio")]
         public string Nombre { get; set; } = "";
+
+        [Required(ErrorMessage = "El apellido es obligatorio")]
+        public string Apellido { get; set; } = "";
+
+        [Required(ErrorMessage = "La cédula es obligatoria")]
+        [RegularExpression(@"^\d{11}$", ErrorMessage = "La cédula debe tener 11 números sin guiones")]
+        public string Cedula { get; set; } = "";
 
         [Required(ErrorMessage = "El correo es obligatorio")]
         [EmailAddress(ErrorMessage = "Correo inválido")]

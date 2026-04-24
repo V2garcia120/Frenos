@@ -70,6 +70,31 @@
 </div>
 
 @code {
+    [Inject] IJSRuntime JS { get; set; }
+    [Inject] HttpClient http { get; set; }
+    [Inject] AuthenticationStateProvider AuthProvider { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
+            if (!string.IsNullOrEmpty(token))
+            {
+                // Re-inyectamos el token en el cliente HTTP
+                http.DefaultRequestHeaders.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            
+                // Si tu AuthStateProvider tiene un método para recargar, úsalo aquí
+                if (AuthProvider is TestAuthStateProvider testProvider)
+                {
+                    // Esto fuerza a Blazor a re-validar que el usuario sigue ahí
+                    await testProvider.GetAuthenticationStateAsync();
+                    StateHasChanged();
+                }
+            }
+        }
+    }
     protected override void OnInitialized()
     {
         carritoService.OnChange += StateHasChanged;
@@ -80,9 +105,9 @@
         carritoService.OnChange -= StateHasChanged;
     }
 
-    private void HandleLogout()
+    private async Task HandleLogout()
     {
-        authService.Logout();
+        await authService.Logout();
         navManager.NavigateTo("/", true);
     }
 }

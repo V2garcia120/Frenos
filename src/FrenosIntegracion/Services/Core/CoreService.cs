@@ -1,7 +1,10 @@
 ﻿using FrenosIntegracion.DTOs;
 using FrenosIntegracion.Models.DTOs;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 
@@ -33,9 +36,19 @@ namespace FrenosIntegracion.Services.Core
         // --- Autenticación ---
         public async Task<object> AutenticarClienteAsync(LoginRequest request)
         {
-            var response = await _http.PostAsync("/api/auth/cliente", Serializar(request));
+            var response = await _http.PostAsync("/api/auth/login-cliente", Serializar(request));
             response.EnsureSuccessStatusCode();
-            return await Deserializar<object>(response) ?? new { };
+
+            var wrapper = JsonSerializer.Deserialize<ApiWrapper<TokenDto>>(
+                await response.Content.ReadAsStringAsync(), _jsonOptions);
+
+            return new
+            {
+                token = wrapper?.Data?.Token ?? "",
+                email = request.Email,        
+                rol = "Cliente",
+                clienteId = 0                   
+            };
         }
 
         public async Task<object> AutenticarEmpleadoAsync(LoginRequest request)
@@ -181,11 +194,75 @@ namespace FrenosIntegracion.Services.Core
 
         public async Task<bool> RegistrarClienteAsync(ClienteRegistroDto cliente)
         {
-            // Cambiamos _httpClient por _http para que coincida con tu variable privada
-            var response = await _http.PostAsJsonAsync("api/clientes/CrearCliente", cliente);
-            return response.IsSuccessStatusCode;
+            var payload = new
+            {
+                Nombre = $"{cliente.Nombre} {cliente.Apellido}".Trim(),
+                Cedula = cliente.Cedula,
+                Telefono = cliente.Telefono,
+                Email = cliente.Correo,
+                Password = cliente.Password,
+                Direccion = ""
+            };
+
+            var response = await _http.PostAsJsonAsync("api/clientes", payload);
+
+            if (response.IsSuccessStatusCode)
+                return true;
+
+            var json = await response.Content.ReadAsStringAsync();
+            var error = JsonSerializer.Deserialize<ApiErrorWrapper>(json, _jsonOptions);
+            var mensaje = error?.Error?.Mensaje ?? "No se pudo registrar el cliente.";
+            throw new InvalidOperationException(mensaje);
+        }
+
+        // Token interno que Integración usa para llamar al Core
+        private string GenerarTokenInterno()
+        {
+            var key = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes("TallerFrenosClaveSecreta2026!MuyLargaParaHMAC256"));
+
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                issuer: "TallerCore",
+                claims: new[]
+                {
+            new Claim(ClaimTypes.NameIdentifier, "0"),
+            new Claim(ClaimTypes.Email, "integracion@sistema.interno"),
+            new Claim(ClaimTypes.Role, "Admin")
+                },
+                expires: DateTime.UtcNow.AddHours(8),
+                signingCredentials: creds
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        // --- Catálogos ---
+        public async Task<IEnumerable<ProductoDto>> ObtenerProductosAsync()
+        {
+            _http.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", GenerarTokenInterno());
+
+            var response = await _http.GetAsync("/api/productos");
+            var data = await Deserializar<IEnumerable<ProductoDto>>(response);
+            return data ?? Enumerable.Empty<ProductoDto>();
+        }
+
+        public async Task<IEnumerable<ServicioDto>> ObtenerServiciosAsync()
+        {
+            _http.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", GenerarTokenInterno());
+
+            var response = await _http.GetAsync("/api/servicios");
+            var data = await Deserializar<IEnumerable<ServicioDto>>(response);
+            return data ?? Enumerable.Empty<ServicioDto>();
         }
     }
 
+
+    internal record ApiErrorDto(string Codigo, string Mensaje);
+    internal record ApiErrorWrapper(bool Success, object? Data, ApiErrorDto? Error);
     internal record ApiWrapper<T>(bool Success, T? Data, object? Error);
+    internal record TokenDto(string Token);
 }

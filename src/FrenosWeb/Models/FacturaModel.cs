@@ -2,6 +2,7 @@
 {
     public class FacturaModel
     {
+        public int Id { get; set; }
         public string NumeroFactura { get; set; } = "";
         public string ServicioRealizado { get; set; } = ""; 
         public decimal Total { get; set; }

@@ -75,12 +75,21 @@ namespace FrenosIntegracion.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Registrar([FromBody] ClienteRegistroDto modelo)
         {
-            var exito = await _core.RegistrarClienteAsync(modelo);
+            try
+            {
+                var exito = await _core.RegistrarClienteAsync(modelo);
+                if (exito)
+                    return Ok(FrenosIntegracion.Helpers.ApiResponse<object>.Ok(
+                        new { mensaje = "Cliente registrado con éxito" }));
 
-            if (exito)
-                return Ok(new { mensaje = "Cliente registrado con éxito" });
-
-            return BadRequest(new { mensaje = "No se pudo registrar el cliente" });
+                return BadRequest(FrenosIntegracion.Helpers.ApiResponse<object>.Fail(
+                    "REGISTRO_FALLIDO", "No se pudo registrar el cliente."));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(FrenosIntegracion.Helpers.ApiResponse<object>.Fail(
+                    "REGISTRO_FALLIDO", ex.Message));
+            }
         }
     }
 }
