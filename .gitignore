@@ -449,3 +449,4 @@ Thumbs.db
 *.msm
 *.msp
 /.github
+/src/FrenosCore/appsettings.json
