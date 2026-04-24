@@ -1,7 +1,11 @@
 ﻿@using FrenosWeb.Services
 
-<div class="card h-100 shadow border-0 rounded-4 item-card position-relative" @onclick="HandleVerDetalle"
-     style="cursor: pointer; transition: all 0.3s ease; border-bottom: 4px solid var(--azul-frenos) !important;">
+<div class="card h-100 shadow border-0 rounded-4 item-card position-relative"
+     @onclick="HandleVerDetalle"
+     style="cursor: @(!EsServicio && Stock == 0 ? "not-allowed" : "pointer");
+    opacity: @(!EsServicio && Stock == 0 ? "0.6" : "1");
+    transition: all 0.3s ease;
+    border-bottom: 4px solid var(--azul-frenos) !important;">
     <div class="card-body text-center p-4">
         
         <div class="mb-3 mt-2">
@@ -21,6 +25,11 @@
         <button class="btn btn-frenos-azul w-100 rounded-pill py-2 shadow fw-bold">
             <i class="bi bi-eye-fill me-2"></i>Ver Detalles
         </button>
+
+        @if (!EsServicio && Stock == 0)
+        {
+            <span class="badge bg-danger rounded-pill w-100 py-2">Sin Stock</span>
+        }
     </div>
 </div>
 
@@ -29,6 +38,7 @@
     [Parameter] public string Nombre { get; set; } = "";
     [Parameter] public decimal Precio { get; set; }
     [Parameter] public bool EsServicio { get; set; }
+    [Parameter] public int Stock { get; set; }
     [Parameter] public EventCallback<int> OnVerDetalle { get; set; }
 
     private async Task HandleVerDetalle() => await OnVerDetalle.InvokeAsync(Id);

@@ -33,6 +33,10 @@
                             <h5 class="fw-bold">@v.Marca @v.Modelo</h5>
                             <p class="text-muted mb-1">Año: @v.Anio</p>
                             <p class="badge bg-light text-dark border">Placa: @v.Placa</p>
+                            @if (!string.IsNullOrEmpty(v.Color))
+                            {
+                                <p class="text-muted mb-1">Color: @v.Color</p>
+                            }
                         </div>
                         <div class="card-footer bg-transparent border-0 text-end d-flex justify-content-between">
                             <button class="btn btn-sm btn-outline-primary border-0" @onclick="() => PrepararEdicion(v)">
@@ -60,7 +64,7 @@
                     <button type="button" class="btn-close" @onclick="CerrarModal"></button>
                 </div>
                 <div class="modal-body px-4">
-                    <EditForm Model="nuevoVehiculo" OnSubmit="HandleSubmit">
+                    <EditForm Model="nuevoVehiculo" OnValidSubmit="HandleSubmit">
                         <DataAnnotationsValidator />
                         <ValidationSummary class="text-danger small" />
 
@@ -109,17 +113,48 @@
                             }
                         </div>
 
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Color</label>
+                            <InputSelect class="form-select rounded-pill bg-light border-0" @bind-Value="nuevoVehiculo.Color">
+                                <option value="">Seleccione un color...</option>
+                                <option value="Blanco">Blanco</option>
+                                <option value="Negro">Negro</option>
+                                <option value="Gris">Gris</option>
+                                <option value="Plata">Plata</option>
+                                <option value="Rojo">Rojo</option>
+                                <option value="Azul">Azul</option>
+                                <option value="Verde">Verde</option>
+                                <option value="Amarillo">Amarillo</option>
+                                <option value="Beige">Beige</option>
+                                <option value="Otro">Otro</option>
+                            </InputSelect>
+
+                            @if (nuevoVehiculo.Color == "Otro")
+                            {
+                                <input class="form-control rounded-pill bg-light border-0 mt-2"
+                                       @bind-value="colorManual"
+                                       @bind-value:event="oninput"
+                                       placeholder="Escribe el color aquí..." />
+                            }
+                        </div>
+
                         <div class="row">
                             <div class="col-6 mb-3">
                                 <label class="form-label fw-bold small">Año</label>
-                                <InputNumber class="form-control rounded-pill bg-light border-0" @bind-Value="nuevoVehiculo.Anio" min="1950" max="2026" />
+                                <InputNumber class="form-control rounded-pill bg-light border-0" @bind-Value="nuevoVehiculo.Anio" min="1950" max="@DateTime.Now.Year" />
                             </div>
                             <div class="col-6 mb-3">
                                 <label class="form-label fw-bold small">Placa</label>
-                                <input class="form-control rounded-pill bg-light border-0" @bind-value="nuevoVehiculo.Placa" placeholder="A123456" />
+                                <InputText class="form-control rounded-pill bg-light border-0" @bind-Value="nuevoVehiculo.Placa" placeholder="A123456" />
                             </div>
                         </div>
 
+                        @if (!string.IsNullOrEmpty(mensajeError))
+                        {
+                            <div class="alert alert-danger border-0 rounded-4 py-2 text-center small">
+                                ⚠️ @mensajeError
+                            </div>
+                        }
                         <div class="text-end mt-3 mb-2">
                             <button type="button" class="btn btn-light rounded-pill px-4 me-2" @onclick="CerrarModal">Cancelar</button>
                             <button type="submit" class="btn btn-success rounded-pill px-4">Guardar Vehículo</button>
@@ -139,28 +174,31 @@
     private string modeloManual = "";
     private bool esEdicion = false;
     private int idVehiculoAEditar;
+    private string colorManual = "";
+    private string mensajeError = "";
 
     protected override async Task OnInitializedAsync() => vehiculos = await vehiculoService.GetVehiculosUsuarioAsync();
 
     private void AbrirModal()
     {
-        esEdicion = false; // Reset de estado
-        nuevoVehiculo = new VehiculoModel { Anio = 2026 };
+        esEdicion = false;
+        nuevoVehiculo = new VehiculoModel { Anio = DateTime.Now.Year, Color = "" };
         marcaManual = "";
         modeloManual = "";
+        mensajeError = ""; 
+        colorManual = "";
         mostrarModal = true;
     }
 
     private void CerrarModal() => mostrarModal = false;
-    
+
     private async Task EliminarVehiculo(int id)
     {
         bool confirmado = await JS.InvokeAsync<bool>("confirm", "¿Estás segura de que quieres eliminar este vehículo?");
-    
         if (confirmado)
         {
-            var vehiculo = vehiculos.FirstOrDefault(v => v.Id == id);
-            if (vehiculo != null) vehiculos.Remove(vehiculo);
+            await vehiculoService.EliminarVehiculoAsync(id);  
+            vehiculos = await vehiculoService.GetVehiculosUsuarioAsync(); 
         }
     }
 
@@ -174,13 +212,13 @@
         _ => new() // Lista vacía para otras marcas
     };
 
-    private void HandleSubmit()
+    private async Task HandleSubmit()
     {
         if (nuevoVehiculo.Marca == "Otro") nuevoVehiculo.Marca = marcaManual;
         if (nuevoVehiculo.Modelo == "Otro" || string.IsNullOrEmpty(nuevoVehiculo.Modelo))
             nuevoVehiculo.Modelo = modeloManual;
-
-        GuardarVehiculo();
+        if (nuevoVehiculo.Color == "Otro") nuevoVehiculo.Color = colorManual;
+        await GuardarVehiculo();
     }
 
     private async Task GuardarVehiculo()
@@ -192,23 +230,24 @@
 
         if (esEdicion)
         {
-            // Aquí podrías llamar a un vehiculoService.Actualizar si Diana lo crea
-            var original = vehiculos.FirstOrDefault(x => x.Id == idVehiculoAEditar);
-            if (original != null) { /* ... lógica de edición local ... */ }
+            await vehiculoService.ActualizarVehiculoAsync(idVehiculoAEditar, nuevoVehiculo);
+            vehiculos = await vehiculoService.GetVehiculosUsuarioAsync();
         }
         else
         {
-            // Enviamos el nuevo vehículo a la API 
-            var exito = await vehiculoService.RegistrarVehiculoAsync(nuevoVehiculo);
-        
-            if (exito)
+            var (exito, mensaje) = await vehiculoService.RegistrarVehiculoAsync(nuevoVehiculo);
+            if (!exito)
             {
-                // Recargamos la lista para ver el cambio real desde la DB
-                vehiculos = await vehiculoService.GetVehiculosUsuarioAsync();
+                mensajeError = mensaje;
+                StateHasChanged();
+                return;
             }
+            mensajeError = "";
+            vehiculos = await vehiculoService.GetVehiculosUsuarioAsync(); 
         }
-    
+
         CerrarModal();
+        StateHasChanged(); 
     }
 
     private void PrepararEdicion(VehiculoModel v)
@@ -236,6 +275,13 @@
         {
             modeloManual = v.Modelo;
             nuevoVehiculo.Modelo = "Otro";
+        }
+
+        var coloresComunes = new List<string> { "Blanco", "Negro", "Gris", "Plata", "Rojo", "Azul", "Verde", "Amarillo", "Beige" };
+        if (!coloresComunes.Contains(v.Color ?? ""))
+        {
+            colorManual = v.Color ?? "";
+            nuevoVehiculo.Color = "Otro";
         }
 
         mostrarModal = true;
