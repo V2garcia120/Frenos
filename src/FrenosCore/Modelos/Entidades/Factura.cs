@@ -5,6 +5,7 @@
         public int Id { get; set; }
         public int? OrdenId { get; set; }
         public int ClienteId { get; set; }
+        public int? TurnoId { get; set; }
         public string Numero { get; set; }
         public DateTime Fecha { get; set; }
         public decimal Subtotal { get; set; }
@@ -19,6 +20,7 @@
         public Cliente Cliente { get; set; } = null!;
         public Usuario EmitidaPorUsuario { get; set; } = null!;
         public CuentasPorCobrar? CuentasPorCorbrar { get; set; }
+        public TurnoCaja? Turno { get; set; } = null!;
         public ICollection<FacturaItem> Items { get; set; } = [];
     }
 }

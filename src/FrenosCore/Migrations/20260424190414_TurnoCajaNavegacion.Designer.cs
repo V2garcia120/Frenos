@@ -4,6 +4,7 @@ using FrenosCore.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FrenosCore.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260424190414_TurnoCajaNavegacion")]
+    partial class TurnoCajaNavegacion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -460,9 +463,6 @@ namespace FrenosCore.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 
-                    b.Property<int?>("TurnoId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("ClienteId");
@@ -475,8 +475,6 @@ namespace FrenosCore.Migrations
                     b.HasIndex("OrdenId")
                         .IsUnique()
                         .HasFilter("[OrdenId] IS NOT NULL");
-
-                    b.HasIndex("TurnoId");
 
                     b.ToTable("Factura", (string)null);
                 });
@@ -1040,18 +1038,11 @@ namespace FrenosCore.Migrations
                         .HasForeignKey("FrenosCore.Modelos.Entidades.Factura", "OrdenId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("FrenosCore.Modelos.Entidades.TurnoCaja", "Turno")
-                        .WithMany("Facturas")
-                        .HasForeignKey("TurnoId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.Navigation("Cliente");
 
                     b.Navigation("EmitidaPorUsuario");
 
                     b.Navigation("Orden");
-
-                    b.Navigation("Turno");
                 });
 
             modelBuilder.Entity("FrenosCore.Modelos.Entidades.FacturaItem", b =>
@@ -1207,11 +1198,6 @@ namespace FrenosCore.Migrations
             modelBuilder.Entity("FrenosCore.Modelos.Entidades.Servicio", b =>
                 {
                     b.Navigation("DiagnosticoItemsSugeridos");
-                });
-
-            modelBuilder.Entity("FrenosCore.Modelos.Entidades.TurnoCaja", b =>
-                {
-                    b.Navigation("Facturas");
                 });
 
             modelBuilder.Entity("FrenosCore.Modelos.Entidades.Usuario", b =>

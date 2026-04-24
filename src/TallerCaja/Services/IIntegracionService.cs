@@ -17,7 +17,7 @@ namespace TallerCaja.Services
         Task<AbrirTurnoResponse?> AbrirTurnoAsync(AbrirTurnoRequest request);
         Task<CerrarTurnoResponse?> CerrarTurnoAsync(CerrarTurnoRequest request);
         Task<CobroResponse?> ProcesarCobroAsync(CobroRequest request);
-        Task<FacturaPendienteDto?> BuscarFacturaPendienteAsync(string? placa = null, string? numero = null);
+        Task<FacturaPendienteDto> BuscarFacturaPendienteAsync(string? placa = null, string? numero = null);
         Task<PagoFacturaResponse?> PagarFacturaAsync(int facturaId, PagoFacturaRequest request);
         Task<AbonoResponse?> RegistrarAbonoAsync(int cxcId, AbonoRequest request);
         Task<SyncResponse?> SincronizarAsync(SyncRequest request);

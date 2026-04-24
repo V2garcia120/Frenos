@@ -14,6 +14,7 @@ namespace FrenosCore.Modelos.Entidades
         public DateTime FechaApertura { get; set; }
         public string Estado { get; set; }
         public string IdLocalCaja { get; set; }
+        public ICollection<Factura>? Facturas { get; set; } = new List<Factura>();
 
     }
 }

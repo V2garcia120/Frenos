@@ -5,6 +5,7 @@ using FrenosCore.Modelos.Dtos.Factura;
 using FrenosCore.Modelos.Dtos.Log;
 using FrenosCore.Modelos.Entidades;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using System.Text.Json;
 
 
@@ -84,10 +85,11 @@ public class FacturaService(
         return ToResponse(factura);
     }
 
-    public async Task<IEnumerable<FacturaPendienteDto>> ObtenerFacturaPendientesAsync(string? placa = null, string? numeroFactura = null) 
+    public async Task<FacturaPendienteDto> ObtenerFacturaPendientesAsync(string? placa = null, string? numeroFactura = null) 
     {
         if (string.IsNullOrWhiteSpace(placa) && string.IsNullOrWhiteSpace(numeroFactura))
             throw new ArgumentException("Se requiere placa o número de factura para buscar facturas pendientes.");
+        Log.Information($"Buscando facturas pendientes con placa='{placa}' o numeroFactura='{numeroFactura}'");
         var facturas = await db.Factura
         .Where(f => f.Estado == "Pendiente" &&
             (f.Orden.Vehiculo.Placa == placa || f.Numero == numeroFactura))
@@ -118,7 +120,9 @@ public class FacturaService(
             }).ToList()
         })
         .ToListAsync();
-         return facturas.Select(f => new FacturaPendienteDto ( f.Id, f.Numero, f.Cliente, f.Vehiculo, f.Total, f.Estado, f.Items.Select(i => new ItemFacturaDto(Convert.ToString(i.Nombre), i.Cantidad, i.Precio, i.Subtotal)).ToList()));
+        if (facturas.Count == 0 || facturas.All(f => f == null))
+            throw new KeyNotFoundException("No se encontraron facturas pendientes con los criterios proporcionados.");
+        return facturas.Select(f => new FacturaPendienteDto(f.Id, f.Numero, f.Cliente, f.Vehiculo, f.Total, f.Estado, f.Items.Select(i => new ItemFacturaDto(Convert.ToString(i.Nombre), i.Cantidad, i.Precio, i.Subtotal)).ToList())).FirstOrDefault();
 
     }
     public async Task<FacturaResponse> GenerarDesdeOrdenAsync(int ordenId, int emisorId, string? metodoPago)
@@ -238,21 +242,21 @@ public class FacturaService(
                 $"La factura ya está en estado {factura.Estado}. " +
                 "Solo se pueden pagar facturas Pendientes.");
 
- 
-        if (req.MontoPagado < factura.Total)
+        if (req.Monto < factura.Total)
             throw new InvalidOperationException(
-                $"El monto pagado (${req.MontoPagado:N2}) es menor al total " +
+                $"El monto pagado (${req.Monto:N2}) es menor al total " +
                 $"de la factura (${factura.Total:N2}).");
 
         string[] metodosValidos = ["Efectivo", "Tarjeta", "Transferencia", "Credito"];
-        if (!metodosValidos.Contains(req.MetodoPago))
+        if (!metodosValidos.Contains(req.Metodo))
             throw new ArgumentException(
-                $"Método de pago '{req.MetodoPago}' no válido. " +
+                $"Método de pago '{req.Metodo}' no válido. " +
                 $"Valores permitidos: {string.Join(", ", metodosValidos)}.");
 
-        factura.MetodoPago = req.MetodoPago;
+        factura.MetodoPago = req.Metodo;
+        factura.TurnoId = req.TurnoId;
 
-        if (req.MetodoPago == "Credito")
+        if (req.Metodo == "Credito")
         {
             factura.Estado = "Pendiente";
 
@@ -275,6 +279,14 @@ public class FacturaService(
         else
         {
             factura.Estado = "Pagada";
+
+            var cxcAbierta = await db.CuentasPorCobrar
+                .FirstOrDefaultAsync(c => c.FacturaId == factura.Id && c.Estado == "Pendiente");
+            if (cxcAbierta != null)
+            {
+                cxcAbierta.Saldo = 0;
+                cxcAbierta.Estado = "Pagada";
+            }
         }
 
         await db.SaveChangesAsync();

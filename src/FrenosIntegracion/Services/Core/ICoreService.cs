@@ -1,5 +1,6 @@
 ﻿using FrenosIntegracion.DTOs;
 using FrenosIntegracion.Models.DTOs;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 
 namespace FrenosIntegracion.Services.Core
 {
@@ -18,15 +19,15 @@ namespace FrenosIntegracion.Services.Core
         Task<EstadoOrdenResponse> ObtenerEstadoOrdenAsync(int ordenId, string token);
 
         // Caja
-        Task<object> AbrirTurnoAsync(int cajeroId, decimal montoInicial);
-        Task<object> CerrarTurnoAsync(int turnoId, decimal efectivoContado);
-        Task<object> RegistrarMovimientoEfectivoAsync(int turnoId, decimal monto, string motivo, string tipo);
-        Task<object> PagarFacturaAsync(int facturaId, int turnoId, string metodo, decimal monto);
-        Task<object> RegistrarAbonoAsync(int cxcId, int turnoId, decimal monto, string metodo);
+        Task<object> AbrirTurnoAsync(AbrirTurnoRequest request);
+        Task<object> CerrarTurnoAsync(CerrarTurnoRequest request);
+        Task<object> RegistrarMovimientoEfectivoAsync(MovimientoEfectivoRequest request);
+        Task<object> PagarFacturaAsync(PagoFacturaRequest request, string token);
+        Task<object> RegistrarAbonoAsync(AbonoCxCRequest request);
         Task<CobroResponse> ProcesarCobroAsync(CobroRequest request, string token);
         Task<bool> EstaDisponibleAsync();
         Task<IEnumerable<object>> ObtenerFacturasPorClienteAsync(int clienteId);
-
+        Task<object> ObtenerFacturasPendientesAsync(string token, string? numeroFactura, string? placa);
         Task<IEnumerable<object>> ObtenerVehiculosClienteAsync();
         Task<object> RegistrarVehiculoAsync(object vehiculo);
         Task<IEnumerable<object>> ObtenerHistorialOrdenesAsync();

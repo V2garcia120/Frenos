@@ -192,11 +192,14 @@ namespace TallerCaja.Forms
                 lblInfo.Text = $"Factura: {_facturaActual.Numero} | Cliente: {_facturaActual.ClienteNombre} | Vehículo: {_facturaActual.VehiculoInfo}";
                 CargarDetalle(_facturaActual);
             }
-            catch
+            catch (Exception ex)
             {
-                LimpiarDetalle();
-                lblInfo.Text = "No fue posible consultar la factura en este momento.";
-                MessageBox.Show("Error de conexión al buscar la factura.", "Conexión", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                {
+                    LimpiarDetalle();
+                    lblInfo.Text = "No fue posible consultar la factura en este momento.";
+                    MessageBox.Show("Error de conexión al buscar la factura.", "Conexión", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show($"Detalles técnicos: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
             finally
             {
@@ -237,9 +240,10 @@ namespace TallerCaja.Forms
             var metodoPago = cmbMetodoPago.SelectedItem?.ToString() ?? "Efectivo";
             var request = new PagoFacturaRequest
             {
+                FacturaId = _facturaActual.Id,
                 TurnoId = SessionManager.TurnoId != 0 ? SessionManager.TurnoId : _localTurnoId,
                 MetodoPago = metodoPago,
-                MontoPagado = _facturaActual.Total
+                Monto = _facturaActual.Total
             };
 
             btnPagar.Enabled = false;
@@ -296,7 +300,7 @@ namespace TallerCaja.Forms
                 TurnoId = request.TurnoId,
                 ClienteId = 0,
                 MetodoPago = metodoPago,
-                MontoPagado = request.MontoPagado,
+                MontoPagado = request.Monto,
                 Items = _facturaActual.Items.Select(i => new ItemCobroDto
                 {
                     Tipo = "Factura",

@@ -53,7 +53,7 @@ namespace FrenosCore.Pages.Facturas
 
             try
             {
-                await _facturaService.RegistrarPagoAsync(id, new RegistrarPagoRequest("Credito", Factura.Total));
+                await _facturaService.RegistrarPagoAsync(id, new RegistrarPagoRequest(0, "Credito", Factura.Total));
                 TempData["Mensaje"] = "Factura marcada como crédito. Se creó la cuenta por cobrar.";
                 return RedirectToPage(new { id });
             }
@@ -83,7 +83,7 @@ namespace FrenosCore.Pages.Facturas
             {
                 await _facturaService.RegistrarPagoAsync(
                     id,
-                    new RegistrarPagoRequest(Pago.MetodoPago, Pago.MontoPagado));
+                    new RegistrarPagoRequest(0, Pago.MetodoPago, Pago.MontoPagado));
 
                 TempData["Mensaje"] = "Pago registrado correctamente.";
                 return RedirectToPage(new { id });

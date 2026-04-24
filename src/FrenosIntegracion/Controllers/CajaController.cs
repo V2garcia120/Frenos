@@ -17,7 +17,7 @@ namespace FrenosIntegracion.Controllers
         [HttpPost("turno/abrir")]
         public async Task<IActionResult> AbrirTurno([FromBody] AbrirTurnoRequest request)
         {
-            var resultado = await core.AbrirTurnoAsync(request.CajeroId, request.MontoInicial);
+            var resultado = await core.AbrirTurnoAsync(request);
             return Ok(FrenosIntegracion.Helpers.ApiResponse<object>.Ok(resultado));
         }
 
@@ -25,7 +25,7 @@ namespace FrenosIntegracion.Controllers
         [HttpPost("turno/cerrar")]
         public async Task<IActionResult> CerrarTurno([FromBody] CerrarTurnoRequest request)
         {
-            var resultado = await core.CerrarTurnoAsync(request.TurnoId, request.EfectivoContado);
+            var resultado = await core.CerrarTurnoAsync(request);
             return Ok(FrenosIntegracion.Helpers.ApiResponse<object>.Ok(resultado));
         }
 
@@ -33,14 +33,14 @@ namespace FrenosIntegracion.Controllers
         [HttpPost("efectivo/entrada")]
         public async Task<IActionResult> EntradaEfectivo([FromBody] MovimientoEfectivoRequest request)
         {
-            var resultado = await core.RegistrarMovimientoEfectivoAsync(request.TurnoId, request.Monto, request.Motivo, "Entrada");
+            var resultado = await core.RegistrarMovimientoEfectivoAsync(request);
             return Ok(FrenosIntegracion.Helpers.ApiResponse<object>.Ok(resultado));
         }
 
         [HttpPost("efectivo/salida")]
         public async Task<IActionResult> SalidaEfectivo([FromBody] MovimientoEfectivoRequest request)
         {
-            var resultado = await core.RegistrarMovimientoEfectivoAsync(request.TurnoId, request.Monto, request.Motivo, "Salida");
+            var resultado = await core.RegistrarMovimientoEfectivoAsync(request);
             return Ok(FrenosIntegracion.Helpers.ApiResponse<object>.Ok(resultado));
         }
 
@@ -76,10 +76,10 @@ namespace FrenosIntegracion.Controllers
         [HttpPost("facturas/{id}/pago")]
         public async Task<IActionResult> PagarFactura(int id, [FromBody] PagoFacturaRequest request)
         {
-            // Si el pago viene de la Web y no trae turno, le asignamos el ID 999 (por ejemplo)
-            int turnoParaElCore = request.TurnoId == 0 ? 999 : request.TurnoId;
+            // Forzamos el id de ruta para evitar discrepancias entre URL y body.
+            var requestCore = request with { FacturaId = id };
 
-            var resultado = await core.PagarFacturaAsync(id, turnoParaElCore, request.MetodoPago, request.Monto);
+            var resultado = await core.PagarFacturaAsync(requestCore, ObtenerToken());
             return Ok(FrenosIntegracion.Helpers.ApiResponse<object>.Ok(resultado));
         }
 
@@ -87,7 +87,7 @@ namespace FrenosIntegracion.Controllers
         [HttpPost("cxc/{id}/abono")]
         public async Task<IActionResult> AbonoCxC(int id, [FromBody] AbonoCxCRequest request)
         {
-            var resultado = await core.RegistrarAbonoAsync(id, request.TurnoId, request.Monto, request.MetodoPago);
+            var resultado = await core.RegistrarAbonoAsync(request);
             return Ok(FrenosIntegracion.Helpers.ApiResponse<object>.Ok(resultado));
         }
 
@@ -113,6 +113,23 @@ namespace FrenosIntegracion.Controllers
                     return NotFound(FrenosIntegracion.Helpers.ApiResponse<object>.Fail("NOT_FOUND", "No se encontraron facturas."));
                 }
 
+                return Ok(FrenosIntegracion.Helpers.ApiResponse<object>.Ok(facturas));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(503, FrenosIntegracion.Helpers.ApiResponse<object>.Fail("CORE_UNAVAILABLE", ex.Message));
+            }
+        }
+        [HttpGet("facturas/buscar")]
+        public async Task<IActionResult> BuscarFacturas([FromQuery] string? numeroFactura, [FromQuery] string? placa)
+        {
+            try
+            {
+                var facturas = await core.ObtenerFacturasPendientesAsync(ObtenerToken(), numeroFactura, placa);
+                if (facturas == null)
+                {
+                    return NotFound(FrenosIntegracion.Helpers.ApiResponse<object>.Fail("NOT_FOUND", "No se encontraron facturas que coincidan con la búsqueda."));
+                }
                 return Ok(FrenosIntegracion.Helpers.ApiResponse<object>.Ok(facturas));
             }
             catch (Exception ex)

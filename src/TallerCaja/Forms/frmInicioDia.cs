@@ -60,27 +60,30 @@ namespace TallerCaja.Forms
             btnAbrir.Enabled = false;
             btnAbrir.Text = "Abriendo turno...";
 
+            var turnoLocal = new TurnoLocal
+            {
+                CajeroId = SessionManager.CajeroId,
+                CajeroNombre = SessionManager.CajeroNombre,
+                MontoInicial = monto,
+                Estado = "Abierto",
+                FechaApertura = DateTime.Now
+            };
+
             try
             {
+                _local.GuardarTurnoLocal(turnoLocal);
+
                 var request = new Models.DTOs.AbrirTurnoRequest
                 {
+                    TurnoLocalCaja = turnoLocal.Id,
                     CajeroId = SessionManager.CajeroId,
                     MontoInicial = monto
                 };
 
                 var resp = await _integracion.AbrirTurnoAsync(request);
+                turnoLocal.TurnoIdCore = resp?.TurnoId;
+                _local.ActualizarTurnoLocal(turnoLocal);
 
-                var turnoLocal = new TurnoLocal
-                {
-                    CajeroId = SessionManager.CajeroId,
-                    CajeroNombre = SessionManager.CajeroNombre,
-                    MontoInicial = monto,
-                    Estado = "Abierto",
-                    FechaApertura = DateTime.Now,
-                    TurnoIdCore = resp?.TurnoId
-                };
-
-                _local.GuardarTurnoLocal(turnoLocal);
                 SessionManager.AbrirTurno(resp?.TurnoId ?? turnoLocal.Id);
                 TurnoIdResultante = turnoLocal.Id;
 
@@ -92,16 +95,6 @@ namespace TallerCaja.Forms
             }
             catch (Exception)
             {
-                // Si falla Integración, guardar solo en local
-                var turnoLocal = new TurnoLocal
-                {
-                    CajeroId = SessionManager.CajeroId,
-                    CajeroNombre = SessionManager.CajeroNombre,
-                    MontoInicial = monto,
-                    Estado = "Abierto",
-                    FechaApertura = DateTime.Now
-                };
-                _local.GuardarTurnoLocal(turnoLocal);
                 SessionManager.AbrirTurno(turnoLocal.Id);
                 TurnoIdResultante = turnoLocal.Id;
 

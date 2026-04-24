@@ -83,39 +83,45 @@ namespace FrenosIntegracion.Services.Core
         }
 
         // --- Gestión de Turnos y Caja ---
-        public async Task<object> AbrirTurnoAsync(int cajeroId, decimal montoInicial)
-        {
-            var payload = new { cajeroId, montoInicial };
-            var response = await _http.PostAsync("/api/caja/abrir", Serializar(payload));
-            return await Deserializar<object>(response) ?? new { };
+        public async Task<object> AbrirTurnoAsync(AbrirTurnoRequest request)
+        {   
+            var response = await _http.PostAsync("/api/caja/turno/abrir", Serializar(request));
+            var resultado = await DeserializarRespuestaOCuerpo<AbrirTurnoCoreResponse>(response);
+            return resultado is not null ? (object)resultado : new { };
         }
 
-        public async Task<object> CerrarTurnoAsync(int turnoId, decimal efectivoContado)
+        public async Task<object> CerrarTurnoAsync(CerrarTurnoRequest request)
         {
-            var payload = new { turnoId, efectivoContado };
-            var response = await _http.PostAsync("/api/caja/cerrar", Serializar(payload));
-            return await Deserializar<object>(response) ?? new { };
+            var response = await _http.PostAsync("/api/caja/turno/cerrar", Serializar(request));
+            var resultado = await DeserializarRespuestaOCuerpo<CerrarTurnoCoreResponse>(response);
+            return resultado is not null ? (object)resultado : new { };
         }
 
-        public async Task<object> RegistrarMovimientoEfectivoAsync(int turnoId, decimal monto, string motivo, string tipo)
+        public async Task<object> RegistrarMovimientoEfectivoAsync(MovimientoEfectivoRequest request)
         {
-            var payload = new { turnoId, monto, motivo, tipo };
-            var response = await _http.PostAsync("/api/caja/movimiento", Serializar(payload));
+            var response = await _http.PostAsync("/api/caja/movimiento", Serializar(request));
             return await Deserializar<object>(response) ?? new { };
         }
 
         // --- Pagos ---
-        public async Task<object> PagarFacturaAsync(int facturaId, int turnoId, string metodo, decimal monto)
+        public async Task<object> PagarFacturaAsync(PagoFacturaRequest request, string token)
         {
-            var payload = new { facturaId, turnoId, metodo, monto };
-            var response = await _http.PostAsync($"/api/facturas/{facturaId}/pago", Serializar(payload));
+            _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var payload = new
+            {
+                TurnoId = request.TurnoId,
+                Metodo = request.MetodoPago,
+                Monto = request.Monto
+            };
+
+            var response = await _http.PostAsync($"/api/factura/{request.FacturaId}/pago", Serializar(payload));
             return await Deserializar<object>(response) ?? new { };
         }
 
-        public async Task<object> RegistrarAbonoAsync(int cxcId, int turnoId, decimal monto, string metodo)
+        public async Task<object> RegistrarAbonoAsync(AbonoCxCRequest request)
         {
-            var payload = new { cxcId, turnoId, monto, metodo };
-            var response = await _http.PostAsync($"/api/cxc/{cxcId}/abono", Serializar(payload));
+            var response = await _http.PostAsync($"/api/cxc/{request.FacturaId}/abono", Serializar(request));
             return await Deserializar<object>(response) ?? new { };
         }
 
@@ -137,8 +143,20 @@ namespace FrenosIntegracion.Services.Core
         private async Task<T?> Deserializar<T>(HttpResponseMessage response)
         {
             var json = await response.Content.ReadAsStringAsync();
+            if (string.IsNullOrWhiteSpace(json)) return default;
             var wrapper = JsonSerializer.Deserialize<ApiWrapper<T>>(json, _jsonOptions);
             return wrapper != null ? wrapper.Data : default;
+        }
+
+        private async Task<T?> DeserializarRespuestaOCuerpo<T>(HttpResponseMessage response)
+        {
+            var json = await response.Content.ReadAsStringAsync();
+            var wrapper = JsonSerializer.Deserialize<ApiWrapper<T>>(json, _jsonOptions);
+
+            if (wrapper is not null && wrapper.Success && wrapper.Data is not null)
+                return wrapper.Data;
+
+            return JsonSerializer.Deserialize<T>(json, _jsonOptions);
         }
 
         public async Task<IEnumerable<object>> ObtenerFacturasPorClienteAsync(int clienteId)
@@ -177,7 +195,32 @@ namespace FrenosIntegracion.Services.Core
             var response = await _http.GetAsync("/api/ordenes/historial");
             return await Deserializar<IEnumerable<object>>(response) ?? Enumerable.Empty<object>();
         }
+        public async Task<object> ObtenerFacturasPendientesAsync(string token,string? numeroFactura, string? placa)
+        {
+            var query = new List<string>();
 
+            if (!string.IsNullOrEmpty(placa))
+                query.Add($"placa={placa}");
+
+            if (!string.IsNullOrEmpty(numeroFactura))
+                query.Add($"numeroFactura={numeroFactura}");
+
+            var url = "/api/factura/buscar";
+
+            if (query.Count > 0)
+                url += "?" + string.Join("&", query);
+
+     
+            _http.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+            Console.WriteLine(url);
+            var response = await _http.GetAsync(url);
+            return await Deserializar<object>(response) ?? new { };
+
+        }
+        
+
+        
         public async Task<bool> RegistrarClienteAsync(ClienteRegistroDto cliente)
         {
             var payload = new
@@ -245,4 +288,16 @@ namespace FrenosIntegracion.Services.Core
     internal record ApiErrorWrapper(bool Success, object? Data, ApiErrorDto? Error);
     internal record ApiWrapper<T>(bool Success, T? Data, object? Error);
     internal record TokenDto(string Token);
+    internal record AbrirTurnoCoreResponse(
+        int TurnoId,
+        string Estado,
+        DateTime FechaApertura);
+    internal record CerrarTurnoCoreResponse(
+        int TurnoId,
+        string Estado,
+        DateTime FechaApertura,
+        DateTime FechaCierre,
+        decimal MontoInicial,
+        decimal EfectivoContado,
+        string? Observaciones);
 }

@@ -391,7 +391,7 @@ namespace FrenosCore.Servicios
 
                 await facturas.RegistrarPagoAsync(
                     factura.Id,
-                    new RegistrarPagoRequest(req.MetodoPago, factura.Total));
+                    new RegistrarPagoRequest(0, req.MetodoPago, factura.Total));
 
                 await transaccion.CommitAsync();
 

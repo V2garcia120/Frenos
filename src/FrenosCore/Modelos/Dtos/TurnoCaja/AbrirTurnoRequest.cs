@@ -3,6 +3,7 @@
     public record AbrirTurnoRequest
     (
         int CajeroId,
+        int TurnoLocalCaja,
         decimal MontoInicial
     );
 }

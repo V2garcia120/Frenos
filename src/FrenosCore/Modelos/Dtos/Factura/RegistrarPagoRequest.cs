@@ -3,7 +3,8 @@
 namespace FrenosCore.Modelos.Dtos.Factura
 {
     public record RegistrarPagoRequest(
-        [Required] string MetodoPago,
-        [Required] decimal MontoPagado
+        [Required] int TurnoId,
+        [Required] string Metodo,
+        [Required] decimal Monto
     );
 }

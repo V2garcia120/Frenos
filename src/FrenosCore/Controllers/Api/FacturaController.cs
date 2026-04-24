@@ -34,7 +34,7 @@ namespace FrenosCore.Controllers.Api
         }
 
         [HttpPost("{id:int}/pago")]
-        [Authorize(Policy = "Mantenimiento")]
+        [Authorize(Policy = "Cajero")]
         public async Task<IActionResult> RegistrarPago(
             int id, [FromBody] RegistrarPagoRequest request)
         {

@@ -8,7 +8,7 @@
         DateTime FechaApertura,
         DateTime FechaCierre,
         decimal MontoInicial,
-        decimal MontoFinal,
+        decimal EfectivoContado,
         string Observaciones
     );
 }

@@ -10,13 +10,15 @@ namespace FrenosIntegracion.Models.DTOs
 
     // --- Gestión de Turnos ---
     public record AbrirTurnoRequest(
+        int TurnoLocalCaja,
         [Required] int CajeroId,
         [Required] decimal MontoInicial
     );
 
     public record CerrarTurnoRequest(
         [Required] int TurnoId,
-        [Required] decimal EfectivoContado
+        [Required] decimal EfectivoContado,
+        string? Observaciones
     );
 
     // --- Movimientos de Efectivo ---
@@ -54,12 +56,14 @@ namespace FrenosIntegracion.Models.DTOs
 
     // --- Pagos de Factura y CxC ---
     public record PagoFacturaRequest(
+        [Required] int FacturaId,
         [Required] int TurnoId,
         [Required] string MetodoPago,
         [Required] decimal Monto
     );
 
     public record AbonoCxCRequest(
+        [Required] int FacturaId,
         [Required] int TurnoId,
         [Required] decimal Monto,
         [Required] string MetodoPago

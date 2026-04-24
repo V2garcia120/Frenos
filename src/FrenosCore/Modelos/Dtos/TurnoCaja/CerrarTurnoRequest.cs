@@ -3,7 +3,7 @@
     public record CerrarTurnoRequest
     (
         int TurnoId,
-        decimal MontoFinal,
-        string Observaciones
+        decimal EfectivoContado,
+        string? Observaciones
     );
 }

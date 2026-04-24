@@ -240,6 +240,11 @@ namespace FrenosCore.Data
                  .HasForeignKey<Factura>(f => f.OrdenId)
                  .OnDelete(DeleteBehavior.Restrict);
 
+                e.HasOne(f => f.Turno)
+                 .WithMany(t => t.Facturas)
+                 .HasForeignKey(f => f.TurnoId)
+                 .OnDelete(DeleteBehavior.Restrict);
+
                 e.HasOne(f => f.EmitidaPorUsuario)
                  .WithMany(u => u.FacturasEmitidas)
                  .HasForeignKey(f => f.EmitidaPor)

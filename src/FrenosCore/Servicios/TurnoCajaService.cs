@@ -2,6 +2,7 @@
 using FrenosCore.Modelos.Entidades;
 using FrenosCore.Modelos.Dtos;
 using FrenosCore.Modelos.Dtos.TurnoCaja;
+using Microsoft.EntityFrameworkCore;
 
 namespace FrenosCore.Servicios
 {
@@ -16,16 +17,25 @@ namespace FrenosCore.Servicios
 
         public async Task<AbrirTurnoResponse> AbrirTurnoAsync(AbrirTurnoRequest request)
         {
+            if (request.MontoInicial < 0)
+                throw new ArgumentException("El monto inicial no puede ser negativo.");
+            if (await _context.TurnoCaja.AnyAsync(t => t.CajeroId == request.CajeroId && t.Estado == "Abierto"))
+                throw new InvalidOperationException("El cajero ya tiene un turno abierto.");
+            if (!await _context.Usuario.AnyAsync(c => c.Id == request.CajeroId))
+                throw new ArgumentException("Cajero no encontrado.");
+
             var turno = new TurnoCaja
             {
                 CajeroId = request.CajeroId,
                 FechaApertura = DateTime.Now,
+                IdLocalCaja = request.TurnoLocalCaja.ToString(),
+                MontoInicial = request.MontoInicial,
                 Estado = "Abierto"
             };
             _context.TurnoCaja.Add(turno);
             await _context.SaveChangesAsync();
             return new AbrirTurnoResponse(
-                TurnoId: turno.CajeroId,
+                TurnoId: turno.Id,
                 Estado: turno.Estado,
                 Fechaapertura: turno.FechaApertura
             );
@@ -38,14 +48,15 @@ namespace FrenosCore.Servicios
                 throw new InvalidOperationException("Turno no encontrado o ya cerrado.");
             turno.FechaCierre = DateTime.Now;
             turno.Estado = "Cerrado";
+            turno.EfectivoContado = request.EfectivoContado;
             await _context.SaveChangesAsync();
             return new CerrarTurnoResponse(
-                TurnoId: turno.CajeroId,
+                TurnoId: turno.Id,
                 Estado: turno.Estado,
                 FechaApertura: turno.FechaApertura,
-                FechaCierre: DateTime.Now,
+                FechaCierre: turno.FechaCierre ?? DateTime.Now,
                 MontoInicial: turno.MontoInicial,
-                MontoFinal: request.MontoFinal,
+                EfectivoContado: request.EfectivoContado,
                 Observaciones: request.Observaciones
             );
         }
