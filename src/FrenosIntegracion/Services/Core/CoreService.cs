@@ -216,9 +216,6 @@ namespace FrenosIntegracion.Services.Core
         // --- Catálogos ---
         public async Task<IEnumerable<ProductoDto>> ObtenerProductosAsync()
         {
-            _http.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", GenerarTokenInterno());
-
             var response = await _http.GetAsync("/api/productos");
             var data = await Deserializar<IEnumerable<ProductoDto>>(response);
             return data ?? Enumerable.Empty<ProductoDto>();
@@ -226,9 +223,6 @@ namespace FrenosIntegracion.Services.Core
 
         public async Task<IEnumerable<ServicioDto>> ObtenerServiciosAsync()
         {
-            _http.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", GenerarTokenInterno());
-
             var response = await _http.GetAsync("/api/servicios");
             var data = await Deserializar<IEnumerable<ServicioDto>>(response);
             return data ?? Enumerable.Empty<ServicioDto>();

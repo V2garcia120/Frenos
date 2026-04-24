@@ -48,6 +48,9 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddAuthorizationBuilder()
+    .SetFallbackPolicy(null);  // ← permite acceso anónimo por defecto
+
 // 4. Registro de Servicios propios e Inyecci�n de Dependencias
 builder.Services.AddScoped<ICacheService, CacheService>();
 builder.Services.AddScoped<IColaSyncService, ColaSyncService>();

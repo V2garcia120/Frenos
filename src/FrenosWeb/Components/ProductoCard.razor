@@ -1,19 +1,35 @@
 ﻿@using FrenosWeb.Services
 
-<div style="border:1px solid #ccc; padding:15px; margin:10px; border-radius: 8px; box-shadow: 2px 2px 5px #eee;">
-    <h4>@Nombre</h4>
-    <p>Precio: <strong>RD$ @Precio.ToString("N2")</strong></p>
-
-
-    <button @onclick="OnAgregar"
-            style="background-color: #28a745; color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px;">
-        🛒 Agregar al Carrito
-    </button>
+<div class="card h-100 shadow border-0 rounded-4 item-card position-relative" @onclick="HandleVerDetalle"
+     style="cursor: pointer; transition: all 0.3s ease; border-bottom: 4px solid var(--azul-frenos) !important;">
+    <div class="card-body text-center p-4">
+        
+        <div class="mb-3 mt-2">
+            <div class="rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm"
+                 style="width: 85px; height: 85px; background-color: @(EsServicio ? "#fff3e6" : "#e6f0ff"); border: 2px solid @(EsServicio ? "var(--naranja-frenos)" : "var(--azul-frenos)");">
+                <i class="bi @(EsServicio ? "bi-wrench-adjustable text-naranja" : "bi-gear-wide-connected text-azul")"
+                   style="font-size: 2.8rem;"></i>
+            </div>
+        </div>
+        
+        <h5 class="fw-bold mb-2" style="color: #222;">@Nombre</h5>
+        
+        <p class="fw-bold fs-3 mb-3" style="color: var(--azul-frenos); letter-spacing: -1px;">
+            RD$ @Precio.ToString("N0")
+        </p>
+        
+        <button class="btn btn-frenos-azul w-100 rounded-pill py-2 shadow fw-bold">
+            <i class="bi bi-eye-fill me-2"></i>Ver Detalles
+        </button>
+    </div>
 </div>
 
 @code {
     [Parameter] public int Id { get; set; }
-    [Parameter] public string Nombre { get; set; } = string.Empty;
+    [Parameter] public string Nombre { get; set; } = "";
     [Parameter] public decimal Precio { get; set; }
-    [Parameter] public EventCallback OnAgregar { get; set; }
+    [Parameter] public bool EsServicio { get; set; }
+    [Parameter] public EventCallback<int> OnVerDetalle { get; set; }
+
+    private async Task HandleVerDetalle() => await OnVerDetalle.InvokeAsync(Id);
 }

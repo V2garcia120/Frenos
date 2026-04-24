@@ -9,5 +9,6 @@
         public bool RequiereVehiculo { get; set; } = true;
         public int Stock { get; set; }
         public string? Categoria { get; set; }
+        public string? Descripcion { get; set; }
     }
 }
