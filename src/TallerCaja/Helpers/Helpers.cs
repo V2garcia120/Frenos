@@ -50,6 +50,7 @@ namespace TallerCaja.Helpers
             CajeroId = datos.CajeroId;
             CajeroNombre = datos.Nombre;
             TurnoAbierto = false;
+            Console.WriteLine($"[SessionManager] Sesión iniciada para {CajeroNombre} (ID: {CajeroId}), Token: {Token}, Expira: {datos.Expira}");
         }
 
         public static void AbrirTurno(int turnoId)

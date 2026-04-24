@@ -116,13 +116,14 @@ if (!app.Environment.IsDevelopment())
 //    options.RoutePrefix = "swagger";
 //});
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseRouting();
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 app.MapStaticAssets();
 app.MapControllers();
 app.MapRazorPages()

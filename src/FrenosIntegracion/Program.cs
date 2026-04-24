@@ -25,16 +25,17 @@ builder.Services.AddHttpClient<ICoreService, CoreService>(client =>
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opt =>
     {
-        var secret = builder.Configuration["Jwt:Secret"] ?? "TuSuperSecretoQueDebeSerLargo123!";
         opt.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret)),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Secret"]!)),
             ValidateIssuer = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidateAudience = true,
-            ValidAudience = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
             ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(2),
+            RoleClaimType = "Rol"
         };
     });
 
@@ -84,7 +85,7 @@ if (app.Environment.IsDevelopment())
 // El Middleware de Log debe ir ANTES de Auth para captar intentos fallidos
 app.UseMiddleware<RequestLogMiddleware>();
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseCors("AllowBlazor");
 

@@ -8,7 +8,7 @@ namespace FrenosIntegracion.Services.Core
         // Autenticación
         Task<object> AutenticarClienteAsync(LoginRequest request);
         Task<object> AutenticarEmpleadoAsync(LoginRequest request);
-
+        Task<object> AutenticarCajeroAsync(LoginRequest request);
         // Catálogo
         Task<IEnumerable<ProductoDto>> ObtenerProductosAsync();
         Task<IEnumerable<ServicioDto>> ObtenerServiciosAsync();

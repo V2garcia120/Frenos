@@ -11,6 +11,10 @@ namespace TallerCaja.Data
         public DbSet<TurnoLocal> Turnos { get; set; }
         public DbSet<TransaccionPendiente> TransaccionesPendientes { get; set; }
         public DbSet<VentaLocal> VentasLocales { get; set; }
+        public DbSet<UsuariosLocal> Usuarios { get; set; }
+        public DbSet<ClienteLocal> Clientes { get; set; }
+        public DbSet<FacturasPendienteLocal> FacturasPendientes { get; set; }
+       
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -25,6 +29,22 @@ namespace TallerCaja.Data
             modelBuilder.Entity<TurnoLocal>().HasKey(t => t.Id);
             modelBuilder.Entity<TransaccionPendiente>().HasKey(t => t.Id);
             modelBuilder.Entity<VentaLocal>().HasKey(v => v.Id);
+            modelBuilder.Entity<UsuariosLocal>().HasKey(u => u.Id);
+            modelBuilder.Entity<ClienteLocal>().HasKey(c => c.Id);
+            modelBuilder.Entity<FacturasPendienteLocal>().HasKey(f => f.Id);
+            modelBuilder.Entity<CxCLocal>().HasKey(c => c.Id);
+
+            modelBuilder.Entity<ProductoLocal>()
+                .Property(p => p.Precio)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<FacturasPendienteLocal>()
+                .Property(f => f.Total)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<CxCLocal>()
+                .Property(c => c.Saldo)
+                .HasColumnType("decimal(18,2)");
 
             modelBuilder.Entity<TurnoLocal>()
                 .Property(t => t.MontoInicial)

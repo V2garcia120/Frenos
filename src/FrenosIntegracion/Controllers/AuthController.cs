@@ -29,15 +29,14 @@ namespace FrenosIntegracion.Controllers
             // Si aquí te sigue dando ambigüedad, el problema es el archivo de la interfaz duplicado
             var coreDisponible = await _core.EstaDisponibleAsync();
 
-            var status = new
-            {
-                integracion = "online",
-                core = coreDisponible ? "online" : "offline",
-                modoCache = !coreDisponible,
-                ultimaSync = _cache.UltimaActualizacion
-            };
+            var status = new HealthResponse(
+                Integracion: "online",
+                Core: coreDisponible ? "online" : "offline",
+                ModoCache: !coreDisponible,
+                UltimaSync: _cache.UltimaActualizacion
+            );
 
-            return Ok(FrenosIntegracion.Helpers.ApiResponse<object>.Ok(status));
+            return Ok(FrenosIntegracion.Helpers.ApiResponse<HealthResponse>.Ok(status));
         }
 
         [HttpPost("login-cliente")]
@@ -61,7 +60,7 @@ namespace FrenosIntegracion.Controllers
         {
             try
             {
-                var resultado = await _core.AutenticarEmpleadoAsync(request);
+                var resultado = await _core.AutenticarCajeroAsync(request);
                 return Ok(FrenosIntegracion.Helpers.ApiResponse<object>.Ok(resultado));
             }
             catch (Exception)

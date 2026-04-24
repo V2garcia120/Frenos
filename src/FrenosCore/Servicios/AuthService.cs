@@ -72,6 +72,31 @@ namespace FrenosCore.Servicios
             var token = _jwtHelper.GenerarToken(cliente.Id.ToString(), cliente.Email, "Cliente");
             return new IniciarSesionResponse(true, token);
         }
+        public async Task<LoginCajeroResponse> IniciarSesionCajero(IniciarSesionRequest req)
+        {
+            var cajero = await ObtenerPorEmailAsync(req.Email);
+            if (cajero is null || cajero.Rol?.Nombre != "Caja")
+                return new LoginCajeroResponse { Token = string.Empty };
+            if (!ValidarCredenciales(cajero.PasswordHash, req.Password))
+                return new LoginCajeroResponse { Token = string.Empty };
+            cajero.UltimoLogin = DateTime.Now;
+            await _context.SaveChangesAsync();
+            await RegistrarAuditoriaAsync(
+                cajero.Id,
+                "Login",
+                "Usuario",
+                string.Empty,
+                JsonSerializer.Serialize(new { cajero.Id, cajero.Email, Tipo = "Cajero" }));
+            _logger.LogInformation("Inicio de sesión exitoso para cajero {CajeroId}", cajero.Id);
+            var token = _jwtHelper.GenerarToken(cajero.Id.ToString(), cajero.Email, "Cajero");
+            return new LoginCajeroResponse
+            {
+                Token = token,
+                Expira = DateTime.Now.AddHours(1),
+                CajeroId = cajero.Id,
+                Nombre = cajero.Nombre
+            };
+        }
 
         private async Task RegistrarAuditoriaAsync(int registroId, string accion, string tabla, string valorAntes, string valorDespues)
         {

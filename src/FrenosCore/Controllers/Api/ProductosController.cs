@@ -1,5 +1,7 @@
-﻿using FrenosCore.Servicios;
-using FrenosCore.Helpers;
+﻿using FrenosCore.Helpers;
+using FrenosCore.Modelos.Dtos;
+using FrenosCore.Modelos.Dtos.Producto;
+using FrenosCore.Servicios;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FrenosCore.Controllers.Api
@@ -19,7 +21,9 @@ namespace FrenosCore.Controllers.Api
         public async Task<IActionResult> Listar([FromQuery] string? categoria = null)
         {
             var productos = await _productoService.ListarTodosAsync(categoria);
-            return Ok(ApiResponse<object>.Ok(productos));
+            IEnumerable<ProductoDto> productosDto = productos.Select(p => new ProductoDto(
+                p.Id, p.Nombre, p.Precio, p.Stock, p.Categoria, p.Activo));
+            return Ok(ApiResponse<object>.Ok(productosDto));
         }
 
         [HttpGet("buscar")]

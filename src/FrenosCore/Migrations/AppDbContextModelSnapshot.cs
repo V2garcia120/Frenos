@@ -744,6 +744,48 @@ namespace FrenosCore.Migrations
                     b.ToTable("Servicio", (string)null);
                 });
 
+            modelBuilder.Entity("FrenosCore.Modelos.Entidades.TurnoCaja", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CajeroId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Diferencia")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("EfectivoContado")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("FechaApertura")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaCierre")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("IdLocalCaja")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("MontoInicial")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("TotalVentas")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TurnoCaja");
+                });
+
             modelBuilder.Entity("FrenosCore.Modelos.Entidades.Usuario", b =>
                 {
                     b.Property<int>("Id")

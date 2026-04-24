@@ -48,7 +48,7 @@ namespace TallerCaja.Services
                     _db.Servicios.Add(new ServicioLocal
                     {
                         Id = s.Id, Nombre = s.Nombre, Precio = s.Precio,
-                        DuracionMin = s.DuracionMin, Categoria = s.Categoria, UltimaSync = DateTime.Now
+                        DuracionMin = 90, Categoria = s.Categoria, UltimaSync = DateTime.Now
                     });
                 }
                 else

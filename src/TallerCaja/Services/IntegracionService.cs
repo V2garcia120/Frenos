@@ -46,13 +46,34 @@ namespace TallerCaja.Services
 
         public async Task<List<ProductoDto>> ObtenerProductosAsync(string? categoria = null)
         {
+            _http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", SessionManager.Token);
+
             var url = "/int/catalogo/productos";
+            
             if (!string.IsNullOrEmpty(categoria)) url += $"?categoria={Uri.EscapeDataString(categoria)}";
-            return await GetAsync<List<ProductoDto>>(url) ?? new();
+
+            var productos = await GetAsync<List<ProductoDto>>(url);
+            if (productos == null)
+            {
+                MessageBox.Show("No se pudieron obtener los productos. Verifique la conexión con Integración.");
+                return new List<ProductoDto>();
+            }
+            return productos;
+
         }
 
         public async Task<List<ServicioDto>> ObtenerServiciosAsync()
-            => await GetAsync<List<ServicioDto>>("/int/catalogo/servicios") ?? new();
+        {
+            _http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", SessionManager.Token);
+            var servicios = await GetAsync<List<ServicioDto>>("/int/catalogo/servicios");
+            if (servicios == null)
+            {
+                MessageBox.Show("No se pudieron obtener los servicios. Verifique la conexión con Integración.");
+                return new List<ServicioDto>();
+            }
+            return servicios;
+
+        }
 
         public async Task<BusquedaCatalogoDto?> BuscarCatalogoAsync(string q)
             => await GetAsync<BusquedaCatalogoDto>($"/int/catalogo/buscar?q={Uri.EscapeDataString(q)}");

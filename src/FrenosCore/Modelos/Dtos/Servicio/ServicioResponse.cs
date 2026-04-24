@@ -10,4 +10,13 @@
         bool Activo,
         DateTime CreadoEn
     );
+
+    public record ServicioDto(
+        int Id,
+        string Nombre,
+        decimal Precio,
+        int? DuracionMin,
+        string? Categoria,
+        bool Activo
+    );
 }

@@ -71,6 +71,8 @@ namespace TallerCaja.Forms
                 if (resp != null)
                 {
                     SessionManager.IniciarSesion(resp);
+                    MessageBox.Show($"Bienvenido, {resp.Nombre}, Token: {resp.Token}!", $"Acceso concedido",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
                     this.DialogResult = DialogResult.OK;
                     this.Close();
                 }

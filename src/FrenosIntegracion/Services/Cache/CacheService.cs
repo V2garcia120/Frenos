@@ -44,6 +44,7 @@ namespace FrenosIntegracion.Services.Cache
 
             var nuevos = productos.Select(p => new Models.Entities.ProductoCache
             {
+                Id = p.Id,
                 Nombre = p.Nombre,
                 Precio = p.Precio,
                 Stock = p.Stock,
@@ -65,6 +66,7 @@ namespace FrenosIntegracion.Services.Cache
 
             var nuevos = servicios.Select(s => new Models.Entities.ServicioCache
             {
+                Id = s.Id,
                 Nombre = s.Nombre,
                 Precio = s.Precio,
                 DuracionMin = s.DuracionMin,
@@ -82,12 +84,14 @@ namespace FrenosIntegracion.Services.Cache
             try
             {
                 var productos = await core.ObtenerProductosAsync();
+                Console.WriteLine($"[CacheService] Productos obtenidos de Core: {productos.Count()} items");
                 await ActualizarProductosCacheAsync(productos);
                 return productos;
             }
             catch
             {
                 // Core no disponible — responder con caché local
+                Console.WriteLine("[CacheService] Core no disponible, usando caché local");
                 return await db.ProductosCache
                     .AsNoTracking()
                     .Where(p => p.Activo)
