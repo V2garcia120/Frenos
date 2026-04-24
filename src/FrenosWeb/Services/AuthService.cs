@@ -106,5 +106,27 @@ namespace FrenosWeb.Services
                 IsLoggedIn = true;
             }
         }
+
+        public async Task<(bool Exito, string? Error)> Registrar(ClienteModel modelo)
+        {
+            try
+            {
+                var response = await http.PostAsJsonAsync("int/auth/registrar-cliente", modelo);
+
+                if (response.IsSuccessStatusCode)
+                    return (true, null);
+
+                var json = await response.Content.ReadAsStringAsync();
+                var result = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<object>>(
+                    json, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                return (false, result?.Error?.Mensaje ?? "No se pudo crear la cuenta.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Cyber-Logs] Error de conexión: {ex.Message}");
+                return (false, "Error de conexión con el servidor.");
+            }
+        }
     }
 }

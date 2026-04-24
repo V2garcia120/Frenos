@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace FrenosWeb.Models
 {
@@ -7,13 +8,20 @@ namespace FrenosWeb.Models
         [Required(ErrorMessage = "El nombre es obligatorio")]
         public string Nombre { get; set; } = "";
 
-        public string? Cedula { get; set; }
+        [Required(ErrorMessage = "El apellido es obligatorio")]
+        public string Apellido { get; set; } = "";
+
+        [Required(ErrorMessage = "El cédula es obligatorio")]
+        [JsonPropertyName("Cedula")]
+        public string Cedula { get; set; } = "";
 
         public string? Telefono { get; set; }
 
         [Required(ErrorMessage = "El correo es obligatorio")]
         [EmailAddress(ErrorMessage = "Formato inválido")]
-        public string Email { get; set; } = "";
+        [JsonPropertyName("Correo")]
+        public string Correo { get; set; } = "";
+        
 
         [Required(ErrorMessage = "La contraseña es obligatoria")]
         [MinLength(6, ErrorMessage = "Mínimo 6 caracteres")]

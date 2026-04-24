@@ -3,6 +3,7 @@
 @using FrenosWeb.Services
 @inject FacturaService facturaService
 @inject NavigationManager navManager
+@inject AuthService authService
 @inject IJSRuntime JS
 
 <div class="container mt-4 pb-5">
@@ -80,24 +81,17 @@
 </div>
 
 @code {
-    [Inject] AuthenticationStateProvider AuthProvider { get; set; }
     private string usuarioActual = "...";
     private List<FacturaModel>? misFacturas;
 
     protected override async Task OnInitializedAsync()
     {
-        var state = await AuthProvider.GetAuthenticationStateAsync();
-        var user = state.User;
-        
-        usuarioActual = user.Identity?.Name?.Split('@')[0] ?? "Usuario";
-
-        var idClaim = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
-                      ?? user.FindFirst("sub")?.Value
-                      ?? "0";
-
-        if (int.TryParse(idClaim, out int clienteId))
+        if (authService.CurrentUser != null)
         {
-            misFacturas = await facturaService.GetFacturasUsuarioAsync(clienteId);
+            usuarioActual = authService.CurrentUser.Email.Split('@')[0];
+            int id = authService.CurrentUser.ClienteId;
+            
+            misFacturas = await facturaService.GetFacturasUsuarioAsync(id);
         }
         else
         {

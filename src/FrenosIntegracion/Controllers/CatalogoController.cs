@@ -13,6 +13,7 @@ namespace FrenosIntegracion.Controllers
         // 1. Catálogo de productos (Pág. 7-8)
         // GET /int/catalogo/productos?categoria=
         [HttpGet("productos")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetProductos([FromQuery] string? categoria)
         {
             var productos = await cache.ObtenerProductosAsync();
@@ -30,6 +31,7 @@ namespace FrenosIntegracion.Controllers
         // 2. Catálogo de servicios (Pág. 8)
         // GET /int/catalogo/servicios
         [HttpGet("servicios")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetServicios()
         {
             var servicios = await cache.ObtenerServiciosAsync();
@@ -41,6 +43,7 @@ namespace FrenosIntegracion.Controllers
         // 3. Búsqueda combinada del catálogo (Pág. 8)
         // GET /int/catalogo/buscar?q=
         [HttpGet("buscar")]
+        [AllowAnonymous]
         public async Task<IActionResult> Buscar([FromQuery] string? q)
         {
             // Validación según el documento (Pág. 8 y 14)

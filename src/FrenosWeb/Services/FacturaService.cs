@@ -27,7 +27,7 @@ namespace FrenosWeb.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Cyber-Logs] Error conectando a Integración: {ex.Message}");
+                Console.WriteLine($"[Cyber-Logs] Error: {ex.Message}");
                 return ObtenerDatosPrueba();
             }
         }
