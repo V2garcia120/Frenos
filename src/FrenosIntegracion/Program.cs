@@ -19,6 +19,11 @@ builder.Services.AddHttpClient<ICoreService, CoreService>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["Core:BaseUrl"] ?? "https://localhost:7001");
     client.Timeout = TimeSpan.FromSeconds(10);
+})
+.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    ServerCertificateCustomValidationCallback =
+        HttpClientHandler.DangerousAcceptAnyServerCertificateValidator  
 });
 
 // 3. Configurar Seguridad (JWT)
