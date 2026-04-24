@@ -34,7 +34,6 @@ namespace FrenosIntegracion.Services.Core
         // Facturas
         Task<IEnumerable<object>> ObtenerFacturasPorClienteAsync(int clienteId);
         Task<object> ObtenerFacturasPendientesAsync(string token, string? numeroFactura, string? placa);
-        Task<IEnumerable<object>> ObtenerVehiculosClienteAsync();
 
         // Vehículos — ahora reciben clienteId
         Task<IEnumerable<object>> ObtenerVehiculosClienteAsync(int clienteId);

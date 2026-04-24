@@ -111,9 +111,9 @@ namespace FrenosIntegracion.Services.Core
             req.Content = Serializar(payload);
 
             var response = await _http.SendAsync(req);
-            return await Deserializar<object>(response) ?? new { };
+            return await Deserializar<object>(response) ?? new { }; }
         public async Task<object> AbrirTurnoAsync(AbrirTurnoRequest request)
-        {   
+        {
             var response = await _http.PostAsync("/api/caja/turno/abrir", Serializar(request));
             var resultado = await DeserializarRespuestaOCuerpo<AbrirTurnoCoreResponse>(response);
             return resultado is not null ? (object)resultado : new { };
@@ -193,9 +193,7 @@ namespace FrenosIntegracion.Services.Core
 
             var error = JsonSerializer.Deserialize<ApiErrorWrapper>(json, _jsonOptions);
             throw new InvalidOperationException(error?.Error?.Mensaje ?? "No se pudo registrar el cliente.");
-            if (string.IsNullOrWhiteSpace(json)) return default;
-            var wrapper = JsonSerializer.Deserialize<ApiWrapper<T>>(json, _jsonOptions);
-            return wrapper != null ? wrapper.Data : default;
+
         }
 
         private async Task<T?> DeserializarRespuestaOCuerpo<T>(HttpResponseMessage response)
@@ -270,7 +268,7 @@ namespace FrenosIntegracion.Services.Core
             var response = await _http.SendAsync(req);
             return await Deserializar<IEnumerable<object>>(response) ?? Enumerable.Empty<object>();
         }
-        public async Task<object> ObtenerFacturasPendientesAsync(string token,string? numeroFactura, string? placa)
+        public async Task<object> ObtenerFacturasPendientesAsync(string token, string? numeroFactura, string? placa)
         {
             var query = new List<string>();
 
@@ -285,7 +283,7 @@ namespace FrenosIntegracion.Services.Core
             if (query.Count > 0)
                 url += "?" + string.Join("&", query);
 
-     
+
             _http.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", token);
             Console.WriteLine(url);
@@ -293,10 +291,7 @@ namespace FrenosIntegracion.Services.Core
             return await Deserializar<object>(response) ?? new { };
 
         }
-        
 
-        
-        public async Task<bool> RegistrarClienteAsync(ClienteRegistroDto cliente)
 
         // --- Catálogos ---
         public async Task<IEnumerable<ProductoDto>> ObtenerProductosAsync()
@@ -353,7 +348,7 @@ namespace FrenosIntegracion.Services.Core
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
-    }
+    } }
 
     internal record ApiErrorDto(string Codigo, string Mensaje);
     internal record ApiErrorWrapper(bool Success, object? Data, ApiErrorDto? Error);
@@ -371,4 +366,3 @@ namespace FrenosIntegracion.Services.Core
         decimal MontoInicial,
         decimal EfectivoContado,
         string? Observaciones);
-}
