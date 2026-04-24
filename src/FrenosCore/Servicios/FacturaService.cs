@@ -84,7 +84,43 @@ public class FacturaService(
         return ToResponse(factura);
     }
 
+    public async Task<IEnumerable<FacturaPendienteDto>> ObtenerFacturaPendientesAsync(string? placa = null, string? numeroFactura = null) 
+    {
+        if (string.IsNullOrWhiteSpace(placa) && string.IsNullOrWhiteSpace(numeroFactura))
+            throw new ArgumentException("Se requiere placa o número de factura para buscar facturas pendientes.");
+        var facturas = await db.Factura
+        .Where(f => f.Estado == "Pendiente" &&
+            (f.Orden.Vehiculo.Placa == placa || f.Numero == numeroFactura))
+        .Select(f => new
+        {
+            f.Id,
+            f.Numero,
+            Cliente = f.Cliente.Nombre,
+            Vehiculo = f.Orden.Vehiculo.Marca + " " + f.Orden.Vehiculo.Modelo + " " + f.Orden.Vehiculo.Anno + " · " + f.Orden.Vehiculo.Placa, 
+            f.Total,
+            f.Estado,
+            
+            Items = f.Items.Select(i => new
+            {
+                Nombre = i.Tipo == "Producto"
+                    ? db.Producto
+                        .Where(p => p.Id == i.ItemId)
+                        .Select(p => p.Nombre)
+                        .FirstOrDefault()
+                    : db.Servicio
+                        .Where(s => s.Id == i.ItemId)
+                        .Select(s => s.Nombre)
+                        .FirstOrDefault(),
+                Precio = i.PrecioUnitario,
+                i.Cantidad,
+                i.Subtotal,
+                
+            }).ToList()
+        })
+        .ToListAsync();
+         return facturas.Select(f => new FacturaPendienteDto ( f.Id, f.Numero, f.Cliente, f.Vehiculo, f.Total, f.Estado, f.Items.Select(i => new ItemFacturaDto(Convert.ToString(i.Nombre), i.Cantidad, i.Precio, i.Subtotal)).ToList()));
 
+    }
     public async Task<FacturaResponse> GenerarDesdeOrdenAsync(int ordenId, int emisorId, string? metodoPago)
     {
         logger.LogInformation("Generando factura desde orden {OrdenId}", ordenId);

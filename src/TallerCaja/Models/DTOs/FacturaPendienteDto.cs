@@ -10,4 +10,5 @@ namespace TallerCaja.Models.DTOs
         public string Estado { get; set; } = string.Empty;
         public List<ItemFacturaDto> Items { get; set; } = new();
     }
+
 }

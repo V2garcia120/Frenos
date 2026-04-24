@@ -12,6 +12,7 @@ namespace FrenosCore.Controllers.Api
     public class FacturaController(IFacturaService facturas) : ControllerBase
     {
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> Listar(
        [FromQuery] int pagina = 1,
        [FromQuery] int tam = 20,
@@ -47,6 +48,14 @@ namespace FrenosCore.Controllers.Api
         {
             await facturas.AnularAsync(id);
             return Ok(ApiResponse.Ok());
+        }
+
+        [HttpGet("buscar")]
+        [Authorize]
+        public async Task<IActionResult> Buscar([FromQuery] string? placa = null, [FromQuery] string? numeroFactura = null)
+        {
+            var factura = await facturas.ObtenerFacturaPendientesAsync(placa, numeroFactura);
+            return Ok(ApiResponse<object>.Ok(factura));
         }
     }
 }
