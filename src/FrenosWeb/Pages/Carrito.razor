@@ -130,15 +130,7 @@
     protected override async Task OnInitializedAsync()
     {
         await ValidarEstadoBoton();
-        
-        // APP REAL: Aquí llamas al servicio.
-        // Si aún no tienes la API, deja la simulación de abajo:
-        await Task.Delay(500);
-        misVehiculos = new List<VehiculoModel>
-        {
-            new VehiculoModel { Id = 1, Marca = "Toyota", Modelo = "Corolla", Placa = "A987456" },
-            new VehiculoModel { Id = 2, Marca = "Honda", Modelo = "Civic", Placa = "G123456" }
-        };
+        misVehiculos = await vehiculoService.GetVehiculosUsuarioAsync();
     }
 
     async Task Eliminar(int id)

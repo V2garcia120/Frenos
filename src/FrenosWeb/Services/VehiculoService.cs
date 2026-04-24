@@ -16,29 +16,49 @@ namespace FrenosWeb.Services
         {
             try
             {
-                // Intento real a la API
-                var response = await _http.GetFromJsonAsync<List<VehiculoModel>>("api/vehiculos/mis-vehiculos");
-                return response ?? new List<VehiculoModel>();
+                var response = await _http.GetFromJsonAsync<ApiResponse<List<VehiculoModel>>>("int/vehiculos/mis-vehiculos");
+
+                if (response != null && response.Success && response.Data != null)
+                {
+                    return response.Data;
+                }
+
+                return ObtenerVehiculosPrueba();
             }
             catch (Exception ex)
             {
-                // Log para auditoria en consola
                 Console.WriteLine($"[Cyber-Logs] API Vehículos no disponible: {ex.Message}");
-
-                // Importante que coincidan con los IDs que usas en el Carrito
-                return new List<VehiculoModel>
-        {
-            new VehiculoModel { Id = 1, Marca = "Toyota", Modelo = "Corolla", Placa = "A987456" },
-            new VehiculoModel { Id = 2, Marca = "Honda", Modelo = "Civic", Placa = "G123456" }
-        };
+                return ObtenerVehiculosPrueba();
             }
         }
 
-        // Registrar un nuevo vehículo
         public async Task<bool> RegistrarVehiculoAsync(VehiculoModel vehiculo)
         {
-            var response = await _http.PostAsJsonAsync("api/vehiculos", vehiculo);
-            return response.IsSuccessStatusCode;
+            try
+            {
+                var response = await _http.PostAsJsonAsync("int/vehiculos", vehiculo);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+                    return result?.Success ?? false;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Cyber-Logs] Error al registrar vehículo: {ex.Message}");
+                return false;
+            }
+        }
+
+        private List<VehiculoModel> ObtenerVehiculosPrueba()
+        {
+            return new List<VehiculoModel>
+            {
+                new VehiculoModel { Id = 1, Marca = "Toyota", Modelo = "Corolla", Placa = "A987456" },
+                new VehiculoModel { Id = 2, Marca = "Honda", Modelo = "Civic", Placa = "G123456" }
+            };
         }
     }
 }

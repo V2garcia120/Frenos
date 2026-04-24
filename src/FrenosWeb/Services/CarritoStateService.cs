@@ -65,7 +65,7 @@ namespace FrenosWeb.Services
             if (item != null)
             {
                 Items.Remove(item);
-                await GuardarEnLocal(); 
+                await GuardarEnLocal();
                 NotifyStateChanged();
             }
         }
@@ -92,8 +92,8 @@ namespace FrenosWeb.Services
             {
                 item.Cantidad = nuevaCantidad;
 
-                await GuardarEnLocal(); 
-                NotifyStateChanged(); 
+                await GuardarEnLocal();
+                NotifyStateChanged();
             }
         }
 
@@ -113,5 +113,25 @@ namespace FrenosWeb.Services
         public decimal TotalFinal => Subtotal + Impuesto;
 
         private void NotifyStateChanged() => OnChange?.Invoke();
+
+        public CobroRequest PrepararCobro(string metodoPago, int? vehiculoId = null)
+        {
+            return new CobroRequest
+            {
+                VehiculoId = vehiculoId, 
+
+                Items = Items.Select(i => new CobroItemRequest
+                {
+                    ServicioId = i.Servicio.Id,
+                    Cantidad = i.Cantidad,
+                    // Usamos el precio que tiene el servicio en ese momento
+                    PrecioSnapshot = i.Servicio.Precio
+                }).ToList(),
+
+                MetodoPago = metodoPago,
+                // El total con ITBIS 
+                MontoPagado = TotalFinal
+            };
+        }
     }
 }

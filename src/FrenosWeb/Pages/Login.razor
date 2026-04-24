@@ -18,13 +18,13 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold">Correo Electrónico</label>
                         <input type="email" class="form-control bg-light border-0 rounded-pill px-3"
-                               @bind-value="loginModel.Email" placeholder="ejemplo@correo.com" required />
+                               @bind="loginModel.Email" placeholder="ejemplo@correo.com" required />
                     </div>
 
                     <div class="mb-4">
                         <label class="form-label fw-bold">Contraseña</label>
                         <input type="password" class="form-control bg-light border-0 rounded-pill px-3"
-                               @bind-value="loginModel.Password" placeholder="******" required />
+                               @bind="loginModel.Password" placeholder="******" required />
                     </div>
 
                     @if (!string.IsNullOrEmpty(errorMessage))

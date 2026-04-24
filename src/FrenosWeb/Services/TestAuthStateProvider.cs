@@ -1,34 +1,89 @@
 ﻿using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.JSInterop;
 using System.Security.Claims;
+using System.Text.Json;
 
 namespace FrenosWeb.Services
 {
     public class TestAuthStateProvider : AuthenticationStateProvider
     {
-        private AuthenticationState _currentState;
+        private readonly IJSRuntime _js;
+        private AuthenticationState _anonymous = new(new ClaimsPrincipal(new ClaimsIdentity()));
 
-        public TestAuthStateProvider()
+        public TestAuthStateProvider(IJSRuntime js) => _js = js;
+
+        public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
-            _currentState = new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+            try
+            {
+                var token = await _js.InvokeAsync<string>("localStorage.getItem", "authToken");
+
+                if (string.IsNullOrWhiteSpace(token))
+                    return _anonymous;
+
+                var identity = new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt");
+                var user = new ClaimsPrincipal(identity);
+
+                return new AuthenticationState(user);
+            }
+            catch
+            {
+                return _anonymous;
+            }
         }
 
-        public override Task<AuthenticationState> GetAuthenticationStateAsync() => Task.FromResult(_currentState);
-
-        public void NotifyAuthenticationStateChanged(string? email)
+        public void NotifyUserAuthentication(string email)
         {
-            ClaimsIdentity identity;
+            var identity = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, email) }, "jwt");
+            var user = new ClaimsPrincipal(identity);
+            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(user)));
+        }
 
-            if (!string.IsNullOrEmpty(email))
-            {
-                identity = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, email) }, "apiauth");
-            }
-            else
-            {
-                identity = new ClaimsIdentity();
-            }
+        public void NotifyUserLogout()
+        {
+            NotifyAuthenticationStateChanged(Task.FromResult(_anonymous));
+        }
 
-            _currentState = new AuthenticationState(new ClaimsPrincipal(identity));
-            NotifyAuthenticationStateChanged(Task.FromResult(_currentState));
+        private IEnumerable<Claim> ParseClaimsFromJwt(string jwt)
+        {
+            var claims = new List<Claim>();
+            var payload = jwt.Split('.')[1];
+            var jsonBytes = ParseBase64WithoutPadding(payload);
+            var keyValuePairs = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonBytes);
+
+            if (keyValuePairs != null)
+            {
+                foreach (var kvp in keyValuePairs)
+                {
+                    switch (kvp.Key)
+                    {
+                        case "role":
+                            claims.Add(new Claim(ClaimTypes.Role, kvp.Value.ToString() ?? ""));
+                            break;
+                        case "unique_name":
+                        case "email":
+                            claims.Add(new Claim(ClaimTypes.Name, kvp.Value.ToString() ?? ""));
+                            break;
+                        case "nameid": 
+                            claims.Add(new Claim(ClaimTypes.NameIdentifier, kvp.Value.ToString() ?? ""));
+                            break;
+                        default:
+                            claims.Add(new Claim(kvp.Key, kvp.Value.ToString() ?? ""));
+                            break;
+                    }
+                }
+            }
+            return claims;
+        }
+
+        private byte[] ParseBase64WithoutPadding(string base64)
+        {
+            switch (base64.Length % 4)
+            {
+                case 2: base64 += "=="; break;
+                case 3: base64 += "="; break;
+            }
+            return Convert.FromBase64String(base64);
         }
     }
 }

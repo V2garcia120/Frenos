@@ -2,6 +2,8 @@
 @using FrenosWeb.Models
 @using FrenosWeb.Services
 @inject FacturaService facturaService
+@inject NavigationManager navManager
+@inject AuthService authService
 @inject IJSRuntime JS
 
 <div class="container mt-4 pb-5">
@@ -79,12 +81,22 @@
 </div>
 
 @code {
+    private string usuarioActual = "...";
     private List<FacturaModel>? misFacturas;
-    private string usuarioActual = "Pamela Luna"; 
 
     protected override async Task OnInitializedAsync()
     {
-        misFacturas = await facturaService.GetFacturasUsuarioAsync();
+        if (authService.CurrentUser != null)
+        {
+            usuarioActual = authService.CurrentUser.Email.Split('@')[0];
+            int id = authService.CurrentUser.ClienteId;
+            
+            misFacturas = await facturaService.GetFacturasUsuarioAsync(id);
+        }
+        else
+        {
+            misFacturas = new List<FacturaModel>();
+        }
     }
 
     private async Task GenerarPDF(string id)
@@ -94,11 +106,6 @@
 
     private async Task IniciarPago(FacturaModel factura)
     {
-        await JS.InvokeVoidAsync("alert", $"🔐 Realizando pago de...\n\nFactura: {factura.NumeroFactura}\nMonto: RD$ {factura.Total:N2}");
-    
-        await Task.Delay(2000);
-    
-        factura.EstadoPago = "Pagado"; 
-        await JS.InvokeVoidAsync("alert", "✅ ¡Pago procesado con éxito! Tu factura ha sido actualizada.");
+        navManager.NavigateTo($"/pago/{factura.Total}/{factura.Id}");
     }
 }
