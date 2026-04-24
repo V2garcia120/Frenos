@@ -120,21 +120,7 @@ namespace FrenosIntegracion.Services.Core
         }
 
         // --- Catálogos ---
-        public async Task<IEnumerable<ProductoDto>> ObtenerProductosAsync()
-        {
-            var response = await _http.GetAsync("/api/productos");
-            var data = await Deserializar<IEnumerable<ProductoDto>>(response);
-            Console.WriteLine($"Productos obtenidos: {data?.Count() ?? 0}");
-            return data ?? Enumerable.Empty<ProductoDto>();
-        }
 
-        public async Task<IEnumerable<ServicioDto>> ObtenerServiciosAsync()
-        {
-            var response = await _http.GetAsync("/api/servicios");
-            var data = await Deserializar<IEnumerable<ServicioDto>>(response);
-            Console.WriteLine($"Servicios obtenidos: {data?.Count() ?? 0}");
-            return data ?? Enumerable.Empty<ServicioDto>();
-        }
 
         public async Task<CobroResponse> ProcesarCobroAsync(CobroRequest request, string token)
         {
