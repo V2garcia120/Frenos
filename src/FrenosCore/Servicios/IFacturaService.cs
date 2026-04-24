@@ -11,7 +11,7 @@ namespace FrenosCore.Servicios
 
 
         Task<FacturaResponse> ObtenerPorIdAsync(int id);
-        Task<FacturaPendienteDto> ObtenerFacturaPendientesAsync(string? placa = null, string? numeroFactura = null);
+        Task<IEnumerable<FacturaPendienteDto>> ObtenerFacturaPendientesAsync(string? placa = null, string? numeroFactura = null);
 
         Task<FacturaResponse> GenerarDesdeOrdenAsync(int ordenId, int emisorId, string? metodoPago);
 

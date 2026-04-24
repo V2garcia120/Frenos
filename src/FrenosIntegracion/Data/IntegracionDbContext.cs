@@ -19,6 +19,14 @@ namespace FrenosIntegracion.Data
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder); // Buena práctica incluir la base
+            
+            builder.Entity<ProductoCache>()
+                .Property(p => p.Id)
+                .ValueGeneratedNever();
+
+            builder.Entity<ServicioCache>()
+                .Property(s => s.Id)
+                .ValueGeneratedNever();
 
             builder.Entity<ColaPendiente>(e =>
             {

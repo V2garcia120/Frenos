@@ -4,6 +4,7 @@ using FrenosIntegracion.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FrenosIntegracion.Migrations
 {
     [DbContext(typeof(IntegracionDbContext))]
-    partial class IntegracionDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260424154916_QuitarGeneracionaAutomaticadeProdcutoCache")]
+    partial class QuitarGeneracionaAutomaticadeProdcutoCache
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -169,7 +172,10 @@ namespace FrenosIntegracion.Migrations
             modelBuilder.Entity("FrenosIntegracion.Models.Entities.ServicioCache", b =>
                 {
                     b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<bool>("Activo")
                         .HasColumnType("bit");
