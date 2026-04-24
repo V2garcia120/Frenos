@@ -29,7 +29,7 @@ namespace TallerCaja
 
             // Para usar la API real: new IntegracionService(httpClient)
             // Para pruebas sin API:   new IntegracionMockService()
-            IIntegracionService integracionService = new IntegracionMockService();
+            IIntegracionService integracionService = new IntegracionService(httpClient);
 
             var dbContext = new CajaDbContext();
             dbContext.Database.EnsureCreated();

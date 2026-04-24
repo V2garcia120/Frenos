@@ -28,6 +28,8 @@ namespace FrenosCore.Data
         public DbSet<Producto> Producto => Set<Producto>();
         public DbSet<AuditLog> AuditLog => Set<AuditLog>();
 
+        public DbSet<TurnoCaja> TurnoCaja => Set<TurnoCaja>();
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             builder.Entity<Usuario>(e =>

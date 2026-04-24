@@ -2,6 +2,7 @@
 using FrenosCore.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using FrenosCore.Modelos.Dtos.Servicio;
 
 namespace FrenosCore.Controllers.Api
 {
@@ -20,7 +21,16 @@ namespace FrenosCore.Controllers.Api
         public async Task<IActionResult> Listar()
         {
             var servicios = await _serviciciosService.ListarAsync();
-            return Ok(ApiResponse<object>.Ok(servicios));
+            IEnumerable<ServicioDto> serviciosDto = servicios.Select(s => new ServicioDto 
+            (
+                s.Id,
+                s.Nombre,
+                s.Precio,
+                s.DuracionMinutos,
+                s.Categoria,
+                s.Activo
+            ));
+            return Ok(ApiResponse<object>.Ok(serviciosDto));
         }
 
         [HttpGet("buscar")]

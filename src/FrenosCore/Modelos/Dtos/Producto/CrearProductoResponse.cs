@@ -12,4 +12,12 @@
         bool Activo,
         DateTime CreadoEn
     );
+    public record ProductoDto(
+                int Id,
+        string Nombre,
+        decimal Precio,
+        int Stock,
+        string? Categoria,
+        bool Activo
+        );
 }

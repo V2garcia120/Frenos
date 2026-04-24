@@ -31,5 +31,12 @@ namespace FrenosCore.Controllers.Api
 
 
         }
+        [HttpPost("login-cajero")]
+        public async Task<IActionResult> IniciarSesionCajero([FromBody] IniciarSesionRequest request)
+        {
+            var resultado = await _authService.IniciarSesionCajero(request);
+            return Ok(ApiResponse<object>.Ok(resultado));
+
+        }
     }
 }

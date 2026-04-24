@@ -24,7 +24,10 @@ namespace FrenosIntegracion.Services.Core
         public async Task<bool> EstaDisponibleAsync()
         {
             try { var r = await _http.GetAsync("/health"); return r.IsSuccessStatusCode; }
-            catch { return false; }
+            catch (Exception ex) {
+                Console.WriteLine($"Error al verificar disponibilidad del Core: {ex.Message}");
+                return false;
+            }
         }
 
         // --- Autenticación ---
@@ -41,7 +44,13 @@ namespace FrenosIntegracion.Services.Core
             response.EnsureSuccessStatusCode();
             return await Deserializar<object>(response) ?? new { };
         }
-
+        public async Task<object> AutenticarCajeroAsync(LoginRequest request)
+        {
+            var response = await _http.PostAsync("/api/auth/login-cajero", Serializar(request));
+            response.EnsureSuccessStatusCode();
+            return await Deserializar<object>(response) ?? new { };
+        }
+     
         // --- Gestión de Órdenes Web (Pág. 7-9) ---
         // Estos faltaban y causaban el error CS0535
         public async Task<OrdenWebResponse> CrearOrdenAsync(CrearOrdenWebRequest request, string token)
@@ -102,6 +111,7 @@ namespace FrenosIntegracion.Services.Core
         {
             var response = await _http.GetAsync("/api/productos");
             var data = await Deserializar<IEnumerable<ProductoDto>>(response);
+            Console.WriteLine($"Productos obtenidos: {data?.Count() ?? 0}");
             return data ?? Enumerable.Empty<ProductoDto>();
         }
 
@@ -109,6 +119,7 @@ namespace FrenosIntegracion.Services.Core
         {
             var response = await _http.GetAsync("/api/servicios");
             var data = await Deserializar<IEnumerable<ServicioDto>>(response);
+            Console.WriteLine($"Servicios obtenidos: {data?.Count() ?? 0}");
             return data ?? Enumerable.Empty<ServicioDto>();
         }
 
