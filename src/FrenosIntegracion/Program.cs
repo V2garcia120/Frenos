@@ -17,13 +17,8 @@ builder.Services.AddDbContext<IntegracionDbContext>(opt =>
 // 2. Configurar HttpClient para el CoreService
 builder.Services.AddHttpClient<ICoreService, CoreService>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Core:BaseUrl"] ?? "https://localhost:7001");
+    client.BaseAddress = new Uri(builder.Configuration["Core:BaseUrl"] ?? "http://localhost:5081");
     client.Timeout = TimeSpan.FromSeconds(10);
-})
-.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-{
-    ServerCertificateCustomValidationCallback =
-        HttpClientHandler.DangerousAcceptAnyServerCertificateValidator  
 });
 
 // 3. Configurar Seguridad (JWT)
@@ -90,7 +85,7 @@ if (app.Environment.IsDevelopment())
 // El Middleware de Log debe ir ANTES de Auth para captar intentos fallidos
 app.UseMiddleware<RequestLogMiddleware>();
 
-//app.UseHttpsRedirection();
+app.UseHttpsRedirection();
 
 app.UseCors("AllowBlazor");
 
