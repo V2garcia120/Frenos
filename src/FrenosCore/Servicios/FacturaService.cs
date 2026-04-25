@@ -223,11 +223,21 @@ public class FacturaService(
         if (!metodosValidos.Contains(request.MetodoPago))
             throw new ArgumentException($"Método de pago '{request.MetodoPago}' no válido.");
 
-        var turno = await db.TurnoCaja.FindAsync(request.TurnoId)
-            ?? throw new ArgumentException($"Turno {request.TurnoId} no encontrado.");
-
         if (!await db.Cliente.AnyAsync(c => c.Id == request.ClienteId))
             throw new ArgumentException($"Cliente {request.ClienteId} no encontrado.");
+
+        var emisorId = usuarioActual.Id;
+        if (emisorId <= 0 || !await db.Usuario.AnyAsync(u => u.Id == emisorId))
+        {
+            emisorId = await db.Usuario
+                .Where(u => u.Rol.Nombre == "Caja" || u.Rol.Nombre == "Administrador")
+                .OrderBy(u => u.Id)
+                .Select(u => u.Id)
+                .FirstOrDefaultAsync();
+        }
+
+        if (emisorId <= 0)
+            throw new InvalidOperationException("No se pudo determinar un usuario válido para emitir la factura.");
 
         var items = new List<FacturaItem>();
         foreach (var i in request.Items)
@@ -261,8 +271,8 @@ public class FacturaService(
         {
             TipoOrigen = "VentaDirecta",
             ClienteId = request.ClienteId,
-            TurnoId = request.TurnoId,
-            EmitidaPor = turno.CajeroId,
+            TurnoId = null,
+            EmitidaPor = emisorId,
             Numero = numero,
             Fecha = DateTime.UtcNow,
             Subtotal = subtotal,
@@ -344,7 +354,10 @@ public class FacturaService(
                 $"Valores permitidos: {string.Join(", ", metodosValidos)}.");
 
         factura.MetodoPago = req.Metodo;
-        factura.TurnoId = req.TurnoId;
+        if (req.TurnoId > 0)
+        {
+            factura.TurnoId = req.TurnoId;
+        }
 
         if (req.Metodo == "Credito")
         {

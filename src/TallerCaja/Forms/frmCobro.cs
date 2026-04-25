@@ -9,6 +9,7 @@ namespace TallerCaja.Forms
         private readonly IIntegracionService _integracion;
         private readonly ICajaLocalService _local;
         private readonly OfflineQueue _queue;
+        private readonly ISyncService _syncService;
 
         private List<ItemCobroDto> _carrito = new();
         private ClienteDto? _clienteSeleccionado;
@@ -42,15 +43,17 @@ namespace TallerCaja.Forms
             _integracion = null!;
             _local = null!;
             _queue = null!;
+            _syncService = null!;
             _localTurnoId = 0;
             InitializeComponent();
         }
 
-        public frmCobro(IIntegracionService integracion, ICajaLocalService local, OfflineQueue queue, int turnoLocalId)
+        public frmCobro(IIntegracionService integracion, ICajaLocalService local, OfflineQueue queue, ISyncService syncService, int turnoLocalId)
         {
             _integracion = integracion;
             _local = local;
             _queue = queue;
+            _syncService = syncService;
             _localTurnoId = turnoLocalId;
             InitializeComponent();
         }
@@ -82,7 +85,33 @@ namespace TallerCaja.Forms
             ActualizarLabelCliente();
 
             await CargarCatalogoAsync();
+            await SincronizarPendientesYNotificarAsync();
             ActualizarTotales();
+        }
+
+        private async Task SincronizarPendientesYNotificarAsync()
+        {
+            try
+            {
+                var resultado = await _syncService.SincronizarPendientesAsync();
+                lblPendientes.Text = $"Pendientes offline: {_queue.ContarPendientes()}";
+
+                if (resultado.Procesadas > 0)
+                {
+                    var mensaje = resultado.Procesadas == 1
+                        ? "Se sincronizó 1 transacción pendiente."
+                        : $"Se sincronizaron {resultado.Procesadas} transacciones pendientes.";
+
+                    if (resultado.Fallidas > 0)
+                        mensaje += $" Quedaron {resultado.Fallidas} fallidas por sincronizar.";
+
+                    MessageBox.Show(mensaje, "Sincronización completada", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            catch
+            {
+                // La caja sigue funcionando aunque no se pueda sincronizar en este momento.
+            }
         }
 
         private async Task CargarCatalogoAsync()

@@ -118,7 +118,7 @@ namespace FrenosWeb.Services
             string metodoPago,
             int? vehiculoId = null,
             int clienteId = 0,
-            int turnoId = 1)
+            int turnoId = 0)
         {
             return new CobroRequest
             {

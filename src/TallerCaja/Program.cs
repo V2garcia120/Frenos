@@ -51,15 +51,8 @@ namespace TallerCaja
 
             int localTurnoId = inicioDia.TurnoIdResultante;
 
-            // ── Sincronización de pendientes al iniciar ───────────────────────
-            Task.Run(async () =>
-            {
-                try { await syncService.SincronizarPendientesAsync(); }
-                catch { /* Silencioso, no bloquear el inicio */ }
-            });
-
             // ── Pantalla principal de cobro ────────────────────────────────────
-            Application.Run(new frmCobro(integracionService, cajaLocalService, offlineQueue, localTurnoId));
+            Application.Run(new frmCobro(integracionService, cajaLocalService, offlineQueue, syncService, localTurnoId));
         }
     }
 }

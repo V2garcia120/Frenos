@@ -14,10 +14,11 @@ namespace TallerCaja.Services
             _queue = queue;
         }
 
-        public async Task SincronizarPendientesAsync()
+        public async Task<SyncResponse> SincronizarPendientesAsync()
         {
             var pendientes = _queue.ObtenerPendientes();
-            if (!pendientes.Any()) return;
+            if (!pendientes.Any())
+                return new SyncResponse();
 
             var request = new SyncRequest
             {
@@ -31,13 +32,23 @@ namespace TallerCaja.Services
             };
 
             var resultado = await _integracion.SincronizarAsync(request);
-            if (resultado == null) return;
+            if (resultado == null)
+                return new SyncResponse();
+
+            var respuesta = new SyncResponse
+            {
+                Procesadas = resultado.Procesadas,
+                Fallidas = resultado.Fallidas,
+                Resultados = resultado.Resultados ?? new List<SyncResultadoDto>()
+            };
 
             foreach (var r in resultado.Resultados.Where(r => r.Exitosa))
             {
                 var item = pendientes.FirstOrDefault(p => p.IdLocal == r.IdLocal);
                 if (item != null) _queue.MarcarProcesada(item.Id);
             }
+
+            return respuesta;
         }
     }
 }
