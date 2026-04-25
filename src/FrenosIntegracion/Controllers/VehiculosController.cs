@@ -1,4 +1,5 @@
-﻿using FrenosIntegracion.Services.Core;
+﻿using System.Security.Claims;
+using FrenosIntegracion.Services.Core;
 using FrenosIntegracion.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,14 +18,18 @@ namespace FrenosIntegracion.Controllers
             _core = core;
         }
 
-        // GET: int/vehiculos/mis-vehiculos?clienteId=5
         [HttpGet("mis-vehiculos")]
-        public async Task<IActionResult> Listar([FromQuery] int clienteId)
+        public async Task<IActionResult> Listar()
         {
             try
             {
-                if (clienteId <= 0)
-                    return BadRequest(ApiResponse<object>.Fail("VALIDATION_ERROR", "clienteId requerido."));
+                // El Core pone el clienteId en el claim "sub"
+                // .NET lo mapea automáticamente a NameIdentifier
+                var sub = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                if (!int.TryParse(sub, out var clienteId) || clienteId <= 0)
+                    return Unauthorized(ApiResponse<object>.Fail(
+                        "AUTH_ERROR", "No se pudo identificar al cliente."));
 
                 var lista = await _core.ObtenerVehiculosClienteAsync(clienteId);
                 return Ok(ApiResponse<object>.Ok(lista));
@@ -35,7 +40,6 @@ namespace FrenosIntegracion.Controllers
             }
         }
 
-        // POST: int/vehiculos
         [HttpPost]
         public async Task<IActionResult> Registrar([FromBody] object vehiculo)
         {
@@ -50,7 +54,6 @@ namespace FrenosIntegracion.Controllers
             }
         }
 
-        // PUT: int/vehiculos/{id}
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Actualizar(int id, [FromBody] object vehiculo)
         {
@@ -65,7 +68,6 @@ namespace FrenosIntegracion.Controllers
             }
         }
 
-        // DELETE: int/vehiculos/{id}
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Eliminar(int id)
         {

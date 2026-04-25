@@ -121,10 +121,18 @@
     protected override async Task OnInitializedAsync()
     {
         productos = await servicioService.GetProductosDelInventarioAsync() ?? new();
-        foreach (var p in productos) p.RequiereVehiculo = false;
+        foreach (var p in productos)
+        {
+            p.RequiereVehiculo = false;
+            p.TipoItem = "Producto"; 
+        }
 
         servicios = await servicioService.GetServiciosAsync() ?? new();
-        foreach (var s in servicios) s.RequiereVehiculo = true;
+        foreach (var s in servicios)
+        {
+            s.RequiereVehiculo = true;
+            s.TipoItem = "Servicio"; 
+        }
     }
 
     private void AbrirModal(int id, bool esServicio)
@@ -136,13 +144,18 @@
 
     private async Task HandleConfirmarAgregar()
     {
-        if (!authService.IsLoggedIn) { navManager.NavigateTo("login"); return; }
-    
+        await authService.InicializarSesionDesdeStorage();
+        if (!authService.IsLoggedIn)
+        {
+            navManager.NavigateTo("login");
+            return;
+        }
+
         if (!itemSeleccionado!.RequiereVehiculo && itemSeleccionado.Stock == 0) return;
-    
+
         for (int i = 0; i < cantidad; i++)
             await carritoService.Agregar(itemSeleccionado!);
-    
+
         CerrarModal();
     }
 

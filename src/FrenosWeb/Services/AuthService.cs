@@ -96,15 +96,18 @@ namespace FrenosWeb.Services
             return $"{header}.{payload}.{signature}";
         }
 
+        public bool Inicializado { get; private set; } = false;
+
         public async Task InicializarSesionDesdeStorage()
         {
             var token = await js.InvokeAsync<string>("localStorage.getItem", "authToken");
             if (!string.IsNullOrEmpty(token))
             {
-                // Re-inyectamos la llave en el HttpClient para que Integracion nos deje pasar
-                http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                http.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", token);
                 IsLoggedIn = true;
             }
+            Inicializado = true;
         }
 
         public async Task<(bool Exito, string? Error)> Registrar(ClienteModel modelo)

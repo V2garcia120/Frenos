@@ -33,22 +33,20 @@ namespace FrenosWeb.Services
             }
         }
 
-        // Método para consultar el historial (Para MisOrdenes.razor)
         public async Task<List<OrdenWebModel>> GetHistorialAsync()
         {
             try
             {
                 var response = await _http.GetFromJsonAsync<ApiResponse<List<OrdenWebModel>>>("int/ordenes/historial");
                 if (response != null && response.Success && response.Data != null)
-                {
                     return response.Data;
-                }
-                return ObtenerDatosPrueba();
+
+                return new List<OrdenWebModel>(); 
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[Cyber-Logs] Error al obtener historial: {ex.Message}");
-                return ObtenerDatosPrueba();
+                return new List<OrdenWebModel>(); 
             }
         }
 

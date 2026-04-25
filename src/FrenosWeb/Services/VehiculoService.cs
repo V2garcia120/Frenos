@@ -13,7 +13,6 @@ namespace FrenosWeb.Services
             _http = http;
         }
 
-        // Lee el clienteId del JWT guardado en el header del HttpClient
         private int ObtenerClienteIdDelToken()
         {
             try
@@ -27,14 +26,28 @@ namespace FrenosWeb.Services
                     case 2: payload += "=="; break;
                     case 3: payload += "="; break;
                 }
+
                 var json = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payload));
                 var claims = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
 
-                // El Core genera el token con "sub" = clienteId
-                if (claims != null && claims.TryGetValue("sub", out var sub))
-                    return int.TryParse(sub.ToString(), out var id) ? id : 0;
+                if (claims == null) return 0;
+
+                // Intentar varios nombres de claim según cómo lo genera el Core
+                foreach (var key in new[] { "sub", "nameid", "clienteId",
+            "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier" })
+                {
+                    if (claims.TryGetValue(key, out var val) &&
+                        int.TryParse(val.ToString(), out var id) && id > 0)
+                    {
+                        Console.WriteLine($"[VehiculoService] ClienteId encontrado en claim '{key}': {id}");
+                        return id;
+                    }
+                }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[VehiculoService] Error leyendo token: {ex.Message}");
+            }
             return 0;
         }
 
@@ -50,7 +63,7 @@ namespace FrenosWeb.Services
                 }
 
                 var response = await _http.GetFromJsonAsync<ApiResponse<List<VehiculoModel>>>(
-                    $"int/vehiculos/mis-vehiculos?clienteId={clienteId}");
+                    $"int/vehiculos/mis-vehiculos");
 
                 if (response != null && response.Success && response.Data != null)
                     return response.Data;

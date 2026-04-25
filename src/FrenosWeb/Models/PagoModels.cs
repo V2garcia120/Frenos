@@ -27,4 +27,21 @@
         public string Estado { get; set; } = "";
         public string? IdLocal { get; set; }
     }
+
+    public class OrdenWebRequest
+    {
+        public int ClienteId { get; set; }
+        public int? VehiculoId { get; set; }
+        public string MetodoPago { get; set; } = "Tarjeta";
+        public List<OrdenWebItem> Items { get; set; } = new();
+        public string? Notas { get; set; }
+    }
+
+    public class OrdenWebItem
+    {
+        public string Tipo { get; set; } = "";     
+        public int ItemId { get; set; }
+        public int Cantidad { get; set; }
+        public decimal PrecioSnapshot { get; set; }
+    }
 }

@@ -80,14 +80,18 @@
     {
         if (firstRender)
         {
-            // Solo re-inyectar el token en HttpClient para las llamadas a la API
-            // El AuthStateProvider ya maneja la sesión leyendo el localStorage
             var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
             if (!string.IsNullOrEmpty(token))
             {
                 http.DefaultRequestHeaders.Authorization =
                     new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+                await authService.InicializarSesionDesdeStorage();
             }
+
+            await carritoService.InicializarAsync();
+
+            StateHasChanged();
         }
     }
 

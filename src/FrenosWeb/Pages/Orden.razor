@@ -234,7 +234,7 @@
                 clienteId: clienteId.Value
             );
 
-            var resultado = await pagoService.ProcesarCobroAsync(request);
+            var resultado = await pagoService.ProcesarCobroAsync(request, metodoPago);
 
             if (resultado.Success)
             {

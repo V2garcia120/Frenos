@@ -3,6 +3,7 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 @inject IJSRuntime JS
 @inject FrenosWeb.Services.VehiculoService vehiculoService
+@inject FrenosWeb.Services.AuthService authService
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -177,7 +178,17 @@
     private string colorManual = "";
     private string mensajeError = "";
 
-    protected override async Task OnInitializedAsync() => vehiculos = await vehiculoService.GetVehiculosUsuarioAsync();
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await authService.InicializarSesionDesdeStorage();
+            vehiculos = await vehiculoService.GetVehiculosUsuarioAsync();
+            StateHasChanged();
+        }
+    }
+
+    protected override Task OnInitializedAsync() => Task.CompletedTask;
 
     private void AbrirModal()
     {

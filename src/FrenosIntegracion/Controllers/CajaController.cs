@@ -1,7 +1,7 @@
 ﻿using FrenosIntegracion.Models.DTOs;
 using FrenosIntegracion.Services.Core;
 using FrenosIntegracion.Services.Sync;
-using FrenosIntegracion.Helpers; // Asegúrate de que ApiResponse esté aquí
+using FrenosIntegracion.Helpers; 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -169,6 +169,36 @@ namespace FrenosIntegracion.Controllers
             catch (Exception ex)
             {
                 return StatusCode(503, FrenosIntegracion.Helpers.ApiResponse<object>.Fail("CORE_UNAVAILABLE", ex.Message));
+            }
+        }
+
+        [HttpPost("venta-directa")]
+        public async Task<IActionResult> VentaDirecta([FromBody] object request)
+        {
+            try
+            {
+                var token = ObtenerToken();
+
+                var cobroRequest = System.Text.Json.JsonSerializer
+                    .Deserialize<CobroRequest>(
+                        System.Text.Json.JsonSerializer.Serialize(request),
+                        new System.Text.Json.JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true
+                        });
+
+                if (cobroRequest == null)
+                    return BadRequest(FrenosIntegracion.Helpers.ApiResponse<object>.Fail(
+                        "VALIDATION_ERROR", "Request inválido."));
+
+                var resultado = await core.ProcesarCobroAsync(cobroRequest, token);
+
+                return Ok(FrenosIntegracion.Helpers.ApiResponse<object>.Ok(resultado));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(503, FrenosIntegracion.Helpers.ApiResponse<object>.Fail(
+                    "CORE_ERROR", ex.Message));
             }
         }
     }

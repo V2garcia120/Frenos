@@ -20,31 +20,30 @@ public class RequestLogMiddleware
     {
         var stopwatch = Stopwatch.StartNew();
 
-        // 1. Habilitar lectura múltiple del cuerpo de la petición
         context.Request.EnableBuffering();
         var requestBody = await LeerBodyAsync(context.Request.Body);
-        context.Request.Body.Position = 0; // "Rebobinar" para que el Controller pueda leerlo
+        context.Request.Body.Position = 0;
 
-        // 2. Interceptar la respuesta (Buffer)
         var originalResponseBody = context.Response.Body;
         using var responseBuffer = new MemoryStream();
         context.Response.Body = responseBuffer;
 
-        // Continuar con el siguiente paso (ir al Controller)
         await _next(context);
 
         stopwatch.Stop();
 
-        // 3. Leer lo que el Controller respondió
         responseBuffer.Seek(0, SeekOrigin.Begin);
         var responseBody = await new StreamReader(responseBuffer).ReadToEndAsync();
         responseBuffer.Seek(0, SeekOrigin.Begin);
-
-        // Copiar de vuelta al flujo original para que el cliente reciba la respuesta
         await responseBuffer.CopyToAsync(originalResponseBody);
         context.Response.Body = originalResponseBody;
 
-        // 4. Guardar Log en segundo plano (para no poner lenta la App)
+        var canal = context.Request.Headers["X-Canal"].ToString() is { Length: > 0 } c ? c : "Web";
+        var metodo = context.Request.Method;
+        var endpoint = context.Request.Path.ToString();
+        var statusCode = context.Response.StatusCode;
+        var duracion = (int)stopwatch.ElapsedMilliseconds;
+
         _ = Task.Run(async () =>
         {
             using var scope = _scopeFactory.CreateScope();
@@ -52,13 +51,13 @@ public class RequestLogMiddleware
 
             db.LogPeticiones.Add(new LogPeticion
             {
-                Canal = context.Request.Headers["X-Canal"].ToString() ?? "Web",
-                Metodo = context.Request.Method,
-                Endpoint = context.Request.Path,
-                RequestBody = requestBody,
+                Canal = canal,       
+                Metodo = metodo,      
+                Endpoint = endpoint,    
+                RequestBody = requestBody, 
                 ResponseBody = responseBody,
-                StatusCode = context.Response.StatusCode,
-                DuracionMs = (int)stopwatch.ElapsedMilliseconds,
+                StatusCode = statusCode,  
+                DuracionMs = duracion,    
                 FechaHora = DateTime.UtcNow
             });
 

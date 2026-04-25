@@ -8,7 +8,8 @@ namespace FrenosCore.Helpers
         {
             get
             {
-                var claim = http.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var claim = http.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                         ?? http.HttpContext?.User.FindFirst("sub")?.Value;
                 return int.TryParse(claim, out var id) ? id : 0;
             }
         }

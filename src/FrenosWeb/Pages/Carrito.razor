@@ -3,6 +3,7 @@
 @using FrenosWeb.Services
 @using Microsoft.AspNetCore.Authorization
 @inject CarritoStateService carritoService
+@inject AuthService authService
 @inject VehiculoService vehiculoService
 @inject NavigationManager navManager
 @attribute [Authorize]
@@ -127,11 +128,18 @@
     private List<VehiculoModel>? misVehiculos; 
     private int vehiculoSeleccionadoId = 0;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        await ValidarEstadoBoton();
-        misVehiculos = await vehiculoService.GetVehiculosUsuarioAsync();
+        if (firstRender)
+        {
+            await authService.InicializarSesionDesdeStorage();
+            await ValidarEstadoBoton();
+            misVehiculos = await vehiculoService.GetVehiculosUsuarioAsync();
+            StateHasChanged();
+        }
     }
+
+    protected override Task OnInitializedAsync() => Task.CompletedTask;
 
     async Task Eliminar(int id)
     {
@@ -158,7 +166,6 @@
         await ValidarEstadoBoton();
         if (botonBloqueado) return;
 
-        // Verificamos si en el carrito hay algo que necesite carro
         bool necesitaCarro = carritoService.Items.Any(x => x.Servicio.RequiereVehiculo);
 
         if (necesitaCarro && vehiculoSeleccionadoId == 0)
@@ -167,7 +174,6 @@
             return;
         }
 
-        // Si no necesita carro, mandamos ID 0
         navManager.NavigateTo($"/orden/{(necesitaCarro ? vehiculoSeleccionadoId : 0)}");
     }
 }

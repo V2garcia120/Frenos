@@ -1,4 +1,5 @@
-﻿using FrenosIntegracion.Services.Core;
+﻿using FrenosIntegracion.Models.DTOs;
+using FrenosIntegracion.Services.Core;
 using FrenosIntegracion.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,13 +19,29 @@ namespace FrenosIntegracion.Controllers
             {
                 var token = ObtenerToken();
                 var historial = await core.ObtenerHistorialOrdenesAsync(token);
-
-                return Ok(FrenosIntegracion.Helpers.ApiResponse<object>.Ok(historial ?? []));
+                return Ok(ApiResponse<object>.Ok(historial ?? []));
             }
             catch (Exception ex)
             {
-                return StatusCode(503, FrenosIntegracion.Helpers.ApiResponse<object>.Fail(
-                    "CORE_UNAVAILABLE", "No se pudo obtener el historial. " + ex.Message));
+                return StatusCode(503, ApiResponse<object>.Fail(
+                    "CORE_UNAVAILABLE", ex.Message));
+            }
+        }
+
+        // POST: int/ordenes/web 
+        [HttpPost("web")]
+        public async Task<IActionResult> CrearOrdenWeb([FromBody] CrearOrdenWebRequest request)
+        {
+            try
+            {
+                var token = ObtenerToken();
+                var orden = await core.CrearOrdenAsync(request, token);
+                return Ok(ApiResponse<object>.Ok(orden));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(503, ApiResponse<object>.Fail(
+                    "CORE_UNAVAILABLE", ex.Message));
             }
         }
 

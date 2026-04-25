@@ -14,37 +14,45 @@
         <div class="col-md-6">
             <div class="card shadow-lg border-0">
                 <div class="card-header bg-dark text-white text-center py-3">
-                    <h4 class="mb-0">💳 Checkout Seguro</h4>
+                    <h4 class="mb-0">💳 Pago con Tarjeta</h4>
                 </div>
                 <div class="card-body p-4">
                     <div class="text-center mb-4">
                         <small class="text-muted">Total a pagar (con ITBIS)</small>
-                        <h2 class="text-success font-weight-bold">RD$ @montoAFacturar.ToString("N2")</h2>
+                        <h2 class="text-success font-weight-bold">
+                            RD$ @montoAFacturar.ToString("N2")
+                        </h2>
                     </div>
 
                     <form @onsubmit="ProcesarPago">
+
                         <div class="mb-3">
                             <label class="form-label">Nombre en la tarjeta</label>
                             <input type="text" class="form-control" placeholder="Ej. JUAN PEREZ"
-                                   @bind="nombreTarjeta" @bind:event="oninput" @onkeyup="ValidarNombre" required />
+                                   @bind="nombreTarjeta" @bind:event="oninput" @onkeyup="ValidarNombre" />
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Número de Tarjeta</label>
-                            <input type="text" class="form-control" placeholder="0000 0000 0000 0000" maxlength="16"
-                                   oninput="this.value = this.value.replace(/[^0-9]/g, '')" required />
+                            <input type="text" class="form-control"
+                                   placeholder="0000 0000 0000 0000"
+                                   maxlength="16"
+                                   oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Expiración (MM/AA)</label>
-                                <input type="text" class="form-control" placeholder="MM/AA" maxlength="5"
-                                       @bind="expiracion" @bind:event="oninput" @onkeyup="ValidarExpiracion" required />
+                                <input type="text" class="form-control" placeholder="MM/AA"
+                                       maxlength="5"
+                                       @bind="expiracion" @bind:event="oninput"
+                                       @onkeyup="ValidarExpiracion" />
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">CVV</label>
-                                <input type="password" class="form-control" placeholder="***" maxlength="3"
-                                       oninput="this.value = this.value.replace(/[^0-9]/g, '')" required />
+                                <input type="password" class="form-control" placeholder="***"
+                                       maxlength="3"
+                                       oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
                             </div>
                         </div>
 
@@ -68,7 +76,13 @@
                                 🔒 Confirmar Pago
                             </button>
                         }
-                    </form> 
+
+                        <button type="button"
+                                class="btn btn-outline-secondary w-100 mt-2 rounded-pill"
+                                @onclick='() => navManager.NavigateTo("/carrito")'>
+                            ← Volver al carrito
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -80,6 +94,7 @@
     private string expiracion = "";
     private string nombreTarjeta = "";
     private string? mensajeError;
+
     [Parameter] public decimal MontoExterno { get; set; }
     [Parameter] public int FacturaId { get; set; }
     [SupplyParameterFromQuery(Name = "vehiculoId")] public int? VehiculoId { get; set; }
@@ -98,47 +113,38 @@
 
         try
         {
-            bool exito = false;
-
-            if (FacturaId > 0)
+            if (string.IsNullOrWhiteSpace(nombreTarjeta) ||
+                string.IsNullOrWhiteSpace(expiracion))
             {
-                exito = await facturaService.ProcesarPagoFacturaAsync(FacturaId, montoAFacturar);
+                mensajeError = "Por favor completa los datos de la tarjeta.";
+                return;
+            }
+
+            var request = carritoService.PrepararCobro(
+                metodoPago: "Tarjeta",
+                vehiculoId: VehiculoId.HasValue && VehiculoId.Value > 0 ? VehiculoId : null,
+                clienteId: ClienteId ?? 0);
+
+            var resultado = await pagoService.ProcesarCobroAsync(request, "Tarjeta");
+
+            if (resultado.Success)
+            {
+                await carritoService.Limpiar();
+                var msg = resultado.Data?.Estado == "Pendiente"
+                    ? "Tu orden fue creada. El taller te contactará para confirmar."
+                    : "¡Pago procesado exitosamente!";
+
+                navManager.NavigateTo(
+                    $"/mis-ordenes?msg={Uri.EscapeDataString(msg)}");
             }
             else
             {
-                if (!ClienteId.HasValue || ClienteId.Value <= 0)
-                {
-                    mensajeError = "No se pudo determinar el cliente para procesar el pago del carrito.";
-                    return;
-                }
-
-                var request = carritoService.PrepararCobro(
-                    metodoPago: "Tarjeta",
-                    vehiculoId: VehiculoId.HasValue && VehiculoId.Value > 0 ? VehiculoId : null,
-                    clienteId: ClienteId.Value);
-
-                var resultado = await pagoService.ProcesarCobroAsync(request);
-
-                exito = resultado.Success;
-                if (!exito)
-                {
-                    mensajeError = resultado.Error?.Mensaje ?? "Error en la transacción.";
-                }
-            }
-
-            if (exito)
-            {
-                await carritoService.Limpiar();
-                navManager.NavigateTo(FacturaId > 0 ? "/facturas" : "/mis-ordenes");
-            }
-            else if (string.IsNullOrEmpty(mensajeError))
-            {
-                mensajeError = "El pago no pudo ser procesado.";
+                mensajeError = resultado.Error?.Mensaje ?? "Error al procesar el pago.";
             }
         }
         catch (Exception ex)
         {
-            mensajeError = $"Fallo crítico al procesar el pago: {ex.Message}";
+            mensajeError = $"Error: {ex.Message}";
         }
         finally
         {
@@ -157,38 +163,32 @@
         {
             int mes = int.Parse(soloNumeros.Substring(0, 2));
             if (mes > 12) soloNumeros = "12" + (soloNumeros.Length > 2 ? soloNumeros.Substring(2) : "");
-            if (mes == 0 && soloNumeros.Length >= 2) soloNumeros = "01" + (soloNumeros.Length > 2 ? soloNumeros.Substring(2) : "");
+            if (mes == 0) soloNumeros = "01" + (soloNumeros.Length > 2 ? soloNumeros.Substring(2) : "");
         }
 
         if (soloNumeros.Length == 4)
         {
             int anioIngresado = int.Parse(soloNumeros.Substring(2, 2));
-            int anioActual = DateTime.Now.Year % 100; 
+            int anioActual = DateTime.Now.Year % 100;
 
             if (anioIngresado < anioActual)
             {
                 soloNumeros = soloNumeros.Substring(0, 2) + anioActual.ToString();
                 mensajeError = "⚠️ La tarjeta no puede estar expirada.";
             }
-            else if (anioIngresado > anioActual + 20) 
+            else if (anioIngresado > anioActual + 20)
             {
                 soloNumeros = soloNumeros.Substring(0, 2) + (anioActual + 10).ToString();
             }
         }
 
-        if (soloNumeros.Length > 2)
-        {
-            expiracion = soloNumeros.Insert(2, "/");
-        }
-        else
-        {
-            expiracion = soloNumeros;
-        }
+        expiracion = soloNumeros.Length > 2 ? soloNumeros.Insert(2, "/") : soloNumeros;
     }
 
     private void ValidarNombre()
     {
-        var filtrado = new string(nombreTarjeta.Where(c => char.IsLetter(c) || char.IsWhiteSpace(c)).ToArray());
+        var filtrado = new string(nombreTarjeta
+            .Where(c => char.IsLetter(c) || char.IsWhiteSpace(c)).ToArray());
         nombreTarjeta = filtrado.ToUpper();
     }
 }
