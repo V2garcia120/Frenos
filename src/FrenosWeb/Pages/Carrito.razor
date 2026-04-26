@@ -97,17 +97,20 @@
             <div class="d-flex gap-2">
                 <button class="btn btn-outline-secondary rounded-pill px-4" @onclick="Vaciar">Vaciar Carrito</button>
 
-                <button class="btn @(botonBloqueado || misVehiculos?.Count == 0 ? "btn-secondary" : "btn-success") btn-lg flex-grow-1 rounded-pill shadow"
+                @{
+                    bool hayServicios = carritoService.Items.Any(i => i.Tipo == "Servicio");
+                    bool sinVehiculo = hayServicios && (misVehiculos == null || !misVehiculos.Any());
+                }
+                <button class="btn @(botonBloqueado || sinVehiculo ? "btn-secondary" : "btn-success") btn-lg flex-grow-1 rounded-pill shadow"
                         @onclick="IrAOrden"
-                        disabled="@(botonBloqueado || !carritoService.Items.Any() || misVehiculos?.Count == 0)">
-            
-                    @if (misVehiculos?.Count == 0)
+                        disabled="@(botonBloqueado || sinVehiculo)">
+                    @if (sinVehiculo)
                     {
                         <span>Primero registra un vehículo ⚠️</span>
                     }
                     else
                     {
-                        @(botonBloqueado ? "Corrija las cantidades ⚠️" : "Confirmar Orden ➡")
+                        @(botonBloqueado ? "Corrija las cantidades ⚠️" : "Proceder al Pago →")
                     }
                 </button>
             </div>
@@ -166,7 +169,7 @@
         await ValidarEstadoBoton();
         if (botonBloqueado) return;
 
-        bool necesitaCarro = carritoService.Items.Any(x => x.Servicio.RequiereVehiculo);
+        bool necesitaCarro = carritoService.Items.Any(x => x.Tipo == "Servicio");
 
         if (necesitaCarro && vehiculoSeleccionadoId == 0)
         {

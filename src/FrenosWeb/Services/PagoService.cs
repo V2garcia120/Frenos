@@ -20,8 +20,9 @@ namespace FrenosWeb.Services
 
                 var items = request.Items ?? new();
 
-                var servicios = items.Where(i => i.Tipo == "Servicio").ToList();
-                var productos = items.Where(i => i.Tipo != "Servicio").ToList(); 
+                var tieneVehiculo = request.VehiculoId.HasValue && request.VehiculoId > 0;
+                var servicios = tieneVehiculo ? items.ToList() : new List<CobroItemRequest>();
+                var productos = tieneVehiculo ? new List<CobroItemRequest>() : items.ToList();
 
                 // ── SERVICIOS → siempre quedan pendientes como Orden ──
                 if (servicios.Any())
@@ -37,7 +38,7 @@ namespace FrenosWeb.Services
                             cantidad = i.Cantidad,
                             precioSnapshot = i.PrecioSnapshot
                         }),
-                        notas = $"Orden web - Pago: {metodoPago}"
+                        notas = $"{metodoPago} | Items: {string.Join(", ", servicios.Select(i => i.Nombre))}"
                     };
 
                     var resp = await _http.PostAsJsonAsync("int/ordenes/web", ordenRequest);
@@ -70,11 +71,13 @@ namespace FrenosWeb.Services
                         {
                             clienteId = request.ClienteId,
                             metodoPago = metodoPago,
+                            montoPagado = productos.Sum(i => i.PrecioSnapshot * i.Cantidad) * 1.18m,
                             items = productos.Select(i => new
                             {
                                 tipo = i.Tipo,
                                 itemId = i.ItemId,
-                                cantidad = i.Cantidad
+                                cantidad = i.Cantidad,
+                                precioSnapshot = i.PrecioSnapshot
                             })
                         };
 
@@ -104,11 +107,10 @@ namespace FrenosWeb.Services
                                 cantidad = i.Cantidad,
                                 precioSnapshot = i.PrecioSnapshot
                             }),
-                            notas = "Productos - Pago en efectivo al recoger"
+                            notas = $"Efectivo | Items: {string.Join(", ", productos.Select(i => i.Nombre))} | Total: RD${productos.Sum(i => i.PrecioSnapshot * i.Cantidad):N2}"
                         };
 
-                        var resp = await _http.PostAsJsonAsync(
-                            "int/ordenes/web", ordenRequest);
+                        var resp = await _http.PostAsJsonAsync("int/ordenes/web", ordenRequest);
 
                         if (!resp.IsSuccessStatusCode)
                             return ApiResponse<CobroResponse>.Fail(

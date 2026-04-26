@@ -168,13 +168,20 @@
 
         if (soloNumeros.Length == 4)
         {
+            int mesIngresado = int.Parse(soloNumeros.Substring(0, 2)); 
             int anioIngresado = int.Parse(soloNumeros.Substring(2, 2));
             int anioActual = DateTime.Now.Year % 100;
+            int mesActual = DateTime.Now.Month;
 
             if (anioIngresado < anioActual)
             {
                 soloNumeros = soloNumeros.Substring(0, 2) + anioActual.ToString();
                 mensajeError = "⚠️ La tarjeta no puede estar expirada.";
+            }
+            else if (anioIngresado == anioActual && mesIngresado < mesActual)
+            {
+                soloNumeros = mesActual.ToString("D2") + anioIngresado.ToString();
+                mensajeError = "⚠️ El mes ya ha pasado.";
             }
             else if (anioIngresado > anioActual + 20)
             {

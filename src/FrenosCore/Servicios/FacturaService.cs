@@ -219,7 +219,7 @@ public class FacturaService(
   
     public async Task<CobroDirectoResponse> CobrarDirectoAsync(CobroDirectoRequest request)
     {
-        string[] metodosValidos = ["Efectivo", "Tarjeta", "Transferencia", "Credito"];
+        string[] metodosValidos = ["Efectivo", "Tarjeta", "Transferencia", "Credito", "Pendiente"];
         if (!metodosValidos.Contains(request.MetodoPago))
             throw new ArgumentException($"Método de pago '{request.MetodoPago}' no válido.");
 
@@ -278,7 +278,7 @@ public class FacturaService(
             Subtotal = subtotal,
             Itbis = itbis,
             Total = total,
-            Estado = request.MetodoPago == "Credito" ? "Pendiente" : "Pagada",
+            Estado = (request.MetodoPago == "Credito" || request.MetodoPago == "Efectivo") ? "Pendiente" : "Pagada",
             MetodoPago = request.MetodoPago,
             Items = items
         };

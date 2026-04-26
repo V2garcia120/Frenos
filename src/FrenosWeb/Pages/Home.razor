@@ -4,6 +4,8 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @inject AuthenticationStateProvider AuthStateProvider
 @inject VehiculoService vehiculoService
+@inject OrdenWebService ordenService
+@inject AuthService authService
 @inject NavigationManager navManager
 
 <style>
@@ -57,25 +59,26 @@
                 </div>
 
                 <div class="col-md-6 col-lg-3 mb-4">
-                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white text-center border-top border-4" style="border-top-color: var(--naranja-frenos) !important;">
-                        <div class="card-body">
-                            <div class="bg-naranja text-white rounded-circle d-inline-flex p-3 mb-3 shadow">
-                                <i class="bi bi-tools fs-3"></i>
-                            </div>
-                            <h6 class="fw-bold">Estado Actual</h6>
-                            @if (hayOrdenActiva)
-                            {
-                                <span class="badge bg-naranja rounded-pill mb-2">En Reparación</span>
-                                <p class="x-small text-muted mb-0">Corolla - A987456</p>
-                            }
-                            else
-                            {
-                                <p class="small text-muted mb-3">Sin servicios activos</p>
-                                <button class="btn btn-sm btn-frenos-naranja rounded-pill w-100" @onclick='() => navManager.NavigateTo("/catalogo")'>Agendar</button>
-                            }
-                        </div>
-                    </div>
-                </div>
+    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white text-center border-top border-4" style="border-top-color: var(--naranja-frenos) !important;">
+        <div class="card-body">
+            <div class="bg-naranja text-white rounded-circle d-inline-flex p-3 mb-3 shadow">
+                <i class="bi bi-tools fs-3"></i>
+            </div>
+            <h6 class="fw-bold">Estado Actual</h6>
+            @if (hayOrdenActiva)
+            {
+                <span class="badge bg-naranja rounded-pill mb-2">@ordenActiva!.EstadoServicio</span>
+                <p class="small text-muted mb-1">@ordenActiva.TipoServicio</p>
+                <small class="text-muted">@ordenActiva.Vehiculo [@ordenActiva.Placa]</small>
+            }
+            else
+            {
+                <p class="small text-muted mb-3">Sin servicios activos</p>
+                <button class="btn btn-sm btn-frenos-naranja rounded-pill w-100" @onclick='() => navManager.NavigateTo("/catalogo")'>Agendar</button>
+            }
+        </div>
+    </div>
+</div>
 
                 <div class="col-md-6 col-lg-3 mb-4">
                     <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white text-center border-top border-4" style="border-top-color: var(--azul-frenos) !important;">
@@ -192,10 +195,25 @@
 
 @code {
     private List<VehiculoModel>? misVehiculos;
-    private bool hayOrdenActiva = true;
+    private OrdenWebModel? ordenActiva;
+    private bool hayOrdenActiva => ordenActiva != null;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        misVehiculos = await vehiculoService.GetVehiculosUsuarioAsync();
+        if (firstRender)
+        {
+            await authService.InicializarSesionDesdeStorage();
+            misVehiculos = await vehiculoService.GetVehiculosUsuarioAsync();
+            
+            var historial = await ordenService.GetHistorialAsync();
+            ordenActiva = historial
+                .Where(o => o.EsServicio && 
+                       o.EstadoServicio != "Entregado" && 
+                       o.EstadoServicio != "Pagada")
+                .OrderByDescending(o => o.Fecha)
+                .FirstOrDefault();
+            
+            StateHasChanged();
+        }
     }
 }

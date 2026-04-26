@@ -18,11 +18,14 @@ namespace FrenosIntegracion.Controllers
             try
             {
                 var token = ObtenerToken();
+                Console.WriteLine($"[Historial] Token length={token?.Length} | Token={token?[..Math.Min(50, token.Length)]}...");
                 var historial = await core.ObtenerHistorialOrdenesAsync(token);
+                Console.WriteLine($"[Historial] Items={historial?.Count()}");
                 return Ok(ApiResponse<object>.Ok(historial ?? []));
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[Historial] Error: {ex.Message}");
                 return StatusCode(503, ApiResponse<object>.Fail(
                     "CORE_UNAVAILABLE", ex.Message));
             }

@@ -173,32 +173,28 @@ namespace FrenosIntegracion.Controllers
         }
 
         [HttpPost("venta-directa")]
-        public async Task<IActionResult> VentaDirecta([FromBody] object request)
+        public async Task<IActionResult> VentaDirecta([FromBody] VentaWebRequest request)
         {
             try
             {
                 var token = ObtenerToken();
 
-                var cobroRequest = System.Text.Json.JsonSerializer
-                    .Deserialize<CobroRequest>(
-                        System.Text.Json.JsonSerializer.Serialize(request),
-                        new System.Text.Json.JsonSerializerOptions
-                        {
-                            PropertyNameCaseInsensitive = true
-                        });
-
-                if (cobroRequest == null)
-                    return BadRequest(FrenosIntegracion.Helpers.ApiResponse<object>.Fail(
-                        "VALIDATION_ERROR", "Request inválido."));
+                // Convertir a CobroRequest con TurnoId=0 (no aplica para web)
+                var cobroRequest = new CobroRequest(
+                    TurnoId: 0,
+                    ClienteId: request.ClienteId,
+                    VehiculoId: null,
+                    Items: request.Items.Select(i => new CobroItem(i.Tipo, i.ItemId, i.Cantidad, i.PrecioSnapshot)),
+                    MetodoPago: request.MetodoPago,
+                    MontoPagado: request.MontoPagado
+                );
 
                 var resultado = await core.ProcesarCobroAsync(cobroRequest, token);
-
-                return Ok(FrenosIntegracion.Helpers.ApiResponse<object>.Ok(resultado));
+                return Ok(ApiResponse<object>.Ok(resultado));
             }
             catch (Exception ex)
             {
-                return StatusCode(503, FrenosIntegracion.Helpers.ApiResponse<object>.Fail(
-                    "CORE_ERROR", ex.Message));
+                return StatusCode(503, ApiResponse<object>.Fail("CORE_ERROR", ex.Message));
             }
         }
     }

@@ -10,6 +10,6 @@
         public int Stock { get; set; }
         public string? Categoria { get; set; }
         public string? Descripcion { get; set; }
-        public string TipoItem { get; set; } = ""; 
+        public string TipoItem { get; set; } = "Servicio"; 
     }
 }

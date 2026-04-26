@@ -4,6 +4,7 @@
 @using Microsoft.AspNetCore.Authorization
 @inject NavigationManager navManager
 @inject OrdenWebService ordenService
+@inject AuthService authService
 @attribute [Authorize]
 
 <div class="container mt-4">
@@ -42,7 +43,6 @@
                             <th>Vehículo/Placa</th>
                             <th>Estado</th>
                             <th class="text-end">Total</th>
-                            <th>Acción</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -74,16 +74,13 @@
                                     }
                                     else
                                     {
-                                        <span class="badge rounded-pill bg-dark">📦 Entregado</span>
+                                        <span class="badge rounded-pill @GetEstadoClass(orden.EstadoServicio)">
+                                            📦 @orden.EstadoServicio
+                                        </span>
                                     }
                                 </td>
                                 <td class="text-end fw-bold text-success">
                                     RD$ @orden.Total.ToString("N2")
-                                </td>
-                                <td>
-                                    <button class="btn btn-sm btn-outline-primary border shadow-sm" @onclick='() => DescargarComprobante(orden.NumeroOrden)'>
-                                        <span class="bi bi-file-earmark-text"></span> Ver Comprobante
-                                    </button>
                                 </td>
                             </tr>
                         }
@@ -97,23 +94,26 @@
 @code {
     private List<OrdenWebModel>? historial;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        historial = await ordenService.GetHistorialAsync();
-        if (historial.Count > 0)
+        if (firstRender)
         {
-            await Task.Delay(500); 
+            await authService.InicializarSesionDesdeStorage();
+            historial = await ordenService.GetHistorialAsync();
+            StateHasChanged();
         }
     }
 
     private string GetEstadoClass(string estado) => estado switch
     {
-        "Pendiente" => "bg-warning text-dark",  // Amarillo
-        "En diagnóstico" => "bg-info text-dark", // Cyan
-        "En reparación" => "bg-primary",        // Azul
-        "Listo" => "bg-success",               // Verde
-        "Entregado" => "bg-dark",              // Negro/Gris oscuro
-        _ => "bg-secondary"                     // Color por defecto
+        "Recibido" => "bg-warning text-dark",
+        "Pendiente" => "bg-warning text-dark",
+        "Pagada" => "bg-success",
+        "En diagnóstico" => "bg-info text-dark",
+        "En reparación" => "bg-primary",
+        "Listo" => "bg-success",
+        "Entregado" => "bg-dark",
+        _ => "bg-secondary"
     };
 
     private void DescargarComprobante(string nro) =>

@@ -16,6 +16,7 @@
         public int ItemId { get; set; }
         public int Cantidad { get; set; }
         public decimal PrecioSnapshot { get; set; }
+        public string Nombre { get; set; } = "";
     }
 
     public class CobroResponse

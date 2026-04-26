@@ -35,6 +35,19 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
         options.Events = new JwtBearerEvents
         {
+            OnAuthenticationFailed = context =>
+            {
+                Console.WriteLine($"[JWT-FAIL] {context.Exception.GetType().Name}: {context.Exception.Message}");
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = context =>
+            {
+                var name = context.Principal?.FindFirst("sub")?.Value ?? "?";
+                var rol = context.Principal?.FindFirst("Rol")?.Value ?? "SIN ROL";
+                var isInRole = context.Principal?.IsInRole("Administrador") ?? false;
+                Console.WriteLine($"[JWT-CORE-OK] sub={name} | Rol={rol} | IsInRole(Administrador)={isInRole}");
+                return Task.CompletedTask;
+            },
             OnMessageReceived = context =>
             {
                 if (context.Request.Cookies.TryGetValue("AuthToken", out var token)
@@ -44,7 +57,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 }
 
                 return Task.CompletedTask;
-            }
+            },
         };
     });
 

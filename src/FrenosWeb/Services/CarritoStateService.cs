@@ -115,10 +115,10 @@ namespace FrenosWeb.Services
         private void NotifyStateChanged() => OnChange?.Invoke();
 
         public CobroRequest PrepararCobro(
-            string metodoPago,
-            int? vehiculoId = null,
-            int clienteId = 0,
-            int turnoId = 0)
+    string metodoPago,
+    int? vehiculoId = null,
+    int clienteId = 0,
+    int turnoId = 0)
         {
             return new CobroRequest
             {
@@ -128,10 +128,11 @@ namespace FrenosWeb.Services
 
                 Items = Items.Select(i => new CobroItemRequest
                 {
-                    Tipo = "Servicio",
+                    Tipo = i.Tipo,                    
                     ItemId = i.Servicio.Id,
                     Cantidad = i.Cantidad,
-                    PrecioSnapshot = i.Servicio.Precio
+                    PrecioSnapshot = i.Servicio.Precio,
+                    Nombre = i.Servicio.Nombre       
                 }).ToList(),
 
                 MetodoPago = metodoPago,

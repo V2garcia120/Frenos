@@ -38,15 +38,16 @@ namespace FrenosWeb.Services
             try
             {
                 var response = await _http.GetFromJsonAsync<ApiResponse<List<OrdenWebModel>>>("int/ordenes/historial");
+                Console.WriteLine($"[Historial] Success={response?.Success} Count={response?.Data?.Count}");
                 if (response != null && response.Success && response.Data != null)
                     return response.Data;
 
-                return new List<OrdenWebModel>(); 
+                return new List<OrdenWebModel>(); // ← devolver vacío,no datos de prueba 
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Cyber-Logs] Error al obtener historial: {ex.Message}");
-                return new List<OrdenWebModel>(); 
+                Console.WriteLine($"[Historial] Error: {ex.Message}");
+                return new List<OrdenWebModel>(); // ← vacío, no datos de prueba
             }
         }
 
