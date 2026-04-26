@@ -218,7 +218,8 @@ namespace TallerCaja.Forms
             try
             {
                 var resp = await _integracion.ProcesarCobroAsync(request);
-                if (resp != null)
+                if (resp == null)
+                    throw new InvalidOperationException("Sin respuesta del servidor.");
                 {
                     _ultimaRespuesta = resp;
                     _ultimoRequest = request;

@@ -19,7 +19,7 @@ namespace TallerCaja.Helpers
         }
 
         public static string IntegracionBaseUrl =>
-            _config?["Integracion:BaseUrl"] ?? "http://localhost:5001";
+            _config?["Integracion:BaseUrl"] ?? "https://localhost:7223";
 
         public static int TimeoutSeconds =>
             int.Parse(_config?["Integracion:TimeoutSeconds"] ?? "10");

@@ -87,10 +87,82 @@ namespace FrenosIntegracion.Services.Core
             req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
             req.Content = Serializar(request);
 
-            var response = await _http.SendAsync(req);
-            response.EnsureSuccessStatusCode();
-            return (await Deserializar<OrdenWebResponse>(response))!;
-        }
+            var tieneVehiculo = request.VehiculoId.HasValue && request.VehiculoId > 0;
+            var servicios = tieneVehiculo ? request.Items.ToList() : new List<OrdenWebItem>();
+            var productos = tieneVehiculo ? new List<OrdenWebItem>() : request.Items.ToList();
+
+            Console.WriteLine($"[CrearOrden2] Servicios={servicios.Count} Productos={productos.Count}");
+
+            int? ordenCoreId = null;
+
+            // ── 1. SERVICIOS ──
+            if (servicios.Any())
+            {
+                // Asignación automática del técnico para órdenes creadas desde la web.
+                const int tecnicoWebId = 2;
+
+                var ordenCore = new
+                {
+                    ClienteId = request.ClienteId,
+                    VehiculoId = request.VehiculoId,
+                    TecnicoId = tecnicoWebId,
+                    Prioridad = "Normal",
+                    Notas = $"Orden web - Pago: {request.Notas} | Total: RD${request.Items.Sum(i => i.PrecioSnapshot * i.Cantidad):N2}"
+                };
+
+                var req = new HttpRequestMessage(HttpMethod.Post, "/api/orden");
+                req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", GenerarTokenInterno());
+                req.Content = Serializar(ordenCore);
+
+                var response = await _http.SendAsync(req);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var err = await response.Content.ReadAsStringAsync();
+                    throw new InvalidOperationException($"No se pudo crear la orden: {response.StatusCode} - {err}");
+                }
+
+                var wrapper = JsonSerializer.Deserialize<ApiWrapper<JsonElement>>(
+                    await response.Content.ReadAsStringAsync(), _jsonOptions);
+                if (wrapper?.Data.TryGetProperty("id", out var idEl) == true)
+                    ordenCoreId = idEl.GetInt32();
+            }
+
+            // ── 2. PRODUCTOS ──
+            if (productos.Any())
+            {
+                var ventaCore = new
+                {
+                    ClienteId = request.ClienteId,
+                    EmisorId = 1,
+                    MetodoPago = "Efectivo",
+                    MontoPagado = productos.Sum(i => i.PrecioSnapshot * i.Cantidad) * 1.18m,
+                    Items = productos.Select(i => new
+                    {
+                        Tipo = i.Tipo,
+                        ItemId = i.ItemId,
+                        Cantidad = i.Cantidad,
+                        PrecioSnapshot = i.PrecioSnapshot
+                    })
+                };
+
+                Console.WriteLine($"[CoreService-Factura] Enviando venta directa. ClienteId={request.ClienteId} Items={productos.Count}");
+
+                var req = new HttpRequestMessage(HttpMethod.Post, "/api/factura");
+                req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", GenerarTokenInterno());
+                req.Content = Serializar(ventaCore);
+
+                var response = await _http.SendAsync(req);
+
+                Console.WriteLine($"[CoreService-Factura] Respuesta={response.StatusCode}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var err = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"[CoreService-Factura] Error={err}");
+                    throw new InvalidOperationException($"No se pudo registrar la venta: {response.StatusCode} - {err}");
+                }
+            }
 
         public async Task<EstadoOrdenResponse> ObtenerEstadoOrdenAsync(int ordenId, string token)
         {
@@ -135,16 +207,11 @@ namespace FrenosIntegracion.Services.Core
         // --- Pagos ---
         public async Task<object> PagarFacturaAsync(PagoFacturaRequest request, string token)
         {
-            _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            var payload = new
-            {
-                TurnoId = request.TurnoId,
-                Metodo = request.MetodoPago,
-                Monto = request.Monto
-            };
-
-            var response = await _http.PostAsync($"/api/factura/{request.FacturaId}/pago", Serializar(payload));
+            var req = new HttpRequestMessage(HttpMethod.Post,
+                $"/api/facturas/{request.FacturaId}/pago"); 
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            req.Content = Serializar(new { request.TurnoId, Metodo = request.MetodoPago, Monto = request.Monto });
+            var response = await _http.SendAsync(req);
             return await Deserializar<object>(response) ?? new { };
         }
 

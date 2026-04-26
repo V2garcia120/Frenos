@@ -17,7 +17,7 @@ builder.Services.AddDbContext<IntegracionDbContext>(opt =>
 // 2. Configurar HttpClient para el CoreService
 builder.Services.AddHttpClient<ICoreService, CoreService>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Core:BaseUrl"] ?? "http://localhost:5081");
+    client.BaseAddress = new Uri(builder.Configuration["Core:BaseUrl"]!);
     client.Timeout = TimeSpan.FromSeconds(10);
 });
 

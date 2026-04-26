@@ -35,8 +35,9 @@ namespace FrenosCore.Controllers.Api
         public async Task<IActionResult> IniciarSesionCajero([FromBody] IniciarSesionRequest request)
         {
             var resultado = await _authService.IniciarSesionCajero(request);
+            if (string.IsNullOrEmpty(resultado.Token))
+                return Unauthorized(ApiResponse<object>.Fail("AUTH_ERROR", "Credenciales inválidas o el usuario no tiene acceso de cajero."));
             return Ok(ApiResponse<object>.Ok(resultado));
-
         }
     }
 }

@@ -48,6 +48,7 @@ namespace FrenosCore.Data
                     Telefono = "000-000-0000",
                     Email = "anonimo@frenos.local",
                     Direccion = "N/A",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("Anonimo123*"),
                     CreadoEn = DateTime.Now
                 };
 
@@ -296,7 +297,7 @@ namespace FrenosCore.Data
                     Email = "cliente.demo@frenos.local",
                     Direccion = "Santo Domingo",
                     CreadoEn = DateTime.Now,
-                    PasswordHash = string.Empty
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("ClienteDemo123*")
                 };
 
                 context.Cliente.Add(clienteDemo);
@@ -337,7 +338,7 @@ namespace FrenosCore.Data
                     Email = "flota@caribe.local",
                     Direccion = "Santo Domingo Este",
                     CreadoEn = DateTime.Now,
-                    PasswordHash = string.Empty
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("ClienteEmpresa123*")
                 };
 
                 context.Cliente.Add(clienteEmpresa);
@@ -355,7 +356,7 @@ namespace FrenosCore.Data
                     Email = "maria.perez@correo.local",
                     Direccion = "Santiago de los Caballeros",
                     CreadoEn = DateTime.Now,
-                    PasswordHash = string.Empty
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("ClienteParticular123*")
                 };
 
                 context.Cliente.Add(clienteParticular);

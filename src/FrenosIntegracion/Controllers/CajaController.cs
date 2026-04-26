@@ -57,13 +57,14 @@ namespace FrenosIntegracion.Controllers
             {
                 var idLocal = await cola.EncolarOperacionAsync("Caja", "cobro", request);
 
-                var total = request.Items.Sum(i => i.Cantidad * i.PrecioSnapshot);
+                var subtotal = request.Items.Sum(i => i.Cantidad * i.PrecioSnapshot);
+                var total = Math.Round(subtotal * 1.18m, 2);
                 var response = new
                 {
                     facturaId = (int?)null,
                     numeroFactura = (string)null,
                     total = total,
-                    cambio = request.MontoPagado - total,
+                    cambio = request.MontoPagado > total ? request.MontoPagado - total : 0m,
                     estado = "PendienteSync",
                     idLocal = idLocal
                 };
